@@ -1,0 +1,9 @@
+#goal definition
+float32 min_spot_lenght
+---
+#result definition
+geometry_msgs/Polygon parking_spot
+---
+#feedback
+float32 distance_to_first_place
+string info
