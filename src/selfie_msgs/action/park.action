@@ -1,0 +1,9 @@
+#goal definition
+geometry_msgs/Polygon parking_spot
+bool park
+---
+#result definition
+bool done
+---
+#feedback
+float32 distance

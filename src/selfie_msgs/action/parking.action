@@ -1,0 +1,10 @@
+#goal definition
+uint32 goal
+---
+
+#result definition
+geometry_msgs/Polygon[] parking_place
+---
+
+#feedback
+uint32 feedback
