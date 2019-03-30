@@ -523,14 +523,13 @@ void PylonCameraNode::spin()
 
         if ( getNumSubscribersRect() > 0 && camera_info_manager_->isCalibrated() )
         {
-            // fisheye rectify
             cv_bridge_img_rect_->header.stamp = img_raw_msg_.header.stamp;
             assert(pinhole_model_->initialized());
             cv_bridge::CvImagePtr cv_img_raw = cv_bridge::toCvCopy(
                     img_raw_msg_,
                     img_raw_msg_.encoding);
-            cv::remap(cv_img_raw->image, cv_bridge_img_rect_->image, mapx_,
-                      mapy_, cv::INTER_LANCZOS4, cv::BORDER_CONSTANT);
+            pinhole_model_->fromCameraInfo(camera_info_manager_->getCameraInfo());
+            pinhole_model_->rectifyImage(cv_img_raw->image, cv_bridge_img_rect_->image);
             img_rect_pub_->publish(*cv_bridge_img_rect_);
         }
     }
