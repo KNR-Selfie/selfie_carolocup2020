@@ -26,6 +26,7 @@ This means that the image acquisition is triggered with a certain rate and the c
 
 The package opens either a predefined camera (using a given 'device_user_id' parameter) or, if no camera id is predefined the first camera device it can find.
 
+/ Added image size and offsets paramteres and changed rectification for fisheye lens /
 |
 
 ******
