@@ -1,0 +1,5 @@
+<launch>
+    <node pkg="tf" type="static_transform_publisher" name="tf_base2laser"           args="0 0 0 0 0 3.14159 base_link laser         10"/>
+    <node pkg="tf" type="static_transform_publisher" name="tf_base2imu"             args="0 0 0 0 0 3.14159 base_link imu           10"/>
+    <node pkg="tf" type="static_transform_publisher" name="tf_base2road_markings"   args="0 0 0 0 0 0       base_link road_markings 10"/>
+</launch>

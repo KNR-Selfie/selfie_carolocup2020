@@ -1,0 +1,10 @@
+<launch>
+	<include file="$(find selfie_launch)/launch/transforms.launch"/>
+	<node pkg="selfie_odometry" type="selfie_odometry" name="odometry"/>
+	<node pkg="selfie_stm32_bridge" type="selfie_stm32_bridge" name="selfie_stm32_bridge"/>
+	<node pkg="selfie_park" type="park_server" name="park_server"/>
+	<node pkg="selfie_park" type="park_client" name="park_client">
+		<param name="odom_topic" value="/vesc/odom"/>
+		<param name="ackermann_topic" value="sim_drive"/>
+	</node>
+</launch>
