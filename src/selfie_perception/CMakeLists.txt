@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   sensor_msgs
   std_msgs
+  visualization_msgs
   selfie_msgs
   cv_bridge
   image_transport
@@ -221,5 +222,9 @@ install(DIRECTORY config/
 add_executable(detect_markings src/detect_markings.cpp src/lane_detector.cpp)
 target_link_libraries(detect_markings ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 add_dependencies(detect_markings ${catkin_EXPORTED_TARGETS})
+
+add_executable(detect_obstacles src/detect_obstacles.cpp src/obstacles_generator.cpp)
+target_link_libraries(detect_obstacles ${catkin_LIBRARIES})
+add_dependencies(detect_obstacles ${catkin_EXPORTED_TARGETS})
 
 roslint_cpp(src/lane_detector.cpp include/selfie_perception/lane_detector.h)
