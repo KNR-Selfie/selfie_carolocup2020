@@ -60,14 +60,14 @@ int USB_STM::init(int speed)
 bool USB_STM::read_from_STM()
 {
     int read_state = read(fd, &read_buffer[0], 512) ;
-
+    
     //cast read_buffer to frame
     read_frame = (UsbReadFrame_s *)read_buffer;
-
+    
     if (read_state == USB_RECEIVE_SIZE && read_frame->startbyte == frame_startbyte
       && read_frame->code == frame_code && read_frame->length == USB_RECEIVE_SIZE - 4
       && read_frame->endByte == frame_endbyte)
-    {
+    {   
         return true; //correct data
     }
     else

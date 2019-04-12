@@ -33,7 +33,7 @@ enum
 
 }usb_commands;
 
-typedef struct
+typedef struct __attribute__((__packed__))
 {
     uint8_t startbyte;
     uint8_t code;
@@ -54,10 +54,10 @@ typedef struct
 
     uint8_t endByte;
 
-} UsbReadFrame_s __attribute__((__packed__));
+} UsbReadFrame_s;
 
 #define USB_RECEIVE_SIZE sizeof(UsbReadFrame_s)
-typedef struct
+typedef struct __attribute__((__packed__))
 {
     uint8_t startbyte;
     uint8_t code;
@@ -72,7 +72,7 @@ typedef struct
     uint8_t right_indicator;
     uint8_t endbyte;
 
-}UsbSendFrame_s __attribute__((__packed__));
+}UsbSendFrame_s;
 #define USB_SEND_SIZE sizeof(UsbSendFrame_s)
 
 class USB_STM
