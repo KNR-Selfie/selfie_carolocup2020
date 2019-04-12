@@ -1,6 +1,6 @@
 <launch>
   <node name="pylon_camera_node" type="pylon_camera_node" pkg="pylon_camera" output="screen">
-      <param name="camera_info_url" value="file://$(find selfie_camera)/config/fullmalo2.yaml" />
+      <param name="camera_info_url" value="file://$(find selfie_camera)/config/full1.yaml" />
       <param name="image_encoding" value="mono8" />
       <param name="frame_rate" value="150" />
       <param name="brightness" value="150" />
