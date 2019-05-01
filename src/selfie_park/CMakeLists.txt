@@ -204,3 +204,12 @@ add_dependencies(detect_parking_spot ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catki
 target_link_libraries(detect_parking_spot
   ${catkin_LIBRARIES}
 )
+
+add_executable(detect_parking_spot_mock_client
+  include/selfie_park/Search_client_mock.h
+  src/detect_parking_spot_mock_client.cpp
+)
+add_dependencies(detect_parking_spot_mock_client ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(detect_parking_spot_mock_client
+  ${catkin_LIBRARIES}
+)
