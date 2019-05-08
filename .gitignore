@@ -59,3 +59,4 @@ qtcreator-*
 CATKIN_IGNORE
 
 # jetbrains
+*.idea
