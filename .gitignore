@@ -57,3 +57,6 @@ qtcreator-*
 
 # Catkin custom files
 CATKIN_IGNORE
+
+# jetbrains
+*.idea/
