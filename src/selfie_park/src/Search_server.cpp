@@ -39,7 +39,6 @@ bool Search_server::init()
 
   min_spot_lenght = (*search_server_.acceptNewGoal()).min_spot_lenght;
   ROS_INFO("Initialized");
-  state=searching;
 }
 
 
@@ -51,28 +50,13 @@ void Search_server::manager(const selfie_msgs::PolygonArray &msg)
     ROS_INFO("search_server_ is not active");
     return;
   }
-  switch (state)
-  {
-    case searching:
-    {
-      filter_boxes(msg);
-      display_places(boxes_on_the_right_side,"FilteredBoxes");
-      //ROS_INFO("Size of  boxes_on_the_right %lu",boxes_on_the_right_side.size());
-      if(!find_free_places()){
-      ROS_INFO("Didn't found free places\n");
-      }else
-      send_goal();
-
-      break;
-    }
-//TODO rest of cases
-    default:
-    {
-      ROS_INFO("Inny wariant w managerze");//TODO
-      break;
-    }
-    
-  }
+  filter_boxes(msg);
+  display_places(boxes_on_the_right_side,"FilteredBoxes");
+  //ROS_INFO("Size of  boxes_on_the_right %lu",boxes_on_the_right_side.size());
+  if(!find_free_places()){
+    ROS_INFO("Didn't found free places\n");
+  }else
+    send_goal();
  
 }
 
@@ -136,11 +120,6 @@ bool Search_server::find_free_places()///TODO naprawić kolejność wykrywania m
       display_place(tmp_box,"first_free_place");
       return true;
     }
-    if(state == planning)
-    {
-      ++planning_error_counter;
-    }
-
   }
   return false;
 }
@@ -148,24 +127,6 @@ bool Search_server::find_free_places()///TODO naprawić kolejność wykrywania m
 
 void Search_server::send_goal()
 {
-  /*
-    selfie_park::parkGoal msg;
-    geometry_msgs::Point32 p;
-    p.x = first_free_place.bottom_left.x;
-    p.y = first_free_place.bottom_left.y;
-    msg.parking_spot.points.push_back(p);
-    p.x = first_free_place.bottom_right.x;
-    p.y = first_free_place.bottom_right.y;
-    msg.parking_spot.points.push_back(p);
-    p.x = first_free_place.top_right.x;
-    p.y = first_free_place.top_right.y;
-    msg.parking_spot.points.push_back(p);
-    p.x = first_free_place.top_left.x;
-    p.y = first_free_place.top_left.y;
-    msg.parking_spot.points.push_back(p);
-    msg.park = true;
-    ac_.sendGoal(msg);
-*/
 
     geometry_msgs::Point32 p;
     p.x = first_free_place.bottom_left.x;
@@ -182,7 +143,6 @@ void Search_server::send_goal()
     result.parking_spot.points.push_back(p);
 
     //reset(); TODO
-    state = searching;
     ROS_INFO("Place found and sent");
     search_server_.setSucceeded(result);
 }
