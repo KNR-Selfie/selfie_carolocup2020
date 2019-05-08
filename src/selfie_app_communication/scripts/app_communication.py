@@ -4,6 +4,8 @@ import bluetooth as bt
 import select
 import threading
 from std_srvs.srv import Empty
+import dynamic_reconfigure.client
+from struct import pack, unpack
 class Communicator:
     def __init__(self):
         self.connections = []
@@ -11,6 +13,7 @@ class Communicator:
         self.server_socket = bt.BluetoothSocket(bt.RFCOMM)
         self.server_socket.bind(("", self.port))
         self.server_socket.listen(7)
+        self.pidClient = dynamic_reconfigure.client.Client('controller')
         self.server_socket.setblocking(False)
         BTThread = threading.Thread(name="BTthread", target=self.BTfun)
         self.resetVisionService = rospy.ServiceProxy('resetVision', Empty)
@@ -35,9 +38,17 @@ class Communicator:
             for read in readable:
                 try:
                     data = read.recv(5000)
+                    print data[:3] == '\x01\x01\x01'
                     if data == "resetVision":
                         print data
                         self.resetVisionService()
+                    elif data[:3]=='\x01\x01\x01':
+                        self.pidClient.update_configuration({'Kp':float(unpack('f',data[3:])[0])})
+                    elif data[:3] == '\x01\x01\x02':
+                        self.pidClient.update_configuration({'Ki':float(unpack('f',data[3:])[0])})
+                    elif data[:3] == '\x01\x01\x03':
+                        self.pidClient.update_configuration({'Kd':float(unpack('f',data[3:])[0])})
+
                 except bt.BluetoothError:
                     print "disconnected"
                     self.connections.remove(read)
