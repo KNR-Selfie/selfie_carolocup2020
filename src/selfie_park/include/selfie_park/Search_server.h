@@ -27,8 +27,6 @@
 
 using namespace std;
 
-enum parking_state{searching=0,  planning_failed=1, planning=2, parking=3};
-
 
 class Search_server{
 private:
@@ -61,9 +59,7 @@ private:
 
 
 
-  parking_state state = searching;
   double planning_scan_counter=0;
-  double planning_error_counter = 0;
 
   // jednostki w metrach
   float point_min_x;
