@@ -1,0 +1,5 @@
+<launch>
+    <node pkg="selfie_app_communication" name="bluetooth" type="app_communication.py" output="screen">
+        <rosparam command="load" file="$(find selfie_app_communication)/operations.yaml"/>
+    </node>
+</launch>
