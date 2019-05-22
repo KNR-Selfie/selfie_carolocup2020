@@ -1,9 +1,7 @@
 #goal definition
-float32 min_spot_lenght
+float32 min_spot_lenght #minimal length of parking spot
 ---
 #result definition
-geometry_msgs/Polygon parking_spot
+geometry_msgs/Polygon parking_spot #4 points describing placement of parking spot
 ---
 #feedback
-float32 distance_to_first_place
-string info
