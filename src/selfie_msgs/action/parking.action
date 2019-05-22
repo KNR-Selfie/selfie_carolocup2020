@@ -1,5 +1,5 @@
 #goal definition
-uint32 goal
+uint32 size_of_place
 ---
 
 #result definition
@@ -7,4 +7,3 @@ geometry_msgs/Polygon[] parking_place
 ---
 
 #feedback
-uint32 feedback

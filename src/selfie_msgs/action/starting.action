@@ -1,0 +1,9 @@
+#goal definition
+float32 distance
+---
+#result definition
+
+uint32 mode
+---
+
+#feedback

@@ -1,0 +1,8 @@
+#goal definition
+bool mode
+---
+#result definition
+
+float32 place_size
+---
+#feedback
