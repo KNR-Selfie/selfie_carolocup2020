@@ -3,6 +3,8 @@ bool mode
 ---
 #result definition
 
-float32 place_size
+float32 place_size 
 ---
 #feedback
+
+uint32 action_status #one of enums describing state (see more on wiki)
