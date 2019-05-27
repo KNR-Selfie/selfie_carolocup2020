@@ -8,7 +8,7 @@ ObstaclesGenerator::ObstaclesGenerator(const ros::NodeHandle &nh, const ros::Nod
 
   obstacles_frame_("laser"),
   visualization_frame_("laser"),
-  visualize_(true),
+  visualize_(false),
 
   lidar_offset_(0),
   segment_threshold_(0.03),
