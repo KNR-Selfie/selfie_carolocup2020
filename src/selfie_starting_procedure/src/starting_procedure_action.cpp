@@ -16,7 +16,7 @@ StartingProcedureAction::~StartingProcedureAction(void)
 void StartingProcedureAction::executeCB(const selfie_msgs::startingGoalConstPtr &goal)
 {
     ROS_INFO("goal %f",goal->distance);
-    feedback.action_status = 1;//ButtonPressed;
+    feedback.action_status = START_SIGN;//ButtonPressed;
 
     for(int i = 0;i<10;i++)
     {

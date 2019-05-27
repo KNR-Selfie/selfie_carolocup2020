@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
   selfie_msgs
+  selfie_scheduler
 )
 
 ## System dependencies are found with CMake's conventions
@@ -121,6 +122,7 @@ include_directories(
   include
   ${catkin_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
+  ${selfie_scheduler_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library

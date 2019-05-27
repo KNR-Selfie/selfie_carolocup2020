@@ -7,6 +7,8 @@
 #include <string>
 #include <std_msgs/Bool.h>
 #include <std_msgs/Float32.h>
+#include <selfie_scheduler/scheduler_enums.h>
+
 
 class StartingProcedureAction
 {
