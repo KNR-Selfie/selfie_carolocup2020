@@ -1,0 +1,22 @@
+<launch>
+  <node name="pid_controller" pkg="pid" type="controller" >
+    <param name="upper_limit" value="0.785" />
+    <param name="lower_limit" value="-0.785" />
+    <param name="windup_limit" value="10" />
+
+    <param name="Kp" value="1.2" />
+    <param name="Kd" value="0.01" />
+
+    <remap from="state" to="combined_offset" />
+    <remap from="control_effort" to="steering_angle" />
+  </node>
+
+  <node name="const_setpoint" pkg="selfie_control" type="const_float64.py" >
+    <param name="topic" value="setpoint" />
+    <param name="value" value="0.0" />
+  </node>
+
+  <node name="offset_combiner" pkg="selfie_control" type="offset_combiner.py" />
+
+  <node name="cmd_creator" type="cmd_creator" pkg="selfie_control" respawn="true" />
+</launch>
