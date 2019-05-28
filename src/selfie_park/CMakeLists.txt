@@ -203,13 +203,6 @@ add_executable(detect_parking_spot
 add_dependencies(detect_parking_spot ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(detect_parking_spot
   ${catkin_LIBRARIES}
-<<<<<<< HEAD
-<<<<<<< f51fcce82616957fb620006dba47e6679f97bd94
-<<<<<<< f50197b41bedea9637e11469786f4c87bfc3d79a
-=======
->>>>>>> Added mock server client for parking detection
-=======
->>>>>>> 3249cb7de12dbbe7c726858cf6880891fea237e5
 )
 
 add_executable(detect_parking_spot_mock_client
@@ -219,12 +212,4 @@ add_executable(detect_parking_spot_mock_client
 add_dependencies(detect_parking_spot_mock_client ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(detect_parking_spot_mock_client
   ${catkin_LIBRARIES}
-<<<<<<< HEAD
-<<<<<<< f51fcce82616957fb620006dba47e6679f97bd94
-=======
->>>>>>> Changed from file to link to prevent problems with some IDE's
-=======
->>>>>>> Added mock server client for parking detection
-=======
->>>>>>> 3249cb7de12dbbe7c726858cf6880891fea237e5
 )
