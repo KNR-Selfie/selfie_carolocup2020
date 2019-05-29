@@ -36,22 +36,15 @@ private:
   ros::Publisher visualize_lines_pub;
   ros::Publisher visualize_free_place;
   ros::Publisher point_pub;
-  ros::Publisher parking_state_pub;
-  ros::Publisher parking_place_pub;
   ros::Publisher speed_publisher;
 
   actionlib::SimpleActionServer<selfie_msgs::searchAction> search_server_;
 
-  std::vector<Box> boxes_on_the_right_side;//boxy są posortowane wg wartości x rosnąco (bliskie->dlasze)
+  std::vector<Box> boxes_on_the_right_side;//boxes are sorted by x valule ascendind (near->far)
   std::vector<Box> potential_free_places;
-  // for now only this is used
-  std::vector<Box> for_planning;
   Box first_free_place;
-  float distance_to_stop;
+  
   float min_spot_lenght;
-  int visualization_type;
-  int scans_ignored;
-  int scans_taken;
   bool debug_mode;
 
 
@@ -63,9 +56,8 @@ private:
 
 
 
-  double planning_scan_counter=0;
 
-  // jednostki w metrach
+  // used unit- meter
   float point_min_x;
   float point_max_x;
 
