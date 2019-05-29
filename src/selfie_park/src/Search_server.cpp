@@ -1,12 +1,6 @@
 #include "../../selfie_park/include/selfie_park/Search_server.h"
 
 
-/*TODO LIST:
-planning_failed
-check //TEMP //TODO
-
-check OPT -optymalizacja
-*/
 
 Search_server::Search_server(const ros::NodeHandle &nh, const ros::NodeHandle &pnh):
                 nh_(nh),
@@ -26,6 +20,8 @@ Search_server::Search_server(const ros::NodeHandle &nh, const ros::NodeHandle &p
   pnh_.param<int>("scans_taken", scans_taken, 5);
   pnh_.param<bool>("debug_mode", debug_mode, false);
   pnh_.param<int>("visualization_type", visualization_type, 3);
+  pnh_.param<float>("default_speed_in_parking_zone", default_speed_in_parking_zone, 0.3);
+  speed_current.data=default_speed_in_parking_zone;
 }
 
 Search_server::~Search_server(){}
@@ -36,7 +32,9 @@ bool Search_server::init()
   this->visualize_lines_pub = nh_.advertise<visualization_msgs::Marker>( "/visualization_lines", 1 );
   this->visualize_free_place  = nh_.advertise<visualization_msgs::Marker>( "/free_place", 1 );
   this->point_pub = nh_.advertise<visualization_msgs::Marker>("/box_points", 5);
+  this->speed_publisher=nh_.advertise<std_msgs::Float64>("/speed",2);
 
+  speed_publisher.publish(speed_current);
   min_spot_lenght = (*search_server_.acceptNewGoal()).min_spot_lenght;
   ROS_INFO("Initialized");
 }
@@ -54,7 +52,7 @@ void Search_server::manager(const selfie_msgs::PolygonArray &msg)
   display_places(boxes_on_the_right_side,"FilteredBoxes");
   //ROS_INFO("Size of  boxes_on_the_right %lu",boxes_on_the_right_side.size());
   if(!find_free_places()){
-    ROS_INFO("Didn't found free places\n");
+    ROS_INFO("Didn't found any free places\n");
   }else
     send_goal();
  
@@ -88,14 +86,13 @@ void Search_server::filter_boxes(const selfie_msgs::PolygonArray &msg)
      this->boxes_on_the_right_side.insert(this->boxes_on_the_right_side.begin(),temp_box);
      temp_box.print();
     }
-      //now we reset, but later
-  }//box_nr for
-
+      
+  }
 }//obstacle_callback
 
 
 
-bool Search_server::find_free_places()///TODO naprawić kolejność wykrywania miejsca obecnie freeplace oddaje najdalsze miejsce a nie najbliższe
+bool Search_server::find_free_places()
 {
   if(boxes_on_the_right_side.size() < 2)
   {
