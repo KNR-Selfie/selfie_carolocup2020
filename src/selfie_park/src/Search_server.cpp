@@ -15,11 +15,7 @@ Search_server::Search_server(const ros::NodeHandle &nh, const ros::NodeHandle &p
   pnh_.param<float>("point_max_x", point_max_x, 2);
   pnh_.param<float>("point_min_y", point_min_y, -1);
   pnh_.param<float>("point_max_y", point_max_y, 0.2);
-  pnh_.param<float>("distance_to_stop", distance_to_stop, 0.2);
-  pnh_.param<int>("scans_to_ignore_when_stopped", scans_ignored, 2);
-  pnh_.param<int>("scans_taken", scans_taken, 5);
   pnh_.param<bool>("debug_mode", debug_mode, false);
-  pnh_.param<int>("visualization_type", visualization_type, 3);
   pnh_.param<float>("default_speed_in_parking_zone", default_speed_in_parking_zone, 0.3);
   speed_current.data=default_speed_in_parking_zone;
 }
@@ -51,6 +47,8 @@ void Search_server::manager(const selfie_msgs::PolygonArray &msg)
   filter_boxes(msg);
   display_places(boxes_on_the_right_side,"FilteredBoxes");
   //ROS_INFO("Size of  boxes_on_the_right %lu",boxes_on_the_right_side.size());
+
+
   if(!find_free_places()){
     ROS_INFO("Didn't found any free places\n");
   }else
