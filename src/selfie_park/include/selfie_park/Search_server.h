@@ -1,25 +1,23 @@
 #pragma once
-#include <ros/ros.h>
-#include <iostream>
-#include <vector>
-#include <array>
-#include <cmath>
 #include <algorithm>
+#include <array>
 #include <chrono>
+#include <cmath>
+#include <iostream>
+#include <ros/ros.h>
+#include <vector>
 
 #include <geometry_msgs/Polygon.h>
 #include <geometry_msgs/PolygonStamped.h>
 #include <nav_msgs/Odometry.h>
+#include <selfie_msgs/PolygonArray.h>
 #include <std_msgs/Float64.h>
 #include <std_msgs/Int16.h>
 #include <visualization_msgs/Marker.h>
-#include <selfie_msgs/PolygonArray.h>
 
 #include <actionlib/server/simple_action_server.h>
 #include <selfie_msgs/searchAction.h>
 #include <selfie_scheduler/scheduler_enums.h>
-
-
 
 #include <ros/console.h>
 
@@ -27,8 +25,7 @@
 
 using namespace std;
 
-
-class Search_server{
+class Search_server {
 private:
   ros::NodeHandle nh_;
   ros::NodeHandle pnh_;
@@ -40,13 +37,14 @@ private:
 
   actionlib::SimpleActionServer<selfie_msgs::searchAction> search_server_;
 
-  std::vector<Box> boxes_on_the_right_side;//boxes are sorted by x valule ascendind (near->far)
+  std::vector<Box> boxes_on_the_right_side; // boxes are sorted by x valule
+                                            // ascendind (near->far)
   std::vector<Box> potential_free_places;
   Box first_free_place;
-  
+
   float min_spot_lenght;
   bool debug_mode;
-
+  unsigned int action_status;
 
   float default_speed_in_parking_zone;
   std_msgs::Float64 speed_current;
@@ -54,10 +52,7 @@ private:
   selfie_msgs::searchFeedback feedback_msg;
   selfie_msgs::searchResult result;
 
-
-
-
-  // used unit- meter
+  //area of interest (used unit- meter)
   float point_min_x;
   float point_max_x;
 
@@ -71,10 +66,12 @@ public:
   bool init();
   void preemptCB();
   void manager(const selfie_msgs::PolygonArray &);
-  void filter_boxes(const selfie_msgs::PolygonArray &);//odfiltrowywuje boxy, pozostawia tylko te po prawej
+  void filter_boxes(const selfie_msgs::PolygonArray &); // odfiltrowywuje boxy,
+                                                        // pozostawia tylko te
+                                                        // po prawej
   bool find_free_places();
   void send_goal();
 
   void display_places(std::vector<Box> &, const std::string &);
-  void display_place(Box &,const std::string &);
+  void display_place(Box &, const std::string &);
 };
