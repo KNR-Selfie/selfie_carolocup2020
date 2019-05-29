@@ -17,9 +17,9 @@
 
 #include <actionlib/server/simple_action_server.h>
 #include <selfie_msgs/searchAction.h>
+#include <selfie_scheduler/scheduler_enums.h>
 
 
-#include <actionlib/client/simple_action_client.h>
 
 #include <ros/console.h>
 
@@ -38,6 +38,7 @@ private:
   ros::Publisher point_pub;
   ros::Publisher parking_state_pub;
   ros::Publisher parking_place_pub;
+  ros::Publisher speed_publisher;
 
   actionlib::SimpleActionServer<selfie_msgs::searchAction> search_server_;
 
@@ -53,6 +54,9 @@ private:
   int scans_taken;
   bool debug_mode;
 
+
+  float default_speed_in_parking_zone;
+  std_msgs::Float64 speed_current;
 
   selfie_msgs::searchFeedback feedback_msg;
   selfie_msgs::searchResult result;

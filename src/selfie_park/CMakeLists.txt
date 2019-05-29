@@ -7,7 +7,7 @@ add_compile_options(-std=c++11)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS geometry_msgs roscpp rospy selfie_msgs std_msgs visualization_msgs ackermann_msgs actionlib actionlib_msgs nav_msgs ackermann_msgs tf)
+find_package(catkin REQUIRED COMPONENTS geometry_msgs roscpp rospy selfie_msgs std_msgs visualization_msgs ackermann_msgs actionlib actionlib_msgs nav_msgs ackermann_msgs tf selfie_scheduler)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -112,6 +112,7 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
   include ${catkin_INCLUDE_DIRS}
+  ${selfie_scheduler_INCLUDE_DIRS}
 # include
 # ${catkin_INCLUDE_DIRS}
 )
