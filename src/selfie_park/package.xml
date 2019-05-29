@@ -74,4 +74,7 @@
 <exec_depend>actionlib_msgs</exec_depend>
 <exec_depend>nav_msgs</exec_depend>
 <exec_depend>tf</exec_depend>
+<build_depend>selfie_scheduler</build_depend>
+<build_export_depend>selfie_scheduler</build_export_depend>
+<exec_depend>selfie_scheduler</exec_depend>
 </package>
