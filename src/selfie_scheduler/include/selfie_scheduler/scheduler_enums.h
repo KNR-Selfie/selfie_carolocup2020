@@ -27,4 +27,13 @@ typedef enum program_states
 
 }feedback_variable;
 
+
+typedef enum actions
+{
+    STARTING_PROCEDURE = 0,
+    DRIVING,
+    PARKING,
+    PARK,
+
+}action_variable;
 #endif // SCHEDULER_ENUMS_H
