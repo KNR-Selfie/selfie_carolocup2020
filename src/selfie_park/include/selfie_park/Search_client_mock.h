@@ -4,22 +4,26 @@
 #include <geometry_msgs/Polygon.h>
 #include <ros/ros.h>
 #include <selfie_msgs/searchAction.h>
+#include <selfie_scheduler/scheduler_enums.h>
+#include <std_msgs/Float64.h>
 #include <stdlib.h>
 
+
+void topicCallback(const std_msgs::Float64ConstPtr &msg);
+void feedbackCb(const selfie_msgs::searchFeedbackConstPtr &feedback);
+
 class Search_client_mock {
-  ros::NodeHandle nh_;
+public:
+  static float last_speed_;
+  void send_goal(const float);
+  Search_client_mock(const ros::NodeHandle &nh);void activeCb() { ac_.waitForServer(); }
+  void doneCb(const actionlib::SimpleClientGoalState& state,const selfie_msgs::searchResultConstPtr& result){}
   actionlib::SimpleActionClient<selfie_msgs::searchAction> ac_;
 
-public:
-  void send_goal(const float);
-  Search_client_mock(const ros::NodeHandle &nh);
+private:
+  ros::NodeHandle nh_;
+  ros::Subscriber speed_subscriber_;
+  
+  
+  
 };
-
-Search_client_mock::Search_client_mock(const ros::NodeHandle &nh)
-    : nh_(nh), ac_("search", true) {}
-
-void Search_client_mock::send_goal(const float spot_length = 0.5) {
-  selfie_msgs::searchGoal msg;
-  msg.min_spot_lenght = spot_length; // Czy nie za mało/dużo
-  ac_.sendGoal(msg);
-}

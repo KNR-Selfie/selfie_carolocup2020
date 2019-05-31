@@ -207,6 +207,7 @@ target_link_libraries(detect_parking_spot
 )
 
 add_executable(detect_parking_spot_mock_client
+  src/Search_client_mock.cpp
   include/selfie_park/Search_client_mock.h
   src/detect_parking_spot_mock_client.cpp
 )
