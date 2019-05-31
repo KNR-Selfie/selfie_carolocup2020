@@ -22,7 +22,7 @@ Search_server::~Search_server() {}
 
 bool Search_server::init() {
   this->obstacles_sub =
-      nh_.subscribe("/obstacles", 10, &Search_server::manager, this);
+      nh_.subscribe("/obstacles", 1, &Search_server::manager, this);
   this->visualize_lines_pub =
       nh_.advertise<visualization_msgs::Marker>("/visualization_lines", 1);
   this->visualize_free_place =
@@ -31,7 +31,7 @@ bool Search_server::init() {
   this->speed_publisher = nh_.advertise<std_msgs::Float64>("/speed", 2);
 
   speed_publisher.publish(speed_current);
-  action_status = START_SEARCHING_PLACE;
+  publishFeedback(START_SEARCHING_PLACE);
   min_spot_lenght = (*search_server_.acceptNewGoal()).min_spot_lenght;
   ROS_INFO("Initialized");
 }
@@ -46,10 +46,38 @@ void Search_server::manager(const selfie_msgs::PolygonArray &msg) {
   display_places(boxes_on_the_right_side, "FilteredBoxes");
   // ROS_INFO("Size of  boxes_on_the_right %lu",boxes_on_the_right_side.size());
 
-  if (!find_free_places()) {
-    ROS_INFO("Didn't found any free places\n");
-  } else
-    send_goal();
+  switch (action_status.action_status) {
+  case START_SEARCHING_PLACE:
+    if (find_free_places()) {
+      publishFeedback(FIND_PLACE);
+      speed_current.data = 0;
+      speed_publisher.publish(speed_current);
+      // propably delay here bacause of slowing-down speed
+    }
+    break;
+  case FIND_PLACE:
+    if (find_free_places()) {
+      publishFeedback(FIND_PROPER_PLACE);
+
+    } else {
+      /* code for False */
+    }
+
+    break;
+
+  default:
+    ROS_INFO("Err, wrong action_status");
+  break;
+  
+
+  }
+
+  /*
+    if (!find_free_places()) {
+      ROS_INFO("Didn't found any free places\n");
+    } else
+      send_goal();
+      */
 }
 
 void Search_server::filter_boxes(const selfie_msgs::PolygonArray &msg) {
@@ -236,3 +264,7 @@ void Search_server::display_places(std::vector<Box> &boxes,
   }
   visualize_free_place.publish(marker);
 } // OPT
+void Search_server::publishFeedback(unsigned int newActionStatus) {
+  action_status.action_status = newActionStatus;
+  search_server_.publishFeedback(action_status);
+}

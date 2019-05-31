@@ -44,12 +44,12 @@ private:
 
   float min_spot_lenght;
   bool debug_mode;
-  unsigned int action_status;
 
   float default_speed_in_parking_zone;
   std_msgs::Float64 speed_current;
 
-  selfie_msgs::searchFeedback feedback_msg;
+  selfie_msgs::searchFeedback action_status;
+  void publishFeedback(unsigned int);
   selfie_msgs::searchResult result;
 
   //area of interest (used unit- meter)
