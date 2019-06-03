@@ -52,7 +52,7 @@ void Search_server::manager(const selfie_msgs::PolygonArray &msg) {
       publishFeedback(FIND_PLACE);
       speed_current.data = 0;
       speed_publisher.publish(speed_current);
-      // propably delay here bacause of slowing-down speed
+      ros::Duration(1.0).sleep();//TODO sleep as param
     }
     break;
   case FIND_PLACE:
