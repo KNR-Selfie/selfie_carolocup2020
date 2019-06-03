@@ -1,26 +1,13 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(selfie_perception)
+project(selfie_park)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
- add_compile_options(-std=c++11)
+add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS
-  geometry_msgs
-  roscpp
-  sensor_msgs
-  std_msgs
-  visualization_msgs
-  selfie_msgs
-  cv_bridge
-  image_transport
-  rospy
-  roslint
-)
-
-find_package(OpenCV 3.3.1 REQUIRED)
+find_package(catkin REQUIRED COMPONENTS geometry_msgs roscpp rospy selfie_msgs std_msgs visualization_msgs ackermann_msgs actionlib actionlib_msgs nav_msgs ackermann_msgs tf selfie_scheduler)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -47,7 +34,6 @@ find_package(OpenCV 3.3.1 REQUIRED)
 ##     * add a exec_depend tag for "message_runtime"
 ## * In this file (CMakeLists.txt):
 ##   * add "message_generation" and every package in MSG_DEP_SET to
-##     find_package(catkin REQUIRED COMPONENTS ...)
 ##   * add "message_runtime" and every package in MSG_DEP_SET to
 ##     catkin_package(CATKIN_DEPENDS ...)
 ##   * uncomment the add_*_files sections below as needed
@@ -79,7 +65,7 @@ find_package(OpenCV 3.3.1 REQUIRED)
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
 #   DEPENDENCIES
-#   geometry_msgs#   sensor_msgs#   std_msgs#   visualization_msgs
+#   std_msgs  # Or other packages containing msgs
 # )
 
 ################################################
@@ -112,9 +98,9 @@ find_package(OpenCV 3.3.1 REQUIRED)
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  INCLUDE_DIRS include
-#  LIBRARIES selfie_perception
-#  CATKIN_DEPENDS geometry_msgs roscpp sensor_msgs std_msgs visualization_msgs selfie_msgs cv_bridge image_transport
+#  INCLUDE_DIRS include
+#  LIBRARIES selfie_park
+#  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
 )
 
@@ -125,14 +111,15 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-  include
-  ${catkin_INCLUDE_DIRS}
-  ${OpenCV_INCLUDE_DIRS}
+  include ${catkin_INCLUDE_DIRS}
+  ${selfie_scheduler_INCLUDE_DIRS}
+# include
+# ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/selfie_perception.cpp
+#   src/${PROJECT_NAME}/selfie_park.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -143,7 +130,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/selfie_perception_node.cpp)
+# add_executable(${PROJECT_NAME}_node src/selfie_park_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -200,7 +187,7 @@ include_directories(
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_selfie_perception.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_selfie_park.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
@@ -208,23 +195,23 @@ include_directories(
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
 
-install(DIRECTORY include/${PROJECT_NAME}/
-    DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-    FILES_MATCHING PATTERN "*.hpp" PATTERN "*.h"
-    PATTERN ".svn" EXCLUDE
+add_executable(detect_parking_spot
+  include/selfie_park/shapes.h
+  src/Search_server.cpp
+  include/selfie_park/Search_server.h
+  src/detect_parking_spot.cpp
+)
+add_dependencies(detect_parking_spot ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(detect_parking_spot
+  ${catkin_LIBRARIES}
 )
 
-install(DIRECTORY config/
-    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/config
-    FILES_MATCHING PATTERN "*.yaml"
+add_executable(detect_parking_spot_mock_client
+  src/Search_client_mock.cpp
+  include/selfie_park/Search_client_mock.h
+  src/detect_parking_spot_mock_client.cpp
 )
-
-add_executable(detect_markings src/detect_markings.cpp src/lane_detector.cpp)
-target_link_libraries(detect_markings ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
-add_dependencies(detect_markings ${catkin_EXPORTED_TARGETS})
-
-add_executable(detect_obstacles src/detect_obstacles.cpp src/obstacles_generator.cpp)
-target_link_libraries(detect_obstacles ${catkin_LIBRARIES})
-add_dependencies(detect_obstacles ${catkin_EXPORTED_TARGETS})
-
-roslint_cpp(src/lane_detector.cpp include/selfie_perception/lane_detector.h)
+add_dependencies(detect_parking_spot_mock_client ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(detect_parking_spot_mock_client
+  ${catkin_LIBRARIES}
+)
