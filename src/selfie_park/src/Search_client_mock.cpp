@@ -48,11 +48,7 @@ void Search_client_mock::doneCb(const actionlib::SimpleClientGoalState& state,co
 {
   ROS_INFO("Done, place is found \nfound place:");
   Box(result->parking_spot).print_box_dimensions();
-<<<<<<< HEAD
   ROS_INFO("Shuting down client node...");
-=======
-  ROS_INFO("Shuting down client node...")
->>>>>>> f5d489ac96f36d1737a2c108f2531b1699b63c22
   ros::shutdown();
   
 }
