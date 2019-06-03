@@ -22,7 +22,7 @@ int main(int argc, char** argv)
     client.send_goal(len);
     std::cout<<"sent goal min length of spot: "<<len<<std::endl;
 
-
+    ros::spin();
     return 0;
 
 }
