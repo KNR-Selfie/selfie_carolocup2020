@@ -31,8 +31,8 @@ bool Search_server::init() {
   this->speed_publisher = nh_.advertise<std_msgs::Float64>("/speed", 2);
 
   speed_publisher.publish(speed_current);
+  min_spot_lenght = search_server_.acceptNewGoal()->min_spot_lenght;
   publishFeedback(START_SEARCHING_PLACE);
-  min_spot_lenght = (*search_server_.acceptNewGoal()).min_spot_lenght;
   ROS_INFO("Initialized");
 }
 
@@ -56,14 +56,26 @@ void Search_server::manager(const selfie_msgs::PolygonArray &msg) {
     }
     break;
   case FIND_PLACE:
+
     if (find_free_places()) {
       publishFeedback(FIND_PROPER_PLACE);
 
     } else {
-      /* code for False */
+      speed_current.data = default_speed_in_parking_zone;
     }
-
+    speed_publisher.publish(speed_current);
     break;
+    case FIND_PROPER_PLACE:
+    if (find_free_places()) {
+      std::cout<<"Found proper place\nsending result";
+      speed_current.data =0;
+      send_goal();
+    } else {
+      std::cout<<"Place lost\n";
+      speed_current.data = default_speed_in_parking_zone;
+    }
+    speed_publisher.publish(speed_current);
+      break;
 
   default:
     ROS_INFO("Err, wrong action_status");
@@ -102,7 +114,7 @@ void Search_server::filter_boxes(const selfie_msgs::PolygonArray &msg) {
       min_x = temp_box.top_left.x;
       this->boxes_on_the_right_side.insert(
           this->boxes_on_the_right_side.begin(), temp_box);
-      temp_box.print();
+      //temp_box.print();
     }
   }
 } // obstacle_callback
