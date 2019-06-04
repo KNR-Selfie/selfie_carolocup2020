@@ -1,6 +1,6 @@
 #ifndef SCHEDULER_ENUMS_H
 #define SCHEDULER_ENUMS_H
-typedef enum program_states
+typedef enum program_state
 {
     //starting_procedure
     SELFIE_READY = 0, // car ready, waiting for button press
@@ -30,10 +30,11 @@ typedef enum program_states
 
 typedef enum actions
 {
-    STARTING_PROCEDURE = 0,
+    STARTING = 0,
     DRIVING,
     PARKING,
     PARK,
+    ERROR,
 
 }action_variable;
 #endif // SCHEDULER_ENUMS_H

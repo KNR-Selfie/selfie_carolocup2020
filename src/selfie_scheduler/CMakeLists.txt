@@ -202,6 +202,6 @@ install(DIRECTORY include/${PROJECT_NAME}/
 # catkin_add_nosetests(test)
 
 file(GLOB CLIENTS "src/clients/*.cpp")
-add_executable(scheduler src/scheduler.cpp ${CLIENTS})
+add_executable(scheduler src/scheduler_node.cpp src/scheduler.cpp ${CLIENTS})
 target_link_libraries(scheduler ${catkin_LIBRARIES})
 add_dependencies(scheduler ${catkin_EXPORTED_TARGETS})

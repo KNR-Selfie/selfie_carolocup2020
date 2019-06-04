@@ -3,6 +3,7 @@
 StartingProcedureClient::StartingProcedureClient(std::string name):
     ac_(name, true)
 {
+    ROS_INFO("Wait for server");
      ac_.waitForServer();
 }
 
@@ -17,10 +18,15 @@ void StartingProcedureClient::setGoal(boost::any goal)
     float distance = boost::any_cast<float>(goal);
     if(distance)
     {
+        ROS_INFO("Good goal cast");
         goal_.distance = distance;
         ac_.sendGoal(goal_,boost::bind(&StartingProcedureClient::doneCb, this, _1,_2),
                     boost::bind(&StartingProcedureClient::activeCb,this),
                     boost::bind(&StartingProcedureClient::feedbackCb,this,_1));
+    }
+    else
+    {
+        ROS_INFO("Parameter invalid");
     }
 }
 
@@ -38,15 +44,21 @@ void StartingProcedureClient::doneCb(const actionlib::SimpleClientGoalState& sta
 
 void StartingProcedureClient::activeCb()
 {
-  ROS_INFO("starting procedure server response");
+  ROS_INFO("Starting procedure server active");
+  //STARTING
 }
 void StartingProcedureClient::feedbackCb(const selfie_msgs::startingFeedbackConstPtr& feedback)
 {
   ROS_INFO("Starting procedure feedback %d", feedback->action_status);
+  action_state_ = (program_state)feedback->action_status;
 }
 
 void StartingProcedureClient::cancelAction()
 {
-    ac_.cancelAllGoals();
+  ac_.cancelAllGoals();
 }
 
+program_state StartingProcedureClient::getActionState()
+{
+    return action_state_;
+}

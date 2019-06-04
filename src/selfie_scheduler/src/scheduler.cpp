@@ -1,10 +1,7 @@
-#include <ros/ros.h>
-#include <selfie_scheduler/starting_action_client.h>
+#include <selfie_scheduler/scheduler.h>
 
-int main(int argc, char **argv)
+Scheduler::Scheduler()
 {
-    ros::init(argc, argv, "scheduler");
-    ros::NodeHandle nh;
 
-    ROS_INFO("Hello world!");
 }
+
