@@ -31,9 +31,13 @@ int main(int argc, char **argv)
                 ROS_INFO("SELFIE_READY");
                 previous_car_state = SELFIE_READY;
                 break;
-            case START_SIGN:
-                ROS_INFO("START_SIGN");
-                previous_car_state = START_SIGN;
+            case BUTTON_FREE_DRIVE_PRESSED:
+                ROS_INFO("BUTTON_FREE_DRIVE_PRESSED");
+                previous_car_state = BUTTON_FREE_DRIVE_PRESSED;
+                break;
+            case BUTTON_OBSTACLE_DRIVE_PRESSED:
+                ROS_INFO("BUTTON_OBSTACLE_DRIVE_PRESSED");
+                previous_car_state = BUTTON_OBSTACLE_DRIVE_PRESSED;
                 break;
             case START_DRIVE:
                 ROS_INFO("START_DRIVE");

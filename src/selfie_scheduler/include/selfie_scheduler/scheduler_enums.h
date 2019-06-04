@@ -4,8 +4,9 @@ typedef enum program_state
 {
     //starting_procedure
     SELFIE_READY = 0, // car ready, waiting for button press
-    START_SIGN, // button pressed
-    START_DRIVE, // car started to drive
+    BUTTON_FREE_DRIVE_PRESSED, // button starting Free Drive and Parking
+    BUTTON_OBSTACLE_DRIVE_PRESSED, // button starting Obstacle Evasion Course
+    START_DRIVE, // car started to move
     END_DRIVE, // car drove given distance
 
     //track ride
