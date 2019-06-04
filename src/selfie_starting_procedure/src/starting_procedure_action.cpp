@@ -5,9 +5,11 @@ StartingProcedureAction::StartingProcedureAction(std::string name) :
   action_name_(name)
 {
     as_.start();
-    button_sub_ = nh_.subscribe("start_button1", 1000, &StartingProcedureAction::buttonCB, this);
+    button_sub_ = nh_.subscribe("start_button", 1000, &StartingProcedureAction::buttonCB, this);
     distance_sub_ = nh_.subscribe("distance",10,&StartingProcedureAction::distanceCB, this);
     drive_pub_ = nh_.advertise<ackermann_msgs::AckermannDriveStamped>("drive",1);
+
+    ROS_INFO("Starting procedure object created");
 }
 StartingProcedureAction::~StartingProcedureAction(void)
 {
@@ -16,7 +18,7 @@ StartingProcedureAction::~StartingProcedureAction(void)
 
 void StartingProcedureAction::executeCB(const selfie_msgs::startingGoalConstPtr &goal)
 {
-    ROS_INFO("goal %f",goal->distance);
+    ROS_INFO("received goal %f",goal->distance);
     publishFeedback(SELFIE_READY);
 
     while(button_status_ != 0)
@@ -25,8 +27,6 @@ void StartingProcedureAction::executeCB(const selfie_msgs::startingGoalConstPtr 
             publishFeedback(BUTTON_FREE_DRIVE_PRESSED);
         else if (button_status_ == BUTTON_OBSTACLE_DRIVE_PRESSED)
             publishFeedback(BUTTON_OBSTACLE_DRIVE_PRESSED);
-
-        ROS_INFO("button_pressed %d",button_status_);
     }
 
     //send command to ride
@@ -35,6 +35,7 @@ void StartingProcedureAction::executeCB(const selfie_msgs::startingGoalConstPtr 
     {
 
     }
+
     publishFeedback(START_DRIVE);
 
     while(covered_distance_ < goal->distance)
@@ -44,11 +45,13 @@ void StartingProcedureAction::executeCB(const selfie_msgs::startingGoalConstPtr 
 
     publishFeedback(END_DRIVE);
 
+    //publish result
     result_.drive_mode = true;
     as_.setSucceeded(result_);
 }
 void StartingProcedureAction::buttonCB(const std_msgs::BoolConstPtr &msg)
 {
+    ROS_INFO("Button pressed %d",msg->data);
     if(msg->data == false)
         button_status_ = BUTTON_FREE_DRIVE_PRESSED;
     else if (msg->data == true)
