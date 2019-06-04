@@ -3,7 +3,8 @@
 typedef enum program_state
 {
     //starting_procedure
-    SELFIE_READY = 0, // car ready, waiting for button press
+    SELFIE_IDLE = 0,
+    SELFIE_READY, // car ready, waiting for button press
     BUTTON_FREE_DRIVE_PRESSED, // button starting Free Drive and Parking
     BUTTON_OBSTACLE_DRIVE_PRESSED, // button starting Obstacle Evasion Course
     START_DRIVE, // car started to move
@@ -29,9 +30,10 @@ typedef enum program_state
 }feedback_variable;
 
 
-typedef enum actions
+typedef enum action
 {
-    STARTING = 0,
+    IDLE = 0,
+    STARTING,
     DRIVING,
     PARKING,
     PARK,

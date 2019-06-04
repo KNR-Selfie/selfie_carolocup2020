@@ -15,19 +15,23 @@ StartingProcedureClient::~StartingProcedureClient()
 
 void StartingProcedureClient::setGoal(boost::any goal)
 {
-    float distance = boost::any_cast<float>(goal);
-    if(distance)
+    float distance;
+
+    try
     {
-        ROS_INFO("Good goal cast");
-        goal_.distance = distance;
-        ac_.sendGoal(goal_,boost::bind(&StartingProcedureClient::doneCb, this, _1,_2),
-                    boost::bind(&StartingProcedureClient::activeCb,this),
-                    boost::bind(&StartingProcedureClient::feedbackCb,this,_1));
+        distance = boost::any_cast<float>(goal);
     }
-    else
+    catch (boost::bad_any_cast &e)
     {
-        ROS_INFO("Parameter invalid");
+        ROS_ERROR("bad casting %s",e.what());
+        return;
     }
+
+    ROS_INFO("Good goal cast");
+    goal_.distance = distance;
+    ac_.sendGoal(goal_,boost::bind(&StartingProcedureClient::doneCb, this, _1,_2),
+                boost::bind(&StartingProcedureClient::activeCb,this),
+                boost::bind(&StartingProcedureClient::feedbackCb,this,_1));
 }
 
 bool StartingProcedureClient::waitForResult(float timeout)
