@@ -1,18 +1,19 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(selfie_scheduler)
-
+project(selfie_starting_procedure)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++17)
+# add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   actionlib
+  actionlib_msgs
   roscpp
   std_msgs
   selfie_msgs
+  selfie_scheduler
 )
 
 ## System dependencies are found with CMake's conventions
@@ -106,7 +107,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
    INCLUDE_DIRS include
-#  LIBRARIES selfie_scheduler
+#  LIBRARIES selfie_starting_procedure
 #  CATKIN_DEPENDS actionlib roscpp std_msgs
 #  DEPENDS system_lib
 )
@@ -121,11 +122,12 @@ include_directories(
   include
   ${catkin_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
+  ${selfie_scheduler_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/selfie_scheduler.cpp
+#   src/${PROJECT_NAME}/selfie_starting_procedure.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -136,7 +138,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/selfie_scheduler_node.cpp)
+# add_executable(${PROJECT_NAME}_node src/selfie_starting_procedure_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -193,7 +195,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_selfie_scheduler.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_selfie_starting_procedure.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
@@ -201,7 +203,6 @@ install(DIRECTORY include/${PROJECT_NAME}/
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
 
-file(GLOB CLIENTS "src/clients/*.cpp")
-add_executable(scheduler src/scheduler_node.cpp src/scheduler.cpp ${CLIENTS})
-target_link_libraries(scheduler ${catkin_LIBRARIES})
-add_dependencies(scheduler ${catkin_EXPORTED_TARGETS})
+add_executable(starting_procedure src/starting_procedure_action.cpp src/starting_procedure.cpp)
+target_link_libraries(starting_procedure ${catkin_LIBRARIES})
+add_dependencies(starting_procedure ${catkin_EXPORTED_TARGETS})

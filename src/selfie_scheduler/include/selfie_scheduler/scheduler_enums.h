@@ -1,11 +1,13 @@
 #ifndef SCHEDULER_ENUMS_H
 #define SCHEDULER_ENUMS_H
-typedef enum program_states
+typedef enum program_state
 {
     //starting_procedure
-    SELFIE_READY = 0, // car ready, waiting for button press
-    START_SIGN, // button pressed
-    START_DRIVE, // car started to drive
+    SELFIE_IDLE = 0,
+    SELFIE_READY, // car ready, waiting for button press
+    BUTTON_FREE_DRIVE_PRESSED, // button starting Free Drive and Parking
+    BUTTON_OBSTACLE_DRIVE_PRESSED, // button starting Obstacle Evasion Course
+    START_DRIVE, // car started to move
     END_DRIVE, // car drove given distance
 
     //track ride
@@ -27,4 +29,15 @@ typedef enum program_states
 
 }feedback_variable;
 
+
+typedef enum action
+{
+    IDLE = 0,
+    STARTING,
+    DRIVING,
+    PARKING,
+    PARK,
+    ERROR,
+
+}action_variable;
 #endif // SCHEDULER_ENUMS_H
