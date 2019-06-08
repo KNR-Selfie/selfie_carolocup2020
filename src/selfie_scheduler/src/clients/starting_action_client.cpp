@@ -3,7 +3,7 @@
 StartingProcedureClient::StartingProcedureClient(std::string name):
     ac_(name, true)
 {
-
+    result_flag_ = false;
 }
 
 StartingProcedureClient::~StartingProcedureClient()
@@ -48,6 +48,7 @@ void StartingProcedureClient::doneCb(const actionlib::SimpleClientGoalState& sta
   ROS_INFO("Finished in state [%s]", state.toString().c_str());
   ROS_INFO("result: %i", result->drive_mode);
   result_ = result->drive_mode;
+  result_flag_ = true;
 }
 
 void StartingProcedureClient::activeCb()
@@ -75,4 +76,7 @@ bool StartingProcedureClient::getResult()
 {
     return result_;
 }
-
+bool StartingProcedureClient::isActionFinished()
+{
+    return result_flag_;
+}

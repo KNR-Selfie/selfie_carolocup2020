@@ -3,6 +3,7 @@
 DriveClient::DriveClient(std::string name):
     ac_(name, true)
 {
+    result_flag_ = false;
 }
 
 DriveClient::~DriveClient()
@@ -46,6 +47,7 @@ void DriveClient::doneCb(const actionlib::SimpleClientGoalState& state,
 {
     ROS_INFO("Finished in state [%s]", state.toString().c_str());
     ROS_INFO("result: %d", result->parking_area);
+    result_flag_ = true;
 }
 
 void DriveClient::activeCb()
@@ -66,4 +68,9 @@ void DriveClient::cancelAction()
 program_state DriveClient::getActionState()
 {
     return action_state_;
+}
+
+bool DriveClient::isActionFinished()
+{
+    return result_flag_;
 }

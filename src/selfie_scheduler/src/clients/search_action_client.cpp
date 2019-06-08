@@ -38,14 +38,15 @@ bool SearchClient::waitForResult(float timeout)
 }
 bool SearchClient::waitForServer(float timeout)
 {
-    ROS_INFO("Wait for driving action server");
+    ROS_INFO("Wait for search action server");
     return ac_.waitForServer(ros::Duration(timeout));
 }
 void SearchClient::doneCb(const actionlib::SimpleClientGoalState& state,
             const selfie_msgs::searchResultConstPtr& result)
 {
     ROS_INFO("Finished in state [%s]", state.toString().c_str());
-    ROS_INFO("result: %f", result->parking_spot);
+    result_ = result->parking_spot;
+    result_flag_ = true;
 }
 
 void SearchClient::activeCb()
@@ -66,4 +67,12 @@ void SearchClient::cancelAction()
 program_state SearchClient::getActionState()
 {
     return action_state_;
+}
+bool SearchClient::isActionFinished()
+{
+    return result_flag_;
+}
+geometry_msgs::Polygon SearchClient::getResult()
+{
+    return result_;
 }

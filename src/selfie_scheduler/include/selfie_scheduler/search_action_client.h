@@ -11,8 +11,9 @@ protected:
     ros::NodeHandle nh_;
     actionlib::SimpleActionClient<selfie_msgs::searchAction> ac_;
     selfie_msgs::searchGoal goal_;
-    bool result_;
+    geometry_msgs::Polygon result_;
     program_state action_state_;
+    bool result_flag_;
 
 public:
     SearchClient(std::string name);
@@ -28,9 +29,8 @@ public:
                     const selfie_msgs::searchResultConstPtr& result);
     void activeCb();
     void feedbackCb(const selfie_msgs::searchFeedbackConstPtr& feedback);
-    bool getResult();
-
-
+    geometry_msgs::Polygon getResult();
+    bool isActionFinished();
 };
 
 #endif // SEARCH_ACTION_CLIENT_H

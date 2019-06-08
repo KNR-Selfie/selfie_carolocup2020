@@ -12,6 +12,7 @@ protected:
     selfie_msgs::startingGoal goal_;
     bool result_;
     program_state action_state_;
+    bool result_flag_;
 
 public:
     StartingProcedureClient(std::string name);
@@ -28,6 +29,7 @@ public:
     void activeCb();
     void feedbackCb(const selfie_msgs::startingFeedbackConstPtr& feedback);
     bool getResult();
+    bool isActionFinished();
 
 
 };

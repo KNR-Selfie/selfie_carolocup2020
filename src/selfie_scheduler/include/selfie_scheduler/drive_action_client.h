@@ -12,6 +12,7 @@ protected:
     actionlib::SimpleActionClient<selfie_msgs::drivingAction> ac_;
     selfie_msgs::drivingGoal goal_;
     program_state action_state_;
+    bool result_flag_;
 
 public:
     DriveClient(std::string name);
@@ -28,6 +29,7 @@ public:
     void activeCb();
     void feedbackCb(const selfie_msgs::drivingFeedbackConstPtr& feedback);
     bool getResult();
+    bool isActionFinished();
 
 };
 

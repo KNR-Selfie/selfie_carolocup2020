@@ -14,6 +14,7 @@ public:
     virtual void setGoal(boost::any goal) = 0;
     virtual bool waitForResult(float timeout) = 0;
     virtual void cancelAction() = 0;
+    virtual bool isActionFinished() = 0;
 
 };
 #endif // CLIENT_INTERFACE_H

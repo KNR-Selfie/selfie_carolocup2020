@@ -13,6 +13,7 @@ protected:
     selfie_msgs::parkGoal goal_;
     bool result_;
     program_state action_state_;
+    bool result_flag_;
 
 public:
     ParkClient(std::string name);
@@ -29,6 +30,7 @@ public:
     void activeCb();
     void feedbackCb(const selfie_msgs::parkFeedbackConstPtr& feedback);
     bool getResult();
+    bool isActionFinished();
 
 
 };
