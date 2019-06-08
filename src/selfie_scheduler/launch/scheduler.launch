@@ -1,0 +1,5 @@
+<launch>
+	<node pkg="selfie_stm32_bridge" type="selfie_stm32_bridge" name="selfie_stm32_bridge"/>
+	<node pkg="selfie_scheduler" type="scheduler" name="scheduler" output="screen"/>
+	<node pkg="selfie_starting_procedure" type="starting_procedure" name="starting_procedure"/>
+</launch>
