@@ -7,17 +7,19 @@ from ackermann_msgs.msg import AckermannDriveStamped
 
 rospy.init_node('park_manager')
 park_client = actionlib.SimpleActionClient('park_server',parkAction)
-search_client = actionlib.SimpleActionClient('detect_parking_spot', searchAction)
+search_client = actionlib.SimpleActionClient('search', searchAction)
 speed_pub = rospy.Publisher('/drive',AckermannDriveStamped,queue_size=10)
-print 'init'
-print 'wait1'
+
+drive_msg = AckermannDriveStamped()
+drive_msg.drive.speed = 0.4
+drive_msg.drive.steering_angle = 0
 search_client.wait_for_server()
 goal = searchGoal(0.7)
+speed_pub.publish(drive_msg)
 search_client.send_goal(goal)
 search_client.wait_for_result()
-spot = search_client.get_result()
-print 'half'
-print 'wait2'
+result = search_client.get_result()
+print 'end search'
 goal2 = parkGoal()
 goal2.parking_spot = result.parking_spot
 goal2.park = True

@@ -232,7 +232,7 @@ void ParkService::odom_callback(const nav_msgs::Odometry &msg)
 		break;
 		case out:
 		drive(PARKING_SPEED,0);
-		selfie_park::parkResult result;
+		selfie_msgs::parkResult result;
 		result.done = true;
 		as_.setSucceeded(result);
 		parking_state = not_parking;
@@ -281,7 +281,7 @@ void ParkService::init_parking_spot(const geometry_msgs::Polygon &msg)
 void ParkService::goalCB()
 {
   std::cout<<"got goal"<<std::endl;
-  selfie_park::parkGoal goal = *as_.acceptNewGoal();
+  selfie_msgs::parkGoal goal = *as_.acceptNewGoal();
   init_parking_spot(goal.parking_spot);
   parking_state = go_to_parking_spot;
 }
@@ -331,7 +331,7 @@ bool ParkService::in_traffic_lane()
 }
 bool ParkService::to_parking_spot()
 {
-  selfie_park::parkFeedback feedback;
+  selfie_msgs::parkFeedback feedback;
   feedback.distance = actual_parking_position.y - middle_of_parking_spot_y;
   as_.publishFeedback(feedback);
   if(actual_parking_position.x < back_wall + minimal_start_parking_x) drive(PARKING_SPEED, 0.0);
@@ -342,7 +342,7 @@ bool ParkService::to_parking_spot()
 
 bool ParkService::park()
 {
-  selfie_park::parkFeedback feedback;
+  selfie_msgs::parkFeedback feedback;
   feedback.distance = actual_parking_position.y - middle_of_parking_spot_y;
   as_.publishFeedback(feedback);
   //std::cout<<"back pos  "<<actual_back_parking_position.x<<"  back wall  "<<back_wall<<"  front pos  "<<actual_front_parking_position.x<<"  front wall  "<<front_wall<<std::endl;
