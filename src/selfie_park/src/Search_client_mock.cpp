@@ -47,8 +47,8 @@ void topicCallback(const std_msgs::Float64ConstPtr &msg) {
 void Search_client_mock::doneCb(const actionlib::SimpleClientGoalState& state,const selfie_msgs::searchResultConstPtr& result)
 {
   ROS_INFO("Done, place is found \nfound place:");
-  Box(result->parking_spot).print_box_dimensions();
-  ROS_INFO("Shuting down client node...")
+  Box(result->parking_spot).print();
+  ROS_INFO("Shuting down client node...");
   ros::shutdown();
   
 }

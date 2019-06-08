@@ -43,7 +43,7 @@ private:
   Box first_free_place;
 
   float min_spot_lenght;
-  bool debug_mode;
+  bool visualization;
 
   float default_speed_in_parking_zone;
   std_msgs::Float64 speed_current;
