@@ -26,11 +26,13 @@ void StartingProcedureAction::executeCB(const selfie_msgs::startingGoalConstPtr 
         if(button_status_ == BUTTON_FREE_DRIVE_PRESSED)
         {
             publishFeedback(BUTTON_FREE_DRIVE_PRESSED);
+            result_.drive_mode = true;
             break;
         }
         else if (button_status_ == BUTTON_OBSTACLE_DRIVE_PRESSED)
         {
             publishFeedback(BUTTON_OBSTACLE_DRIVE_PRESSED);
+            result_.drive_mode = false;
             break;
         }
             
@@ -52,7 +54,6 @@ void StartingProcedureAction::executeCB(const selfie_msgs::startingGoalConstPtr 
     publishFeedback(END_DRIVE);
 
     //publish result
-    result_.drive_mode = true;
     as_.setSucceeded(result_);
 }
 void StartingProcedureAction::buttonCB(const std_msgs::BoolConstPtr &msg)

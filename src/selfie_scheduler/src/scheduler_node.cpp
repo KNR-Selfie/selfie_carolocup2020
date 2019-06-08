@@ -3,6 +3,9 @@
 #include <selfie_scheduler/drive_action_client.h>
 #include <selfie_scheduler/scheduler_enums.h>
 
+
+
+
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "scheduler");
@@ -12,22 +15,44 @@ int main(int argc, char **argv)
     feedback_variable previous_car_state = SELFIE_IDLE;
 
     action_variable current_action = IDLE;
+    action_variable previous_action = IDLE;
 
     StartingProcedureClient startingAction("starting_procedure");
-    startingAction.setGoal(float(30.23));
+    DriveClient driveAction("drive");
 
+    current_action = STARTING; //dummy - set if all systems launched succesfuly
 
     while(ros::ok())
     {
         ros::spinOnce();
         current_car_state = startingAction.getActionState();
 
+        if(current_action != previous_action)
+        {
+            switch(current_action)
+            {
+                case STARTING:
+                    previous_action = STARTING;
+                    startingAction.waitForServer(200);
+                    startingAction.setGoal(float(30.23));
+                    break;
+                case DRIVING:
+                    previous_action = DRIVING;
+                    driveAction.waitForServer(200);
+                    driveAction.setGoal(true);
+                    break;
+                case PARKING_SEARCH:
+                    break;
+                case PARK:
+                    break;
+            }
+        }
+
         //compare states
         if(current_car_state == previous_car_state)
         {
             continue;
         }
-
         switch(current_car_state)
         {
             case SELFIE_READY:
@@ -50,7 +75,8 @@ int main(int argc, char **argv)
             case END_DRIVE:
                 ROS_INFO("END DRIVE");
                 previous_car_state = END_DRIVE;
-                DriveClient driveAction("drive");
+                //get goal
+                current_action = DRIVING;
                 break;
         }
 

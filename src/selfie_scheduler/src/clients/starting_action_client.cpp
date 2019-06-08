@@ -3,8 +3,7 @@
 StartingProcedureClient::StartingProcedureClient(std::string name):
     ac_(name, true)
 {
-    ROS_INFO("Wait for starting action server");
-     ac_.waitForServer();
+
 }
 
 StartingProcedureClient::~StartingProcedureClient()
@@ -38,12 +37,17 @@ bool StartingProcedureClient::waitForResult(float timeout)
 {
     return ac_.waitForResult(ros::Duration(timeout));
 }
-
+bool StartingProcedureClient::waitForServer(float timeout)
+{
+    ROS_INFO("Wait for starting action server");
+    return ac_.waitForServer(ros::Duration(timeout));
+}
 void StartingProcedureClient::doneCb(const actionlib::SimpleClientGoalState& state,
             const selfie_msgs::startingResultConstPtr& result)
 {
   ROS_INFO("Finished in state [%s]", state.toString().c_str());
   ROS_INFO("result: %i", result->drive_mode);
+  result_ = result->drive_mode;
 }
 
 void StartingProcedureClient::activeCb()
@@ -66,3 +70,9 @@ program_state StartingProcedureClient::getActionState()
 {
     return action_state_;
 }
+
+bool StartingProcedureClient::getResult()
+{
+    return result_;
+}
+

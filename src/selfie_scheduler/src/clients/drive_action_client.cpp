@@ -3,8 +3,6 @@
 DriveClient::DriveClient(std::string name):
     ac_(name, true)
 {
-    ROS_INFO("Wait for driving action server");
-     ac_.waitForServer();
 }
 
 DriveClient::~DriveClient()
@@ -38,18 +36,21 @@ bool DriveClient::waitForResult(float timeout)
 {
     return ac_.waitForResult(ros::Duration(timeout));
 }
-
+bool DriveClient::waitForServer(float timeout)
+{
+    ROS_INFO("Wait for driving action server");
+    return ac_.waitForServer(ros::Duration(timeout));
+}
 void DriveClient::doneCb(const actionlib::SimpleClientGoalState& state,
             const selfie_msgs::drivingResultConstPtr& result)
 {
-  ROS_INFO("Finished in state [%s]", state.toString().c_str());
-  ROS_INFO("result: %d", result->parking_area);
+    ROS_INFO("Finished in state [%s]", state.toString().c_str());
+    ROS_INFO("result: %d", result->parking_area);
 }
 
 void DriveClient::activeCb()
 {
-  ROS_INFO("Starting procedure server active");
-  //STARTING
+    ROS_INFO("Starting procedure server active");
 }
 void DriveClient::feedbackCb(const selfie_msgs::drivingFeedbackConstPtr& feedback)
 {

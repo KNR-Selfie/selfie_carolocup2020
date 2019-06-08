@@ -20,6 +20,7 @@ public:
     void setGoal(boost::any goal);
     bool waitForResult(float timeout);
     void cancelAction();
+    bool waitForServer(float timeout);
 
     program_state getActionState();
     void doneCb(const actionlib::SimpleClientGoalState& state,
