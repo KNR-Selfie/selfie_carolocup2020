@@ -1,8 +1,20 @@
 <launch>
     <include file="$(find selfie_park)/launch/transforms.launch"/>
+    <node name="urg_node" pkg="urg_node" type="urg_node"/>
     <node name="odometry" pkg="selfie_odometry" type="selfie_odometry"/>
-    <node name="selfir_stm32_bridge" pkg="selfie_stm32_bridge" type="selfie_stm32_bridge"/>
-    <node name="park_manager" pkg="selfie_park" type="park_manager_test.py"/>
+    <node name="selfie_stm32_bridge" pkg="selfie_stm32_bridge" type="selfie_stm32_bridge"/>
     <node name="detect_parking_spot" pkg="selfie_park" type="detect_parking_spot"/>
-    <node name="park_service" pkg="selfie_park" type="park_service"/>
+    <!--<node name="park_manager" pkg="selfie_park" type="park_manager_test.py"/>-->
+    
+    <node name="park_server" pkg="selfie_park" type="park_server"/>
+      <node pkg="selfie_perception" type="detect_obstacles" name="selfie_obstacle_detector">
+    <param name="upside_down" value="false"/>
+    <param name="visualize" value="true" />
+    <param name="max_range" value="2.0"/>
+    <param name="min_range" value="0.03"/>
+    <param name="lidar_offset" value="0.0"/>
+    <param name="segment_threshold" value="0.07"/>
+    <param name="min_segment_size" value="0.04"/>
+    <param name="min_to_divide" value="0.03"/>
+  </node>
 </launch>

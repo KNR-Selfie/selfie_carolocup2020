@@ -18,7 +18,7 @@
 
 #define ODOM_TO_FRONT 0.18
 #define ODOM_TO_BACK -0.33
-#define ODOM_TO_LASER -0.03
+#define ODOM_TO_LASER 0.2
 #define CAR_WIDTH 0.22
 #define MAX_TURN 0.8
 
