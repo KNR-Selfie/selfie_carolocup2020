@@ -3,7 +3,7 @@
 StartingProcedureClient::StartingProcedureClient(std::string name):
     ac_(name, true)
 {
-    ROS_INFO("Wait for server");
+    ROS_INFO("Wait for starting action server");
      ac_.waitForServer();
 }
 
@@ -53,7 +53,7 @@ void StartingProcedureClient::activeCb()
 }
 void StartingProcedureClient::feedbackCb(const selfie_msgs::startingFeedbackConstPtr& feedback)
 {
-  ROS_INFO("Starting procedure feedback %d", feedback->action_status);
+  //ROS_INFO("Starting procedure feedback %d", feedback->action_status);
   action_state_ = (program_state)feedback->action_status;
 }
 

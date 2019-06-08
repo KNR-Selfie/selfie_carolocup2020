@@ -3,7 +3,7 @@
 DriveClient::DriveClient(std::string name):
     ac_(name, true)
 {
-    ROS_INFO("Wait for server");
+    ROS_INFO("Wait for driving action server");
      ac_.waitForServer();
 }
 

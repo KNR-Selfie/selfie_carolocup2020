@@ -1,5 +1,6 @@
 #include <ros/ros.h>
 #include <selfie_scheduler/starting_action_client.h>
+#include <selfie_scheduler/drive_action_client.h>
 #include <selfie_scheduler/scheduler_enums.h>
 
 int main(int argc, char **argv)
@@ -49,6 +50,7 @@ int main(int argc, char **argv)
             case END_DRIVE:
                 ROS_INFO("END DRIVE");
                 previous_car_state = END_DRIVE;
+                DriveClient driveAction("drive");
                 break;
         }
 
