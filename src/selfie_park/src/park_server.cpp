@@ -354,7 +354,7 @@ bool ParkService::park()
 		blink_right(true);
 		blink_left(false);
 		drive(PARKING_SPEED, -MAX_TURN);
-		if(actual_parking_position.rot < -max_rot){move_state = straight;}
+		if(actual_parking_position.rot > max_rot){move_state = straight;}
 		if(actual_parking_position.y < mid_y) {move_state =second_phase;}
 		break;
 		case straight:
