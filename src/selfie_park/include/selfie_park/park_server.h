@@ -20,7 +20,6 @@
 #define ODOM_TO_BACK -0.33
 #define ODOM_TO_LASER -0.03
 #define CAR_WIDTH 0.22
-#define PARKING_SPEED 0.3
 #define MAX_TURN 0.8
 
 class ParkService
@@ -91,6 +90,7 @@ class ParkService
     float parking_spot_width;
     float parking_spot_length;
     float leaving_target;
+    float PARKING_SPEED;
 
 
     enum Move_State

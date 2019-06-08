@@ -19,6 +19,7 @@ visualize(true)
   pnh_.param<float>("max_distance_to_wall", max_distance_to_wall, 0.03);
   pnh_.param<float>("max_rot", max_rot, 0.8);
   pnh_.param<float>("dist_turn", dist_turn, 0.17);
+  pnh_.param<float>("parking_speed",PARKING_SPEED,0.4);
   move_state = first_phase;
   parking_state = not_parking;
   as_.registerGoalCallback(boost::bind(&ParkService::goalCB, this));
