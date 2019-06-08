@@ -9,6 +9,8 @@ StartingProcedureAction::StartingProcedureAction(std::string name) :
     distance_sub_ = nh_.subscribe("distance",10,&StartingProcedureAction::distanceCB, this);
     drive_pub_ = nh_.advertise<ackermann_msgs::AckermannDriveStamped>("drive",1);
 
+    distance_base_ = 0.0;
+
     ROS_INFO("Starting procedure object created");
 }
 StartingProcedureAction::~StartingProcedureAction(void)
@@ -37,12 +39,13 @@ void StartingProcedureAction::executeCB(const selfie_msgs::startingGoalConstPtr 
         }
             
     }
-    //send command to ride
-    driveBoxOut(2);
-    while(covered_distance_ < 0.1) //check if car started to move
-    {
 
+    //check if car started to move
+    while(covered_distance_ < 0.1) 
+    {
+        driveBoxOut(1.5);
     }
+
     ROS_INFO("CAR START MOVE");
     publishFeedback(START_DRIVE);
 
@@ -51,6 +54,7 @@ void StartingProcedureAction::executeCB(const selfie_msgs::startingGoalConstPtr 
         driveBoxOut(1.5);
     }
     ROS_INFO("DISTANCE COVERED");
+    driveBoxOut(0.0);
     publishFeedback(END_DRIVE);
 
     //publish result
@@ -66,8 +70,12 @@ void StartingProcedureAction::buttonCB(const std_msgs::BoolConstPtr &msg)
 }
 
 void StartingProcedureAction::distanceCB(const std_msgs::Float32ConstPtr &msg)
-{
-    covered_distance_ = msg->data;
+{   
+    if(distance_base_ == 0.0)
+    {   
+        distance_base_ = msg->data;
+    }
+    covered_distance_ = msg->data - distance_base_;
 }
 
 void StartingProcedureAction::publishFeedback(feedback_variable program_state)
