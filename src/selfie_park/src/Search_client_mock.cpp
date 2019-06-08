@@ -26,8 +26,8 @@ void feedbackCb(const selfie_msgs::searchFeedbackConstPtr &feedback) {
   case START_SEARCHING_PLACE:
     std::cout << "START_SEARCHING_PLACE "<< "\nLast recieved speed: " << Search_client_mock::last_speed_;
     break;
-  case FIND_PLACE:
-    std::cout << "FIND_PLACE "<< "\nLast recieved speed: " << Search_client_mock::last_speed_;
+  case FOUND_PLACE_MEASURING:
+    std::cout << "FOUND_PLACE_MEASURING "<< "\nLast recieved speed: " << Search_client_mock::last_speed_;
     break;
   case FIND_PROPER_PLACE:
     std::cout << "FIND_PROPER_PLACE "<< "\nLast recieved speed: " << Search_client_mock::last_speed_;
