@@ -3,7 +3,7 @@
 
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
-#include <selfie_park/parkAction.h>
+#include <selfie_msgs/parkAction.h>
 #include <tf/tf.h>
 #include <nav_msgs/Odometry.h>
 #include <geometry_msgs/Polygon.h>
@@ -29,7 +29,7 @@ class ParkService
 
     private:
     ros::NodeHandle nh_, pnh_;
-    actionlib::SimpleActionServer<selfie_park::parkAction> as_;
+    actionlib::SimpleActionServer<selfie_msgs::parkAction> as_;
 
     ros::Subscriber odom_sub;
     ros::Publisher ackermann_pub;
