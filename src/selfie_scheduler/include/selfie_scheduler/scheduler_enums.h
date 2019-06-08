@@ -35,7 +35,7 @@ typedef enum action
     IDLE = 0,
     STARTING,
     DRIVING,
-    PARKING,
+    PARKING_SEARCH,
     PARK,
     ERROR,
 

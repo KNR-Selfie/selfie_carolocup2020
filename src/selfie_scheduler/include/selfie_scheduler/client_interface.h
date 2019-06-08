@@ -10,7 +10,7 @@ class ClientInterface
 {
 public:
     virtual ~ClientInterface() = 0;
-
+    virtual bool waitForServer(float timeout) = 0;
     virtual void setGoal(boost::any goal) = 0;
     virtual bool waitForResult(float timeout) = 0;
     virtual void cancelAction() = 0;

@@ -10,6 +10,7 @@ protected:
     ros::NodeHandle nh_;
     actionlib::SimpleActionClient<selfie_msgs::startingAction> ac_;
     selfie_msgs::startingGoal goal_;
+    bool result_;
     program_state action_state_;
 
 public:
@@ -19,6 +20,7 @@ public:
     void setGoal(boost::any goal);
     bool waitForResult(float timeout);
     void cancelAction();
+    bool waitForServer(float timeout);
 
     program_state getActionState();
     void doneCb(const actionlib::SimpleClientGoalState& state,
@@ -26,6 +28,7 @@ public:
     void activeCb();
     void feedbackCb(const selfie_msgs::startingFeedbackConstPtr& feedback);
     bool getResult();
+
 
 };
 
