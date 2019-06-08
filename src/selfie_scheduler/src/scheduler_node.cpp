@@ -2,9 +2,9 @@
 #include <selfie_scheduler/search_action_client.h>
 #include <selfie_scheduler/drive_action_client.h>
 #include <selfie_scheduler/starting_action_client.h>
-#include <selfie_scheduler/park_action_client.h>
+#include <selfie_scheduler/drive_action_client.h>
+#include <selfie_scheduler/scheduler_enums.h>
 
-#include <std_srvs/Empty.h>
 
 
 
@@ -22,7 +22,6 @@ int main(int argc, char **argv)
     StartingProcedureClient startingAction("starting_procedure");
     DriveClient driveAction("free_drive");
     SearchClient searchAction("search");
-    ParkClient parkAction("park");
 
     current_action = STARTING; //dummy - set if all systems launched succesfuly
 
@@ -79,6 +78,7 @@ int main(int argc, char **argv)
                 }
             }
         }
+
         //compare states
         if(current_car_state == previous_car_state)
         {

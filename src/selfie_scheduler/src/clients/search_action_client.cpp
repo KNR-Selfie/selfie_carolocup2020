@@ -45,7 +45,7 @@ void SearchClient::doneCb(const actionlib::SimpleClientGoalState& state,
             const selfie_msgs::searchResultConstPtr& result)
 {
     ROS_INFO("Finished in state [%s]", state.toString().c_str());
-    //result_ = result;
+    ROS_INFO("result: %f", result->parking_spot);
 }
 
 void SearchClient::activeCb()

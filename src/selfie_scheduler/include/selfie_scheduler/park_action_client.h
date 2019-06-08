@@ -29,6 +29,8 @@ public:
     void activeCb();
     void feedbackCb(const selfie_msgs::parkFeedbackConstPtr& feedback);
     bool getResult();
+
+
 };
 
 
