@@ -4,7 +4,7 @@
 visualization bool rosparam
 in visualization draw car and box filtering zone
 
-
+when found drive until place is no further than xxx
 */
 
 Search_server::Search_server(const ros::NodeHandle &nh,
@@ -59,12 +59,13 @@ void Search_server::manager(const selfie_msgs::PolygonArray &msg) {
       publishFeedback(FOUND_PLACE_MEASURING);
       speed_current.data = 0;
       speed_publisher.publish(speed_current);
-      ros::Duration(1.0).sleep();//TODO sleep as param
+      //ros::Duration(1.0).sleep();//TODO sleep as param
     }
     break;
   case FOUND_PLACE_MEASURING:
 
     if (find_free_places()) {
+      if(first_free_place.bottom_left.y<=0.3)
       publishFeedback(FIND_PROPER_PLACE);
 
     } else {
