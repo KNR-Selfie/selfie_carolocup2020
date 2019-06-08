@@ -1,0 +1,8 @@
+<launch>
+    <include file="$(find selfie_park)/launch/transforms.launch"/>
+    <node name="odometry" pkg="selfie_odometry" type="selfie_odometry"/>
+    <node name="selfir_stm32_bridge" pkg="selfie_stm32_bridge" type="selfie_stm32_bridge"/>
+    <node name="park_manager" pkg="selfie_park" type="park_manager_test.py"/>
+    <node name="detect_parking_spot" pkg="selfie_park" type="detect_parking_spot"/>
+    <node name="park_service" pkg="selfie_park" type="park_service"/>
+</launch>

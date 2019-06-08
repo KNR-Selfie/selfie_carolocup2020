@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(image_proc_fisheye)
 set (CMAKE_CXX_STANDARD 11)
 
+find_package(OpenCV 3.3.1 REQUIRED)
 find_package(catkin REQUIRED COMPONENTS
   cv_bridge
   image_transport
@@ -12,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   nodelet  
 )
+
 
 catkin_package(
   CATKIN_DEPENDS image_geometry roscpp sensor_msgs
