@@ -40,6 +40,9 @@ CMakeLists.txt.user
 # vs code stuff
 *.vscode/
 
+#roboware stuff
+.ycm_extra_conf.py
+
 srv/_*.py
 *.pcd
 *.pyc
@@ -57,3 +60,6 @@ qtcreator-*
 
 # Catkin custom files
 CATKIN_IGNORE
+
+# jetbrains
+*.idea

@@ -6,4 +6,5 @@ bool park
 bool done
 ---
 #feedback
-float32 distance
+float32 distance 
+uint32 action_status #one of enums describing state (see more on wiki)
