@@ -1,5 +1,12 @@
 #include "../../selfie_park/include/selfie_park/Search_server.h"
 
+/*TODO list
+visualization bool rosparam
+in visualization draw car and box filtering zone
+
+
+*/
+
 Search_server::Search_server(const ros::NodeHandle &nh,
                              const ros::NodeHandle &pnh)
     : nh_(nh), pnh_(pnh), search_server_(nh_, "search", false) {
@@ -28,7 +35,7 @@ bool Search_server::init() {
   this->visualize_free_place =
       nh_.advertise<visualization_msgs::Marker>("/free_place", 1);
   this->point_pub = nh_.advertise<visualization_msgs::Marker>("/box_points", 5);
-  this->speed_publisher = nh_.advertise<std_msgs::Float64>("/speed", 2);
+  this->speed_publisher = nh_.advertise<std_msgs::Float64>("/max_speed", 0.5);
 
   speed_publisher.publish(speed_current);
   min_spot_lenght = search_server_.acceptNewGoal()->min_spot_lenght;
@@ -49,13 +56,13 @@ void Search_server::manager(const selfie_msgs::PolygonArray &msg) {
   switch (action_status.action_status) {
   case START_SEARCHING_PLACE:
     if (find_free_places()) {
-      publishFeedback(FIND_PLACE);
+      publishFeedback(FOUND_PLACE_MEASURING);
       speed_current.data = 0;
       speed_publisher.publish(speed_current);
       ros::Duration(1.0).sleep();//TODO sleep as param
     }
     break;
-  case FIND_PLACE:
+  case FOUND_PLACE_MEASURING:
 
     if (find_free_places()) {
       publishFeedback(FIND_PROPER_PLACE);

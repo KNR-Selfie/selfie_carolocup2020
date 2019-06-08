@@ -20,7 +20,7 @@ typedef enum program_state
 
     //parking
     START_SEARCHING_PLACE, //start to search parking place
-    FIND_PLACE, // parking place found (don't know if suitable)
+    FOUND_PLACE_MEASURING, // parking place found, now car is stopped and measures it again
     FIND_PROPER_PLACE, // suitable parking place found
     START_PARK, // parking procedure started
     IN_PLACE, // car parked
