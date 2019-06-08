@@ -1,7 +1,4 @@
-#include "usb.hpp"
-
-#define USB_SEND_SIZE 18+2
-#define USB_RECEIVE_SIZE 36+4
+#include <selfie_stm32_bridge/usb.hpp>
 
 int USB_STM::init(int speed)
 {
@@ -53,116 +50,88 @@ int USB_STM::init(int speed)
     return -3;
   }
 
-  unsigned char data_enable[3] = {command.startbyte, command.data_enable, command.endbyte};
+  //send ACK command
+  unsigned char data_enable[3] = {frame_startbyte, cmd_data_enable, frame_endbyte};
   write(fd, data_enable, 3);
 
   return 1;
 }
 
-void USB_STM::usb_read_buffer(int buf_size, uint32_t& timestamp, int32_t& distance, int16_t& velocity, int16_t& quaternion_x, int16_t& quaternion_y, int16_t& quaternion_z, int16_t& quaternion_w, uint16_t yaw, int16_t& ang_vel_x, int16_t& ang_vel_y, int16_t& ang_vel_z, int16_t& lin_acc_x, int16_t& lin_acc_y, int16_t& lin_acc_z, uint8_t& start_button1, uint8_t& start_button2, uint8_t& reset_vision, uint8_t& switch_state)
+bool USB_STM::read_from_STM()
 {
-
-  struct UsbFrame_s
-  {
-    uint8_t startbyte;
-    uint8_t code;
-    uint8_t length;
-
-    uint32_t timecode;
-
-    int32_t distance;
-    int16_t velocity;
-    int16_t w, x, y, z;
-    uint16_t yaw;
-    int16_t rates[3];
-    int16_t acc[3];
-    uint8_t start_button1;
-    uint8_t start_button2;
-    uint8_t reset_vision;
-    uint8_t switch_state;
-
-    uint8_t endByte;
-  } __attribute__((__packed__));
-  union UsbFrame_u
-  {
-    unsigned char buffer[512];
-    struct UsbFrame_s frame;
-  } Data;
-
-  int read_state = read(fd, &Data.buffer[0], 512) ;
-
-  if (read_state == USB_RECEIVE_SIZE && Data.frame.startbyte == control.commands.startbyte
-      && Data.frame.code == control.commands.code && Data.frame.length == USB_RECEIVE_SIZE - 4
-      && Data.frame.endByte == control.commands.endbyte)
-
-  {
-    //timestamp
-    timestamp = Data.frame.timecode;
-
-    //distance from encoders
-    distance = Data.frame.distance;
-
-    //car velocity
-    velocity = Data.frame.velocity;
-
-    //imu data
-    quaternion_x = Data.frame.x;
-    quaternion_y = Data.frame.y;
-    quaternion_z = Data.frame.z;
-    quaternion_w = Data.frame.w;
-    yaw = Data.frame.yaw;
-    ang_vel_x = Data.frame.rates[0];
-    ang_vel_y = Data.frame.rates[1];
-    ang_vel_z = Data.frame.rates[2];
-    lin_acc_x = Data.frame.acc[0];
-    lin_acc_y = Data.frame.acc[1];
-    lin_acc_z = Data.frame.acc[2];
-
-    //start_button
-    start_button1 = Data.frame.start_button1;
-    start_button2 = Data.frame.start_button2;
-
-    //stm32 status
-    reset_vision = Data.frame.reset_vision;
-    switch_state = Data.frame.switch_state;
-  }
+    int read_state = read(fd, &read_buffer[0], 512) ;
+    
+    //cast read_buffer to frame
+    read_frame = (UsbReadFrame_s *)read_buffer;
+    
+    if (read_state == USB_RECEIVE_SIZE && read_frame->startbyte == frame_startbyte
+      && read_frame->code == frame_code && read_frame->length == USB_RECEIVE_SIZE - 4
+      && read_frame->endByte == frame_endbyte)
+    {   
+        return true; //correct data
+    }
+    else
+    {
+        return false; //no new data 
+    }
 }
 
-void USB_STM::usb_send_buffer(uint32_t timestamp_ms, float steering_angle, float steering_angle_velocity, float speed, float acceleration, float jerk, uint8_t left_indicator, uint8_t right_indicator)
+void USB_STM::send_to_STM(uint32_t timestamp_ms, Sub_messages to_send)
 {
-  struct UsbFrame_s
-  {
-    uint8_t startbyte;
-    uint8_t code;
-    uint8_t length;
-    uint32_t timestamp_ms;
-    int16_t steering_angle;
-    int16_t steering_angle_velocity;
-    int16_t speed;
-    int16_t acceleration;
-    int16_t jerk;
-    uint8_t left_indicator;
-    uint8_t right_indicator;
-    uint8_t endbyte;
-  } __attribute__((__packed__));
+    send_frame = (UsbSendFrame_s *)send_buffer;
+    send_frame->startbyte = frame_startbyte;
+    send_frame->code = frame_code;
+    send_frame->length = USB_SEND_SIZE - 4;
 
-  union UsbFrame_u
-  {
-    unsigned char bytes[USB_SEND_SIZE];
-    struct UsbFrame_s frame;
-  } Data;
+    send_frame->timestamp_ms = timestamp_ms;
+    send_frame->steering_angle = (int16_t)(to_send.ackerman.steering_angle * 10000);
+    send_frame->steering_angle_velocity = (int16_t)(to_send.ackerman.steering_angle_velocity * 10000);
+    send_frame->speed = (int16_t)(to_send.ackerman.speed * 1000);
+    send_frame->acceleration = (int16_t)(to_send.ackerman.acceleration * 1000);
+    send_frame->jerk = (int16_t)(to_send.ackerman.jerk * 1000);
+    send_frame->left_indicator = (uint8_t)(to_send.indicator.left);
+    send_frame->right_indicator = (uint8_t)(to_send.indicator.right);
+    send_frame->endbyte = frame_endbyte;
 
-  Data.frame.startbyte = control.commands.startbyte;
-  Data.frame.code = control.commands.code;
-  Data.frame.length = USB_SEND_SIZE - 4;
-  Data.frame.timestamp_ms = timestamp_ms;
-  Data.frame.steering_angle = (int16_t)(steering_angle * 10000);
-  Data.frame.steering_angle_velocity = (int16_t)(steering_angle_velocity * 10000);
-  Data.frame.speed = (int16_t)(speed * 1000);
-  Data.frame.acceleration = (int16_t)(acceleration * 1000);
-  Data.frame.jerk = (int16_t)(jerk * 1000);
-  Data.frame.left_indicator = (uint8_t)(left_indicator);
-  Data.frame.right_indicator = (uint8_t)(right_indicator);
-  Data.frame.endbyte = control.commands.endbyte;
-  write(fd, &Data.bytes, USB_SEND_SIZE);
+    write(fd, &send_buffer, USB_SEND_SIZE);
+}
+
+void USB_STM::fill_publishers(Pub_messages &pub_data)
+{
+    pub_data.imu_msg.header.frame_id = "imu";
+    pub_data.imu_msg.header.stamp = ros::Time::now();
+
+    //calculate imu quaternions
+    pub_data.imu_msg.orientation.x = (float)(read_frame->x / 32767.f);
+    pub_data.imu_msg.orientation.y = (float)(read_frame->y / 32767.f);
+    pub_data.imu_msg.orientation.z = (float)(read_frame->z / 32767.f);
+    pub_data.imu_msg.orientation.w = (float)(read_frame->w / 32767.f);
+
+    pub_data.imu_msg.linear_acceleration.x = (float)(read_frame->acc[0] / 8192.f * 9.80655f);
+    pub_data.imu_msg.linear_acceleration.y = (float)(read_frame->acc[1] / 8192.f * 9.80655f);
+    pub_data.imu_msg.linear_acceleration.z = (float)(read_frame->acc[2] / 8192.f * 9.80655f);
+
+    pub_data.imu_msg.angular_velocity.x = (float)(read_frame->rates[0] / 65.535f);
+    pub_data.imu_msg.angular_velocity.y = (float)(read_frame->rates[1] / 65.535f);
+    pub_data.imu_msg.angular_velocity.z = (float)(read_frame->rates[2] / 65.535f);
+
+    //acctual car velocity
+    pub_data.velo_msg.data = (float)read_frame->velocity / 1000;
+
+    //distance from encoders
+    pub_data.dist_msg.data = (float)read_frame->distance / 1000;
+
+    //buttons
+    pub_data.button1_msg.data = read_frame->start_button1;
+    pub_data.button2_msg.data = read_frame->start_button2;
+
+    //reset states
+    pub_data.reset_vision_msg.data = read_frame->reset_vision;
+    pub_data.switch_state_msg.data = read_frame->switch_state;
+
+    //unused
+    // read_frame->timestamp
+    // read_frame->yaw
+
+
 }
