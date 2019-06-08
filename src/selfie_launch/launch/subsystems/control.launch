@@ -4,7 +4,7 @@
     <param name="lower_limit" value="-0.785" />
     <param name="windup_limit" value="10" />
 
-    <param name="Kp" value="1.2" />
+    <param name="Kp" value="0.9" />
     <param name="Kd" value="0.01" />
 
     <remap from="state" to="combined_offset" />
@@ -13,7 +13,7 @@
 
   <node name="const_setpoint" pkg="selfie_control" type="const_float64.py" >
     <param name="topic" value="setpoint" />
-    <param name="value" value="0.0" />
+    <param name="value" value="-0.2" />
   </node>
 
   <node name="offset_combiner" pkg="selfie_control" type="offset_combiner.py" />
