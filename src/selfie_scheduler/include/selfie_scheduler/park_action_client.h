@@ -9,8 +9,8 @@ class ParkClient : public ClientInterface
 {
 protected:
     ros::NodeHandle nh_;
-    actionlib::SimpleActionClient<selfie_msgs::searchAction> ac_;
-    selfie_msgs::searchGoal goal_;
+    actionlib::SimpleActionClient<selfie_msgs::parkAction> ac_;
+    selfie_msgs::parkGoal goal_;
     bool result_;
     program_state action_state_;
 
@@ -25,12 +25,10 @@ public:
 
     program_state getActionState();
     void doneCb(const actionlib::SimpleClientGoalState& state,
-                    const selfie_msgs::searchResultConstPtr& result);
+                    const selfie_msgs::parkResultConstPtr& result);
     void activeCb();
-    void feedbackCb(const selfie_msgs::searchFeedbackConstPtr& feedback);
+    void feedbackCb(const selfie_msgs::parkFeedbackConstPtr& feedback);
     bool getResult();
-
-
 };
 
 

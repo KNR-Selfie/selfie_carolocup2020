@@ -2,6 +2,8 @@
 #include <selfie_scheduler/search_action_client.h>
 #include <selfie_scheduler/drive_action_client.h>
 #include <selfie_scheduler/starting_action_client.h>
+#include <selfie_scheduler/park_action_client.h>
+
 #include <std_srvs/Empty.h>
 
 
@@ -20,6 +22,7 @@ int main(int argc, char **argv)
     StartingProcedureClient startingAction("starting_procedure");
     DriveClient driveAction("free_drive");
     SearchClient searchAction("search");
+    ParkClient parkAction("park");
 
     current_action = STARTING; //dummy - set if all systems launched succesfuly
 
@@ -65,8 +68,13 @@ int main(int argc, char **argv)
                 }
                 case PARK:
                 {
+                    previous_action = PARK;
+                    parkAction.waitForServer(200);
+                    parkAction.setGoal(333);
+
                     std_srvs::Empty stop_pub;
                     cmdStopPub.call(stop_pub);
+
                     break;
                 }
             }
