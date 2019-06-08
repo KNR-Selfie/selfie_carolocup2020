@@ -18,7 +18,7 @@ int main(int argc, char **argv)
     action_variable previous_action = IDLE;
 
     StartingProcedureClient startingAction("starting_procedure");
-    DriveClient driveAction("drive");
+    DriveClient driveAction("free_drive");
 
     current_action = STARTING; //dummy - set if all systems launched succesfuly
 
@@ -34,12 +34,12 @@ int main(int argc, char **argv)
                 case STARTING:
                     previous_action = STARTING;
                     startingAction.waitForServer(200);
-                    startingAction.setGoal(float(30.23));
+                    startingAction.setGoal(float(0.3));
                     break;
                 case DRIVING:
                     previous_action = DRIVING;
                     driveAction.waitForServer(200);
-                    driveAction.setGoal(true);
+                    driveAction.setGoal(startingAction.getResult());
                     break;
                 case PARKING_SEARCH:
                     break;

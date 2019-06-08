@@ -39,7 +39,7 @@ void StartingProcedureAction::executeCB(const selfie_msgs::startingGoalConstPtr 
     }
     //send command to ride
     driveBoxOut(2);
-    while(covered_distance_ < 0.5) //check if car started to move
+    while(covered_distance_ < 0.1) //check if car started to move
     {
 
     }
@@ -48,7 +48,7 @@ void StartingProcedureAction::executeCB(const selfie_msgs::startingGoalConstPtr 
 
     while(covered_distance_ < goal->distance)
     {
-        driveBoxOut(2);
+        driveBoxOut(1.5);
     }
     ROS_INFO("DISTANCE COVERED");
     publishFeedback(END_DRIVE);
