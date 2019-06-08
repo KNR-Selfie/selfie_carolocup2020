@@ -1,0 +1,6 @@
+<launch>
+  <include file="$(find selfie_park)/launch/transforms.launch"/>
+  <node name="odometry" pkg="selfie_odometry" type="selfie_odometry"/>
+  <node name="selfie_stm32_bridge" pkg="selfie_stm32_bridge" type="selfie_stm32_bridge"/>
+  <node name="park_server" pkg="selfie_park" type="park_server"/>
+</launch>
