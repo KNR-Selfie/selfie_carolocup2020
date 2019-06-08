@@ -34,7 +34,7 @@ int main(int argc, char **argv)
                 case STARTING:
                     previous_action = STARTING;
                     startingAction.waitForServer(200);
-                    startingAction.setGoal(float(0.3));
+                    startingAction.setGoal(float(1.0));
                     break;
                 case DRIVING:
                     previous_action = DRIVING;

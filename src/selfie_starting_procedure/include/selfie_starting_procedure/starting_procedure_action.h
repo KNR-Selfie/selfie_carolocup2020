@@ -31,6 +31,7 @@ protected:
 
   int button_status_ = 0;
   float covered_distance_ = 0.0;
+  float distance_base_;
 
 public:
 
