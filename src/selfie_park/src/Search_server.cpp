@@ -1,27 +1,21 @@
 #include "../../selfie_park/include/selfie_park/Search_server.h"
 
-/*TODO list
-visualization bool rosparam
-in visualization draw car and box filtering zone
-
-when found drive until place is no further than xxx
-*/
 
 Search_server::Search_server(const ros::NodeHandle &nh,
                              const ros::NodeHandle &pnh)
     : nh_(nh), pnh_(pnh), search_server_(nh_, "search", false) {
   search_server_.registerGoalCallback(boost::bind(&Search_server::init, this));
-  //  search_server_.registerPreemptCallback(boost::bind(&Search_server::preemptCB,
-  //  this)); TODO
-  // TODO Result CB
+  search_server_.registerPreemptCallback(
+      boost::bind(&Search_server::preemptCB, this));
   search_server_.start();
   pnh_.param<float>("point_min_x", point_min_x, 0.01);
   pnh_.param<float>("point_max_x", point_max_x, 2);
   pnh_.param<float>("point_min_y", point_min_y, -1);
   pnh_.param<float>("point_max_y", point_max_y, 0.2);
-  pnh_.param<bool>("debug_mode", debug_mode, false);
   pnh_.param<float>("default_speed_in_parking_zone",
                     default_speed_in_parking_zone, 0.3);
+  pnh_.param<bool>("visualization_in_searching", visualization, false);
+
   speed_current.data = default_speed_in_parking_zone;
 }
 
@@ -50,54 +44,48 @@ void Search_server::manager(const selfie_msgs::PolygonArray &msg) {
     return;
   }
   filter_boxes(msg);
-  display_places(boxes_on_the_right_side, "FilteredBoxes");
+  if (visualization)
+    display_places(boxes_on_the_right_side, "FilteredBoxes");
   // ROS_INFO("Size of  boxes_on_the_right %lu",boxes_on_the_right_side.size());
 
   switch (action_status.action_status) {
   case START_SEARCHING_PLACE:
     if (find_free_places()) {
       publishFeedback(FOUND_PLACE_MEASURING);
-      speed_current.data = 0;
+      speed_current.data = 0.5;
       speed_publisher.publish(speed_current);
-      //ros::Duration(1.0).sleep();//TODO sleep as param
+      ros::Duration(0.4).sleep();//waiting, because next measure should be taken when car is stopped
     }
     break;
+
   case FOUND_PLACE_MEASURING:
-
     if (find_free_places()) {
-      if(first_free_place.bottom_left.y<=0.3)
-      publishFeedback(FIND_PROPER_PLACE);
-
-    } else {
+      if (first_free_place.bottom_left.x <= 0.3)
+        publishFeedback(FIND_PROPER_PLACE);
+    } else 
+    {
       speed_current.data = default_speed_in_parking_zone;
+      publishFeedback(START_SEARCHING_PLACE);
     }
     speed_publisher.publish(speed_current);
     break;
-    case FIND_PROPER_PLACE:
+
+  case FIND_PROPER_PLACE:
     if (find_free_places()) {
-      std::cout<<"Found proper place\nsending result";
-      speed_current.data =0;
+      std::cout << "Found proper place\nsending result";
+      speed_current.data = 0.5;
       send_goal();
     } else {
-      std::cout<<"Place lost\n";
+      std::cout << "Place lost\n";
       speed_current.data = default_speed_in_parking_zone;
     }
     speed_publisher.publish(speed_current);
-      break;
+    break;
 
   default:
     ROS_INFO("Err, wrong action_status");
-  break;
-  
-
+    break;
   }
-
-  /*
-    if (!find_free_places()) {
-      ROS_INFO("Didn't found any free places\n");
-    } else
-      send_goal();
-      */
 }
 
 void Search_server::filter_boxes(const selfie_msgs::PolygonArray &msg) {
@@ -122,10 +110,9 @@ void Search_server::filter_boxes(const selfie_msgs::PolygonArray &msg) {
       min_x = temp_box.top_left.x;
       this->boxes_on_the_right_side.insert(
           this->boxes_on_the_right_side.begin(), temp_box);
-      //temp_box.print();
     }
   }
-} // obstacle_callback
+}
 
 bool Search_server::find_free_places() {
   if (boxes_on_the_right_side.size() < 2) {
@@ -150,7 +137,8 @@ bool Search_server::find_free_places() {
                tmp_box.top_right.y, tmp_box.bottom_left.x,
                tmp_box.bottom_left.y, tmp_box.bottom_right.x,
                tmp_box.bottom_right.y);
-      display_place(tmp_box, "first_free_place");
+      if (visualization)
+        display_place(tmp_box, "first_free_place");
       return true;
     }
   }
@@ -287,4 +275,9 @@ void Search_server::display_places(std::vector<Box> &boxes,
 void Search_server::publishFeedback(unsigned int newActionStatus) {
   action_status.action_status = newActionStatus;
   search_server_.publishFeedback(action_status);
+}
+
+void Search_server::preemptCB(){
+  ROS_INFO("Action preempted");
+  search_server_.setPreempted();
 }
