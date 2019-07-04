@@ -1,4 +1,4 @@
-#include "../../selfie_park/include/selfie_park/Search_client_mock.h"
+#include <selfie_park/Search_client_mock.h>
 
 float Search_client_mock::last_speed_ = -1;
 

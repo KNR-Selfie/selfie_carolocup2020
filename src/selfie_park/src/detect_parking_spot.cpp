@@ -2,7 +2,7 @@
 #include <vector>
 #include "ros/ros.h"
 
-#include "../../selfie_park/include/selfie_park/Search_server.h"
+#include <selfie_park/Search_server.h>
 
 
 int main(int argc, char **argv)
