@@ -1585,7 +1585,20 @@ std::vector<cv::Point2f> LaneDetector::createOffsetLine(std::vector<float> coeff
   cv::Point2f p;
   for (float i = TOPVIEW_MIN_X - 0.1; i < TOPVIEW_MAX_X + 0.1; i += 0.05)
   {
-    float deriative = 2 * coeff[2] * i + coeff[1];
+    float deriative;
+    switch(coeff.size())
+    {
+    case 3:
+      deriative = 2 * coeff[2] * i + coeff[1];
+      break;
+    case 4:
+      deriative = 3 * coeff[3] * pow(i,2) + 2 * coeff[2] * i + coeff[1];
+      break;
+    case 2:
+      deriative = coeff[1];
+      break;
+    }
+
     float angle = atan(deriative);
     p.x = i - offset * sin(angle);
     p.y = getAproxY(coeff, i) + offset * cos(angle);
