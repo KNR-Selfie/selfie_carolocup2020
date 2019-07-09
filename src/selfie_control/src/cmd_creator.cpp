@@ -9,12 +9,12 @@ bool _pub = false;
 
 void steeringCallback(const std_msgs::Float64 &msg)
 {
-  _speed = msg;
+  _steering_angle = msg;
 }
 
 void speedCallback(const std_msgs::Float64 &msg)
 {
-  _steering_angle = msg;
+  _speed = msg;
 }
 
 bool cmdPubCallback(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
