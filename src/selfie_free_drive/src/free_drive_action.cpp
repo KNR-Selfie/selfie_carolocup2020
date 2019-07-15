@@ -59,6 +59,11 @@ void FreeDriveAction::executeCB(const selfie_msgs::drivingGoalConstPtr &goal)
         last_feedback_ = AUTONOMOUS_DRIVE;
       }
     }
+    else
+      publishFeedback(AUTONOMOUS_DRIVE);
+    maxSpeedPub();
+    loop_rate.sleep();
+  }
 
     maxSpeedPub();
     loop_rate.sleep();
