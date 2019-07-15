@@ -2,7 +2,7 @@
 #define FREE_DRIVE_ACTION_H
 
 #include <ros/ros.h>
-#include <selfie_msgs/drivingAction.h>  // Note: "Action" is appended
+#include <selfie_msgs/drivingAction.h> // Note: "Action" is appended
 #include <actionlib/server/simple_action_server.h>
 #include <string>
 #include <std_msgs/Bool.h>
@@ -14,7 +14,6 @@
 class FreeDriveAction
 {
 protected:
-
   ros::NodeHandle nh_;
   ros::NodeHandle pnh_;
   actionlib::SimpleActionServer<selfie_msgs::drivingAction> as_; // NodeHandle instance must be created before this line. Otherwise strange error occurs.
@@ -36,7 +35,6 @@ protected:
   float max_speed_;
 
 public:
-
   FreeDriveAction(const ros::NodeHandle &nh, const ros::NodeHandle &pnh);
   ~FreeDriveAction(void);
 
