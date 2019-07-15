@@ -1,3 +1,8 @@
+/**
+*Copyright ( c ) 2019, KNR Selfie
+*This code is licensed under BSD license (see LICENSE for details)
+**/ 
+
 #ifndef FREE_DRIVE_ACTION_H
 #define FREE_DRIVE_ACTION_H
 

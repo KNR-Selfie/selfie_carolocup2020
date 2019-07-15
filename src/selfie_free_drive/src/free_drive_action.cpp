@@ -1,3 +1,8 @@
+/**
+*Copyright ( c ) 2019, KNR Selfie
+*This code is licensed under BSD license (see LICENSE for details)
+**/ 
+
 #include <selfie_free_drive/free_drive_action.h>
 
 FreeDriveAction::FreeDriveAction(const ros::NodeHandle &nh, const ros::NodeHandle &pnh) : 
