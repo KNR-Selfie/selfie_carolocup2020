@@ -1,6 +1,9 @@
-#include <../include/selfie_park/Search_client_mock.h>
+ /**
+*Copyright ( c ) 2019, KNR Selfie
+*This code is licensed under BSD license (see LICENSE for details)
+**/ 
 
-
+#include <selfie_park/Search_client_mock.h>
 
 
 
