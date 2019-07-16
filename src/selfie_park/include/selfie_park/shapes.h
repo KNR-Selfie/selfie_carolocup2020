@@ -1,5 +1,6 @@
 #include <iostream>
 
+#include <ros/ros.h>
 #include <geometry_msgs/Polygon.h>
 #include <selfie_msgs/PolygonArray.h>
 #include <std_msgs/Float64.h>

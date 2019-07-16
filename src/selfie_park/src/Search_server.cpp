@@ -20,7 +20,8 @@ Search_server::Search_server(const ros::NodeHandle &nh,
   pnh_.param<float>("point_min_y", point_min_y, -1);
   pnh_.param<float>("point_max_y", point_max_y, 0.2);
   pnh_.param<float>("default_speed_in_parking_zone",
-                    default_speed_in_parking_zone, 0.3);
+                    default_speed_in_parking_zone, 0.8);
+  pnh_.param<float>("speed_when_found_place", speed_when_found_place, 0.3);
   pnh_.param<bool>("visualization_in_searching", visualization, false);
 
   speed_current.data = default_speed_in_parking_zone;
@@ -64,10 +65,8 @@ void Search_server::manager(const selfie_msgs::PolygonArray &msg)
     if (find_free_places())
     {
       publishFeedback(FOUND_PLACE_MEASURING);
-      speed_current.data = 0.5;
+      speed_current.data = speed_when_found_place;
       speed_publisher.publish(speed_current);
-      ros::Duration(0.4).sleep(); // waiting, because next measure should be
-                                  // taken when car is stopped
     }
     break;
 
@@ -76,6 +75,8 @@ void Search_server::manager(const selfie_msgs::PolygonArray &msg)
     {
       if (first_free_place.bottom_left.x <= 0.3)
         publishFeedback(FIND_PROPER_PLACE);
+      speed_current.data = 0; // when we found proper place we should stop
+      speed_publisher.publish(speed_current);
     } else
     {
       speed_current.data = default_speed_in_parking_zone;
@@ -88,12 +89,12 @@ void Search_server::manager(const selfie_msgs::PolygonArray &msg)
     if (find_free_places())
     {
       std::cout << "Found proper place\nsending result";
-      speed_current.data = 0.5;
       send_goal();
     } else
     {
       std::cout << "Place lost\n";
       speed_current.data = default_speed_in_parking_zone;
+      publishFeedback(START_SEARCHING_PLACE);
     }
     speed_publisher.publish(speed_current);
     break;
@@ -109,17 +110,12 @@ void Search_server::filter_boxes(const selfie_msgs::PolygonArray &msg)
   this->boxes_on_the_right_side.clear();
   for (int box_nr = msg.polygons.size() - 1; box_nr >= 0; box_nr--)
   {
-    float min_x = point_min_x;
-    float max_x = point_max_x;
-    float min_y = point_min_y;
-    float max_y = point_max_y;
-
     geometry_msgs::Polygon polygon = msg.polygons[box_nr];
     bool box_ok = true;
     for (int a = 0; a < 4; ++a)
     {
       Point p(polygon.points[a]);
-      if (!p.check_position(min_x, max_x, min_y, max_y))
+      if (!p.check_position(point_min_x, point_max_x, point_min_y, point_max_y))
       {
         box_ok = false;
         break;
@@ -128,7 +124,6 @@ void Search_server::filter_boxes(const selfie_msgs::PolygonArray &msg)
     if (box_ok)
     {
       Box temp_box(polygon);
-      min_x = temp_box.top_left.x;
       this->boxes_on_the_right_side.insert(
           this->boxes_on_the_right_side.begin(), temp_box);
     }

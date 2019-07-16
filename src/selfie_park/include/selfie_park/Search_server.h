@@ -47,6 +47,7 @@ private:
   bool visualization;
 
   float default_speed_in_parking_zone;
+  float speed_when_found_place;
   std_msgs::Float64 speed_current;
 
   selfie_msgs::searchFeedback action_status;
