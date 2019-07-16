@@ -1,14 +1,16 @@
- /**
+/**
 *Copyright ( c ) 2019, KNR Selfie
 *This code is licensed under BSD license (see LICENSE for details)
-**/ 
+**/
 
 #include <selfie_park/Search_server.h>
 
-
 Search_server::Search_server(const ros::NodeHandle &nh,
                              const ros::NodeHandle &pnh)
-    : nh_(nh), pnh_(pnh), search_server_(nh_, "search", false) {
+    : nh_(nh)
+    , pnh_(pnh)
+    , search_server_(nh_, "search", false)
+{
   search_server_.registerGoalCallback(boost::bind(&Search_server::init, this));
   search_server_.registerPreemptCallback(
       boost::bind(&Search_server::preemptCB, this));
@@ -26,7 +28,8 @@ Search_server::Search_server(const ros::NodeHandle &nh,
 
 Search_server::~Search_server() {}
 
-bool Search_server::init() {
+bool Search_server::init()
+{
   this->obstacles_sub =
       nh_.subscribe("/obstacles", 1, &Search_server::manager, this);
   this->visualize_lines_pub =
@@ -42,9 +45,11 @@ bool Search_server::init() {
   ROS_INFO("Initialized");
 }
 
-void Search_server::manager(const selfie_msgs::PolygonArray &msg) {
+void Search_server::manager(const selfie_msgs::PolygonArray &msg)
+{
   // to save cpu time just do nothing when new scan comes
-  if (!search_server_.isActive()) {
+  if (!search_server_.isActive())
+  {
     ROS_INFO("search_server_ is not active");
     return;
   }
@@ -53,21 +58,25 @@ void Search_server::manager(const selfie_msgs::PolygonArray &msg) {
     display_places(boxes_on_the_right_side, "FilteredBoxes");
   // ROS_INFO("Size of  boxes_on_the_right %lu",boxes_on_the_right_side.size());
 
-  switch (action_status.action_status) {
+  switch (action_status.action_status)
+  {
   case START_SEARCHING_PLACE:
-    if (find_free_places()) {
+    if (find_free_places())
+    {
       publishFeedback(FOUND_PLACE_MEASURING);
       speed_current.data = 0.5;
       speed_publisher.publish(speed_current);
-      ros::Duration(0.4).sleep();//waiting, because next measure should be taken when car is stopped
+      ros::Duration(0.4).sleep(); // waiting, because next measure should be
+                                  // taken when car is stopped
     }
     break;
 
   case FOUND_PLACE_MEASURING:
-    if (find_free_places()) {
+    if (find_free_places())
+    {
       if (first_free_place.bottom_left.x <= 0.3)
         publishFeedback(FIND_PROPER_PLACE);
-    } else 
+    } else
     {
       speed_current.data = default_speed_in_parking_zone;
       publishFeedback(START_SEARCHING_PLACE);
@@ -76,11 +85,13 @@ void Search_server::manager(const selfie_msgs::PolygonArray &msg) {
     break;
 
   case FIND_PROPER_PLACE:
-    if (find_free_places()) {
+    if (find_free_places())
+    {
       std::cout << "Found proper place\nsending result";
       speed_current.data = 0.5;
       send_goal();
-    } else {
+    } else
+    {
       std::cout << "Place lost\n";
       speed_current.data = default_speed_in_parking_zone;
     }
@@ -93,9 +104,11 @@ void Search_server::manager(const selfie_msgs::PolygonArray &msg) {
   }
 }
 
-void Search_server::filter_boxes(const selfie_msgs::PolygonArray &msg) {
+void Search_server::filter_boxes(const selfie_msgs::PolygonArray &msg)
+{
   this->boxes_on_the_right_side.clear();
-  for (int box_nr = msg.polygons.size() - 1; box_nr >= 0; box_nr--) {
+  for (int box_nr = msg.polygons.size() - 1; box_nr >= 0; box_nr--)
+  {
     float min_x = point_min_x;
     float max_x = point_max_x;
     float min_y = point_min_y;
@@ -103,14 +116,17 @@ void Search_server::filter_boxes(const selfie_msgs::PolygonArray &msg) {
 
     geometry_msgs::Polygon polygon = msg.polygons[box_nr];
     bool box_ok = true;
-    for (int a = 0; a < 4; ++a) {
+    for (int a = 0; a < 4; ++a)
+    {
       Point p(polygon.points[a]);
-      if (!p.check_position(min_x, max_x, min_y, max_y)) {
+      if (!p.check_position(min_x, max_x, min_y, max_y))
+      {
         box_ok = false;
         break;
       }
     }
-    if (box_ok) {
+    if (box_ok)
+    {
       Box temp_box(polygon);
       min_x = temp_box.top_left.x;
       this->boxes_on_the_right_side.insert(
@@ -119,8 +135,10 @@ void Search_server::filter_boxes(const selfie_msgs::PolygonArray &msg) {
   }
 }
 
-bool Search_server::find_free_places() {
-  if (boxes_on_the_right_side.size() < 2) {
+bool Search_server::find_free_places()
+{
+  if (boxes_on_the_right_side.size() < 2)
+  {
     // ROS_WARN("REJECTED");
     return false;
   }
@@ -128,10 +146,12 @@ bool Search_server::find_free_places() {
   // ROS_INFO("min space: %f", min_space);
   vector<Box>::iterator iter = boxes_on_the_right_side.begin();
   vector<Box>::const_iterator end_iter = boxes_on_the_right_side.cend();
-  for (; iter + 1 != end_iter; ++iter) {
+  for (; iter + 1 != end_iter; ++iter)
+  {
     double dist = (*iter).top_left.get_distance((*(iter + 1)).bottom_left);
     ROS_INFO("dist: %f", dist);
-    if (dist > min_space) {
+    if (dist > min_space)
+    {
 
       Box tmp_box((*iter).top_left, (*iter).top_right,
                   (*(iter + 1)).bottom_left, (*(iter + 1)).bottom_right);
@@ -150,7 +170,8 @@ bool Search_server::find_free_places() {
   return false;
 }
 
-void Search_server::send_goal() {
+void Search_server::send_goal()
+{
 
   geometry_msgs::Point32 p;
   p.x = first_free_place.bottom_left.x;
@@ -171,7 +192,8 @@ void Search_server::send_goal() {
   search_server_.setSucceeded(result);
 }
 
-void Search_server::display_place(Box &place, const std::string &name) {
+void Search_server::display_place(Box &place, const std::string &name)
+{
   visualization_msgs::Marker marker;
 
   marker.header.frame_id = "laser";
@@ -225,7 +247,8 @@ void Search_server::display_place(Box &place, const std::string &name) {
 }
 
 void Search_server::display_places(std::vector<Box> &boxes,
-                                   const std::string &name) {
+                                   const std::string &name)
+{
   visualization_msgs::Marker marker;
 
   marker.header.frame_id = "laser";
@@ -246,7 +269,8 @@ void Search_server::display_places(std::vector<Box> &boxes,
 
   geometry_msgs::Point marker_point;
   marker_point.z = 0;
-  for (int i = boxes.size() - 1; i >= 0; i--) {
+  for (int i = boxes.size() - 1; i >= 0; i--)
+  {
     marker_point.x = boxes[i].bottom_left.x;
     marker_point.y = boxes[i].bottom_left.y;
     marker.points.push_back(marker_point);
@@ -277,12 +301,14 @@ void Search_server::display_places(std::vector<Box> &boxes,
   }
   visualize_free_place.publish(marker);
 } // OPT
-void Search_server::publishFeedback(unsigned int newActionStatus) {
+void Search_server::publishFeedback(unsigned int newActionStatus)
+{
   action_status.action_status = newActionStatus;
   search_server_.publishFeedback(action_status);
 }
 
-void Search_server::preemptCB(){
+void Search_server::preemptCB()
+{
   ROS_INFO("Action preempted");
   search_server_.setPreempted();
 }
