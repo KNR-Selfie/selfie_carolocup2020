@@ -27,6 +27,10 @@ using namespace std;
 
 class Search_server
 {
+public:
+  Search_server(const ros::NodeHandle &nh, const ros::NodeHandle &pnh);
+  ~Search_server();
+
 private:
   ros::NodeHandle nh_;
   ros::NodeHandle pnh_;
@@ -60,10 +64,6 @@ private:
 
   float point_min_y;
   float point_max_y;
-
-public:
-  Search_server(const ros::NodeHandle &nh, const ros::NodeHandle &pnh);
-  ~Search_server();
 
   bool init();
   void preemptCB();

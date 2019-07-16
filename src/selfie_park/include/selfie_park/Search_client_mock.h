@@ -19,12 +19,12 @@ public:
   static float last_speed_;
   void send_goal(const float);
   Search_client_mock(const ros::NodeHandle &nh);
-  void activeCb() { ac_.waitForServer(); }
-  void doneCb(const actionlib::SimpleClientGoalState &state,
-              const selfie_msgs::searchResultConstPtr &result);
-  actionlib::SimpleActionClient<selfie_msgs::searchAction> ac_;
 
 private:
+  void activeCb() { ac_.waitForServer(); }
+  void doneCb(const actionlib::SimpleClientGoalState &state, const selfie_msgs::searchResultConstPtr &result);
+  actionlib::SimpleActionClient<selfie_msgs::searchAction> ac_;
+
   ros::NodeHandle nh_;
   ros::Subscriber speed_subscriber_;
 };

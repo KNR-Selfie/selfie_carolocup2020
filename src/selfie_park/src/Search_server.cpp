@@ -31,14 +31,14 @@ Search_server::~Search_server() {}
 
 bool Search_server::init()
 {
-  this->obstacles_sub =
-      nh_.subscribe("/obstacles", 1, &Search_server::manager, this);
-  this->visualize_lines_pub =
+  obstacles_sub = nh_.subscribe("/obstacles", 1, &Search_server::manager, this);
+  visualize_lines_pub =
       nh_.advertise<visualization_msgs::Marker>("/visualization_lines", 1);
-  this->visualize_free_place =
-      nh_.advertise<visualization_msgs::Marker>("/free_place", 1);
-  this->point_pub = nh_.advertise<visualization_msgs::Marker>("/box_points", 5);
-  this->speed_publisher = nh_.advertise<std_msgs::Float64>("/max_speed", 0.5);
+  if (visualization)
+    visualize_free_place =
+        nh_.advertise<visualization_msgs::Marker>("/free_place", 1);
+  point_pub = nh_.advertise<visualization_msgs::Marker>("/box_points", 5);
+  speed_publisher = nh_.advertise<std_msgs::Float64>("/max_speed", 0.5);
 
   speed_publisher.publish(speed_current);
   min_spot_lenght = search_server_.acceptNewGoal()->min_spot_lenght;
@@ -107,7 +107,7 @@ void Search_server::manager(const selfie_msgs::PolygonArray &msg)
 
 void Search_server::filter_boxes(const selfie_msgs::PolygonArray &msg)
 {
-  this->boxes_on_the_right_side.clear();
+  boxes_on_the_right_side.clear();
   for (int box_nr = msg.polygons.size() - 1; box_nr >= 0; box_nr--)
   {
     geometry_msgs::Polygon polygon = msg.polygons[box_nr];
@@ -124,8 +124,7 @@ void Search_server::filter_boxes(const selfie_msgs::PolygonArray &msg)
     if (box_ok)
     {
       Box temp_box(polygon);
-      this->boxes_on_the_right_side.insert(
-          this->boxes_on_the_right_side.begin(), temp_box);
+      boxes_on_the_right_side.insert(boxes_on_the_right_side.begin(), temp_box);
     }
   }
 }
