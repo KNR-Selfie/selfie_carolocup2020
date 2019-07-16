@@ -25,7 +25,8 @@
 
 using namespace std;
 
-class Search_server {
+class Search_server
+{
 private:
   ros::NodeHandle nh_;
   ros::NodeHandle pnh_;
@@ -52,7 +53,7 @@ private:
   void publishFeedback(unsigned int);
   selfie_msgs::searchResult result;
 
-  //area of interest (used unit- meter)
+  // area of interest (used unit- meter)
   float point_min_x;
   float point_max_x;
 
