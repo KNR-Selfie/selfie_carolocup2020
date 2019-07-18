@@ -1332,7 +1332,6 @@ bool LaneDetector::polyfit(int nDegree, RoadLine &road_line)
 void LaneDetector::adjust(RoadLine &good_road_line,
                                         RoadLine &short_road_line, bool left_offset)
 {
-  // !!!!!!!!! TODO !!!!!!!!
   std::vector<cv::Point2f> line = lines_vector_converted_[short_road_line.index];
   std::vector<float> coeff;
   float a, b, width;

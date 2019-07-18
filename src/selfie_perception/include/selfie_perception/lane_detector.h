@@ -85,22 +85,6 @@ class LaneDetector
   RoadLine center_line_;
   RoadLine right_line_;
 
-/*
-  std::vector<float> last_left_coeff_;
-  std::vector<float> last_middle_coeff_;
-  std::vector<float> last_right_coeff_;
-  std::vector<float> left_coeff_;
-  std::vector<float> middle_coeff_;
-  std::vector<float> right_coeff_;
-
-  int left_line_index_;
-  int center_line_index_;
-  int right_line_index_;
-  bool short_left_line_;
-  bool short_center_line_;
-  bool short_right_line_;
-*/
-
   void imageCallback(const sensor_msgs::ImageConstPtr &msg);
   void computeTopView();
   void openCVVisualization();
