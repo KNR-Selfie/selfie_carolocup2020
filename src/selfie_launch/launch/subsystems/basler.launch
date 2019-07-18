@@ -7,7 +7,7 @@
       <param name="brightness_continuous" value="true" />
       <param name="exposure_auto" value="false" />
       <param name="gain_auto" value="true" />
-      <param name="exposure" value="8000.0" />
+      <param name="exposure" value="7000.0" />
       <param name="height" value="1232" />
       <param name="width" value="1312" />
       <param name="roi_offset_x" value="384" />

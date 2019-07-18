@@ -1,0 +1,12 @@
+<launch>
+  <node name="free_drive" type="free_drive" pkg="selfie_free_drive">
+    <param name="max_speed" value="2.5" />
+    <param name="starting_line_distance_to_end" value="0.45" />
+  </node>
+
+  <node name="detect_parking_spot" type="detect_parking_spot" pkg="selfie_park" />
+
+  <node name="park_server" type="park_server" pkg="selfie_park" />
+
+  <node name="starting_procedure" type="starting_procedure" pkg="selfie_starting_procedure" />
+</launch>
