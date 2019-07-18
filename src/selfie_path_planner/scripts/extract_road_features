@@ -1,0 +1,79 @@
+'''
+*Copyright ( c ) 2019, KNR Selfie
+*This code is licensed under BSD license (see LICENSE for details)
+'''
+
+#!/usr/bin/env python
+
+import rospy
+
+from math import sqrt, atan, atan2
+from scipy.optimize import minimize
+from numpy.polynomial.polynomial import Polynomial
+
+from selfie_msgs.msg import RoadMarkings
+from std_msgs.msg import Float64
+
+max_speed = 1.1
+
+def road_markings_callback(msg):
+    c_poly = Polynomial(msg.center_line)
+
+    # x - lookahead
+    x_shifted = Polynomial([-lookahead, 1])
+
+    c_poly_dist_sq = x_shifted**2 + c_poly**2
+
+    c_x = max(lookahead, minimize(c_poly_dist_sq, lookahead).x[0])
+    c_y = c_poly(c_x)
+
+    c_dist = sqrt(c_poly_dist_sq(c_x))
+
+    slope = c_poly.deriv()(c_x)
+    theta = atan(slope)
+    curvature = abs(c_poly.deriv().deriv()(c_x)) / (1+c_poly.deriv()(c_x)**2)**1.5
+    if curvature > 1:
+        speed = min_speed
+    else:
+        speed = (1 - curvature) * (max_speed - min_speed) + min_speed
+
+    if atan2(c_y, x_shifted(c_x)) - theta > 0:
+        c_dist = -c_dist
+
+    heading_offset_pub.publish(-theta)
+    position_offset_pub.publish(c_dist)
+    speed_pub.publish(speed)
+
+def max_speed_callback(msg):
+    global max_speed
+    max_speed = msg.data
+
+if __name__ == '__main__':
+    rospy.init_node('extract_road_features')
+
+    road_markings_sub = rospy.Subscriber('road_markings',
+                                         RoadMarkings,
+                                         road_markings_callback,
+                                         queue_size=1)
+
+    max_speed_sub = rospy.Subscriber('max_speed',
+                                     Float64,
+                                     max_speed_callback,
+                                     queue_size=1)
+
+    global lookahead
+    lookahead = rospy.get_param('~lookahead', 0.0)
+    global min_speed
+    min_speed = rospy.get_param('~min_speed', 0.5)
+
+    print("lookahead set to: " + str(lookahead))
+    print("min_speed set to: " + str(min_speed))
+
+    global heading_offset_pub, position_offset_pub, curvature_pub
+    heading_offset_pub = rospy.Publisher(
+        'heading_offset', Float64, queue_size=1)
+    position_offset_pub = rospy.Publisher(
+        'position_offset', Float64, queue_size=1)
+    speed_pub = rospy.Publisher('speed', Float64, queue_size=1)
+
+    rospy.spin()
