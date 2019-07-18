@@ -30,6 +30,15 @@
 #include <visualization_msgs/Marker.h>
 #include <std_msgs/Float32.h>
 
+struct RoadLine
+{
+  int index;
+  int degree;
+  std::vector<float> coeff;
+  float length;
+  bool is_short;
+};
+
 class LaneDetector
 {
   public:
@@ -68,10 +77,15 @@ class LaneDetector
   cv::Mat homography_frame_;
   cv::Mat debug_frame_;
 
-  std::vector<std::vector<cv::Point> > lanes_vector_;
-  std::vector<std::vector<cv::Point2f> > lanes_vector_converted_;
+  std::vector<std::vector<cv::Point> > lines_vector_;
+  std::vector<std::vector<cv::Point2f> > lines_vector_converted_;
   std::vector<std::vector<cv::Point2f> > aprox_lines_frame_coordinate_;
 
+  RoadLine left_line_;
+  RoadLine center_line_;
+  RoadLine right_line_;
+
+/*
   std::vector<float> last_left_coeff_;
   std::vector<float> last_middle_coeff_;
   std::vector<float> last_right_coeff_;
@@ -85,11 +99,12 @@ class LaneDetector
   bool short_left_line_;
   bool short_center_line_;
   bool short_right_line_;
+*/
 
   void imageCallback(const sensor_msgs::ImageConstPtr &msg);
   void computeTopView();
   void openCVVisualization();
-  void mergeMiddleLane();
+  void mergeMiddleLines();
   void quickSortLinesY(int left, int right);
   void quickSortPointsY(std::vector<cv::Point> &vector_in, int left, int right);
   float getDistance(cv::Point2f p1, cv::Point2f p2);
@@ -107,7 +122,8 @@ class LaneDetector
   float getAproxY(std::vector<float> coeff, float x);
   void convertApproxToFrameCoordinate();
   void initRecognizeLines();
-  void linesApproximation(std::vector<std::vector<cv::Point2f> > lanes_vector);
+  void linesApproximation();
+  void calcRoadLinesParams();
 
   void pointsRVIZVisualization();
   void aproxVisualization();
@@ -117,19 +133,20 @@ class LaneDetector
   void lanesVectorVisualization(cv::Mat &visualization_frame);
   void removeCar(cv::Mat &frame);
   void addBottomPoint();
-  bool polyfit(int nDegree, std::vector<cv::Point2f> line, std::vector<float> &coeff);
-  std::vector<float> adjust(std::vector<float> good_poly_coeff, std::vector<cv::Point2f> line, bool left_offset);
+  bool polyfit(int nDegree, std::vector<cv::Point2f> line, RoadLine &road_line);
+  bool polyfit(int nDegree, RoadLine &road_line);
+  void adjust(RoadLine &good_road_line, RoadLine &short_road_line, bool left_offset);
   void calcRoadWidth();
   void generatePoints();
   void removeHorizontalLines();
-  std::vector<cv::Point2f> createOffsetLine(std::vector<float> coeff, float offset);
+  std::vector<cv::Point2f> createOffsetLine(RoadLine &road_line, float offset);
   void detectStartAndIntersectionLine();
   void intersectionHandler();
 
   float min_length_search_line_;
   float min_length_lane_;
   float max_delta_y_lane_;
-  float min_length_to_aprox_;
+  float min_length_to_2aprox_;
   float left_lane_width_;
   float right_lane_width_;
 
