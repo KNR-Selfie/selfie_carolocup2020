@@ -1,0 +1,7 @@
+#goal definition
+---
+#result definition
+bool done
+---
+#feedback
+uint32 action_status #one of enums describing state (see more on wiki)
