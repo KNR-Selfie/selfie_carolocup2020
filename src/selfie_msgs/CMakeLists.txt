@@ -70,7 +70,7 @@ add_message_files(
    search.action
    driving.action
    starting.action
-
+   intersection.action
  )
 
 ## Generate added messages and services with any dependencies listed here
@@ -203,8 +203,3 @@ include_directories(
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
-
-
-add_action_files(FILES
-  intersection.action
-)
