@@ -12,7 +12,7 @@ rosrun selfie_park detect_parking_spot
   - detected obstacles
  
 ### Published topics
-- `/max_speed` [std_msgs/Float64](https://docs.ros.org/api/std_msgs/html/msg/Float64.html)
+- `/max_speed` ([std_msgs/Float64](https://docs.ros.org/api/std_msgs/html/msg/Float64.html))
   - current speed of car
 - `/free_place` ([visualization_msgs/Marker](https://docs.ros.org/api/visualization_msgs/html/msg/Marker.html))
   - (only when parameter `visualization=true` visualizes found boxes and places in rviz)
