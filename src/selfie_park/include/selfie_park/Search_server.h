@@ -35,9 +35,7 @@ private:
   ros::NodeHandle nh_;
   ros::NodeHandle pnh_;
   ros::Subscriber obstacles_sub;
-  ros::Publisher visualize_lines_pub;
   ros::Publisher visualize_free_place;
-  ros::Publisher point_pub;
   ros::Publisher speed_publisher;
 
   actionlib::SimpleActionServer<selfie_msgs::searchAction> search_server_;

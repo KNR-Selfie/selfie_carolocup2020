@@ -32,12 +32,10 @@ Search_server::~Search_server() {}
 bool Search_server::init()
 {
   obstacles_sub = nh_.subscribe("/obstacles", 1, &Search_server::manager, this);
-  visualize_lines_pub =
-      nh_.advertise<visualization_msgs::Marker>("/visualization_lines", 1);
   if (visualization)
-    visualize_free_place =
-        nh_.advertise<visualization_msgs::Marker>("/free_place", 1);
-  point_pub = nh_.advertise<visualization_msgs::Marker>("/box_points", 5);
+  {
+    visualize_free_place = nh_.advertise<visualization_msgs::Marker>("/free_place", 1);
+  }
   speed_publisher = nh_.advertise<std_msgs::Float64>("/max_speed", 0.5);
 
   speed_publisher.publish(speed_current);
@@ -74,8 +72,10 @@ void Search_server::manager(const selfie_msgs::PolygonArray &msg)
     if (find_free_places())
     {
       if (first_free_place.bottom_left.x <= 0.3)
+      {
         publishFeedback(FIND_PROPER_PLACE);
-      speed_current.data = 0; // when we found proper place we should stop
+        speed_current.data = 0; // when we found proper place we should stop
+      }
       speed_publisher.publish(speed_current);
     } else
     {
