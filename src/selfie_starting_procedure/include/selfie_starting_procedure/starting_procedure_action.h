@@ -22,11 +22,11 @@ protected:
   selfie_msgs::startingFeedback feedback_;
   selfie_msgs::startingResult result_;
 
-  //subscribers
+  // subscribers
   ros::Subscriber button_sub_;
   ros::Subscriber distance_sub_;
 
-  //publishers
+  // publishers
   ros::Publisher drive_pub_;
 
   int button_status_ = 0;
