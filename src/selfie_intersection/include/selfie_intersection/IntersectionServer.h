@@ -14,9 +14,14 @@ public:
 private:
   ros::NodeHandle nh_;
   ros::NodeHandle pnh_;
-  ros::Subscriber obstacles_sub;
-  ros::Publisher visualize_free_place;
-  ros::Publisher speed_publisher;
+  ros::Subscriber obstacles_sub_;
+  ros::Publisher visualize_free_place_;
+  ros::Publisher speed_publisher_;
+
+  float point_min_x_;//Area of interest
+  float point_max_x_;
+  float point_min_y_;
+  float point_max_y_;
 
   actionlib::SimpleActionServer<selfie_msgs::intersectionAction> intersectionServer_;
 };
