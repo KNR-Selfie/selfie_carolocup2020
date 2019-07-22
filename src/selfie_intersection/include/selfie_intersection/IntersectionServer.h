@@ -2,7 +2,10 @@
 
 #include <actionlib/server/simple_action_server.h>
 #include <ros/ros.h>
+
 #include <selfie_msgs/intersectionAction.h>
+#include <selfie_msgs/PolygonArray.h>
+
 #include <selfie_scheduler/scheduler_enums.h>
 #include <selfie_park/shapes.h>
 
@@ -24,5 +27,8 @@ private:
   float point_min_y_;
   float point_max_y_;
 
+  std::list<Box> filtered_boxes_;
+
   actionlib::SimpleActionServer<selfie_msgs::intersectionAction> intersectionServer_;
+  void filter_boxes(const selfie_msgs::PolygonArray &);
 };
