@@ -53,4 +53,7 @@
 <build_depend>selfie_scheduler</build_depend>
 <build_export_depend>selfie_scheduler</build_export_depend>
 <exec_depend>selfie_scheduler</exec_depend>
+<build_depend>selfie_park</build_depend>
+<build_export_depend>selfie_park</build_export_depend>
+<exec_depend>selfie_park</exec_depend>
 </package>

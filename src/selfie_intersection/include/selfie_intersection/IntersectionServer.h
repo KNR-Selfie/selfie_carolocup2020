@@ -4,6 +4,7 @@
 #include <ros/ros.h>
 #include <selfie_msgs/intersectionAction.h>
 #include <selfie_scheduler/scheduler_enums.h>
+#include <selfie_park/shapes.h>
 
 class IntersectionServer
 {
