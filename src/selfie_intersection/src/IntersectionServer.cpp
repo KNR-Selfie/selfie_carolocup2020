@@ -5,11 +5,21 @@ IntersectionServer::IntersectionServer(const ros::NodeHandle &nh, const ros::Nod
     , pnh_(pnh)
     , intersectionServer_(nh_, "intersection", false)
 {
+  intersectionServer_.registerGoalCallback(boost::bind(&IntersectionServer::init, this));
+  intersectionServer_.start();
   pnh_.param<float>("point_min_x", point_min_x_, 0.01);
   pnh_.param<float>("point_max_x", point_max_x_, 0.95);
   pnh_.param<float>("point_min_y", point_min_y_, -3);
   pnh_.param<float>("point_max_y", point_max_y_, 3);
 }
+
+void IntersectionServer::init()
+{
+  obstacles_sub_ = nh_.subscribe("/obstacles", 1, &IntersectionServer::manager, this);
+  speed_publisher_ = nh_.advertise<std_msgs::Float64>("/max_speed", 0);
+}
+
+void IntersectionServer::manager(const selfie_msgs::PolygonArray &boxes) {}
 
 void IntersectionServer::filter_boxes(const selfie_msgs::PolygonArray &msg)
 {
@@ -35,3 +45,4 @@ void IntersectionServer::filter_boxes(const selfie_msgs::PolygonArray &msg)
     }
   }
 }
+// TODO filtering using also size of box

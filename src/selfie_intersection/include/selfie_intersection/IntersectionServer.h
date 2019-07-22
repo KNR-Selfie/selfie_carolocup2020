@@ -3,11 +3,11 @@
 #include <actionlib/server/simple_action_server.h>
 #include <ros/ros.h>
 
-#include <selfie_msgs/intersectionAction.h>
 #include <selfie_msgs/PolygonArray.h>
+#include <selfie_msgs/intersectionAction.h>
 
-#include <selfie_scheduler/scheduler_enums.h>
 #include <selfie_park/shapes.h>
+#include <selfie_scheduler/scheduler_enums.h>
 
 class IntersectionServer
 {
@@ -22,7 +22,7 @@ private:
   ros::Publisher visualize_free_place_;
   ros::Publisher speed_publisher_;
 
-  float point_min_x_;//Area of interest
+  float point_min_x_; // Area of interest
   float point_max_x_;
   float point_min_y_;
   float point_max_y_;
@@ -30,5 +30,7 @@ private:
   std::list<Box> filtered_boxes_;
 
   actionlib::SimpleActionServer<selfie_msgs::intersectionAction> intersectionServer_;
+  void init();
+  void manager(const selfie_msgs::PolygonArray &);
   void filter_boxes(const selfie_msgs::PolygonArray &);
 };
