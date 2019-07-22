@@ -15,6 +15,9 @@
 #define TOPVIEW_MIN_Y -1.2
 #define TOPVIEW_MAX_Y 1.2
 
+#define DEGREE3_MIN_X 0.5
+#define DEGREE3_MAX_X 1.0
+
 static int Acc_slider = 1;
 static double Acc_value = 0.7;
 static int Acc_filt = 1;
@@ -32,6 +35,7 @@ LaneDetector::LaneDetector(const ros::NodeHandle &nh, const ros::NodeHandle &pnh
   max_delta_y_lane_(0.08),
   nominal_center_line_Y_(0.2),
   min_length_to_2aprox_(0.56),
+  min_length_to_3aprox_(0.7),
   poly_nDegree_(2),
   left_lane_width_(0.4),
   right_lane_width_(0.4),
@@ -49,6 +53,9 @@ LaneDetector::LaneDetector(const ros::NodeHandle &nh, const ros::NodeHandle &pnh
   left_line_.is_short = false;
   center_line_.is_short = false;
   right_line_.is_short = false;
+  right_line_.degree = 2;
+  center_line_.degree = 2;
+  left_line_.degree = 2;
 }
 
 LaneDetector::~LaneDetector()
@@ -160,13 +167,6 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
 
   mergeMiddleLines();
 
-  if (debug_mode_)
-  {
-    debug_frame_.rows = homography_frame_.rows;
-    debug_frame_.cols = homography_frame_.cols;
-    lanesVectorVisualization(debug_frame_);
-  }
-
   if (init_imageCallback_)
   {
     initRecognizeLines();
@@ -190,13 +190,21 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
   else
   {
     recognizeLines();
-    calcRoadLinesParams();
+    decide3degree();
     generatePoints();
+    addBottomPoint();
+    calcRoadLinesParams();
 
     calcRoadWidth();
-    addBottomPoint();
     linesApproximation();
     publishMarkings();
+  }
+
+  if (debug_mode_)
+  {
+    debug_frame_.rows = homography_frame_.rows;
+    debug_frame_.cols = homography_frame_.cols;
+    lanesVectorVisualization(debug_frame_);
   }
 
   if (debug_mode_)
@@ -905,6 +913,7 @@ void LaneDetector::linesApproximation()
     l_state = '+';
     c_state = '+';
     r_state = '+';
+
     polyfit(poly_nDegree_, left_line_);
     polyfit(poly_nDegree_, center_line_);
     polyfit(poly_nDegree_, right_line_);
@@ -922,6 +931,7 @@ void LaneDetector::linesApproximation()
         l_state = '-';
         c_state = '+';
         r_state = '+';
+        left_line_.degree = center_line_.degree;
         polyfit(poly_nDegree_, createOffsetLine(center_line_, left_lane_width_), left_line_);
       }
       else
@@ -944,6 +954,7 @@ void LaneDetector::linesApproximation()
         l_state = '+';
         c_state = '+';
         r_state = '-';
+        right_line_.degree = center_line_.degree;
         polyfit(poly_nDegree_, createOffsetLine(center_line_, -1 * right_lane_width_), right_line_);
       }
       else
@@ -966,6 +977,7 @@ void LaneDetector::linesApproximation()
         l_state = '+';
         c_state = '-';
         r_state = '+';
+        center_line_.degree = right_line_.degree;
         polyfit(poly_nDegree_, createOffsetLine(right_line_, right_lane_width_), center_line_);
       }
       else
@@ -1001,6 +1013,7 @@ void LaneDetector::linesApproximation()
           c_state = '/';
           r_state = '+';
           adjust(right_line_, center_line_, true);
+          left_line_.degree = center_line_.degree;
           polyfit(poly_nDegree_, createOffsetLine(center_line_, left_lane_width_), left_line_);
         }
         else
@@ -1010,6 +1023,7 @@ void LaneDetector::linesApproximation()
           c_state = '-';
           r_state = '+';
           adjust(right_line_, left_line_, true);
+          center_line_.degree = right_line_.degree;
           polyfit(poly_nDegree_, createOffsetLine(right_line_, right_lane_width_), center_line_);
         }
       }
@@ -1019,7 +1033,9 @@ void LaneDetector::linesApproximation()
         l_state = '-';
         c_state = '-';
         r_state = '+';
+        center_line_.degree = right_line_.degree;
         polyfit(poly_nDegree_, createOffsetLine(right_line_, right_lane_width_), center_line_);
+        left_line_.degree = center_line_.degree;
         polyfit(poly_nDegree_, createOffsetLine(center_line_, left_lane_width_), left_line_);
       }
     }
@@ -1045,6 +1061,7 @@ void LaneDetector::linesApproximation()
           c_state = '/';
           r_state = '-';
           adjust(left_line_, center_line_, false);
+          right_line_.degree = center_line_.degree;
           polyfit(poly_nDegree_, createOffsetLine(center_line_, -1 * right_lane_width_), right_line_);
         }
         else
@@ -1054,6 +1071,7 @@ void LaneDetector::linesApproximation()
           c_state = '-';
           r_state = '/';
           adjust(left_line_, right_line_, false);
+          center_line_.degree = left_line_.degree;
           polyfit(poly_nDegree_, createOffsetLine(left_line_, -1 * left_lane_width_), center_line_);
         }
       }
@@ -1063,7 +1081,9 @@ void LaneDetector::linesApproximation()
         l_state = '+';
         c_state = '-';
         r_state = '-';
+        center_line_.degree = left_line_.degree;
         polyfit(poly_nDegree_, createOffsetLine(left_line_, -1 * left_lane_width_), center_line_);
+        right_line_.degree = center_line_.degree;
         polyfit(poly_nDegree_, createOffsetLine(center_line_, -1 * right_lane_width_), right_line_);
       }
     }
@@ -1089,6 +1109,7 @@ void LaneDetector::linesApproximation()
           c_state = '+';
           r_state = '-';
           adjust(center_line_, left_line_, true);
+          right_line_.degree = center_line_.degree;
           polyfit(poly_nDegree_, createOffsetLine(center_line_, -1 * right_lane_width_), right_line_);
         }
         else
@@ -1098,6 +1119,7 @@ void LaneDetector::linesApproximation()
           c_state = '+';
           r_state = '/';
           adjust(center_line_, right_line_, false);
+          left_line_.degree = center_line_.degree;
           polyfit(poly_nDegree_, createOffsetLine(center_line_, left_lane_width_), left_line_);
         }
       }
@@ -1107,7 +1129,9 @@ void LaneDetector::linesApproximation()
         l_state = '-';
         c_state = '+';
         r_state = '-';
+        left_line_.degree = center_line_.degree;
         polyfit(poly_nDegree_, createOffsetLine(center_line_, left_lane_width_), left_line_);
+        right_line_.degree = center_line_.degree;
         polyfit(poly_nDegree_, createOffsetLine(center_line_, -1 * right_lane_width_), right_line_);
       }
     }
@@ -1132,6 +1156,11 @@ void LaneDetector::linesApproximation()
     std::cout << "left_length   " << left_line_.length << std::endl;
     std::cout << "center_length " << center_line_.length << std::endl;
     std::cout << "right_length  " << right_line_.length << std::endl
+              << std::endl;
+
+    std::cout << "left_degree   " << left_line_.degree << std::endl;
+    std::cout << "center_degree " << center_line_.degree << std::endl;
+    std::cout << "right_degree  " << right_line_.degree << std::endl
               << std::endl;
 
     std::cout << "l" << l_state << "  c" << c_state << "  r" << r_state << std::endl;
@@ -1225,6 +1254,7 @@ void LaneDetector::addBottomPoint()
 
 bool LaneDetector::polyfit(int nDegree, std::vector<cv::Point2f> line, RoadLine &road_line)
 {
+  nDegree = road_line.degree;
   if (line.size() < nDegree)
     return false;
 
@@ -1278,6 +1308,7 @@ bool LaneDetector::polyfit(int nDegree, std::vector<cv::Point2f> line, RoadLine 
 
 bool LaneDetector::polyfit(int nDegree, RoadLine &road_line)
 {
+  nDegree = road_line.degree;
   if (lines_vector_converted_[road_line.index].size() < nDegree)
     return false;
 
@@ -1333,6 +1364,7 @@ void LaneDetector::adjust(RoadLine &good_road_line,
                                         RoadLine &short_road_line, bool left_offset)
 {
   std::vector<cv::Point2f> line = lines_vector_converted_[short_road_line.index];
+  short_road_line.degree = good_road_line.degree;
   std::vector<float> coeff;
   float a, b, width;
   if (line[1].y - line[line.size() - 1].y != 0)
@@ -1559,15 +1591,15 @@ std::vector<cv::Point2f> LaneDetector::createOffsetLine(RoadLine &road_line, flo
   for (float i = TOPVIEW_MIN_X - 0.1; i < TOPVIEW_MAX_X + 0.1; i += 0.05)
   {
     float deriative;
-    switch(road_line.coeff.size())
+    switch(road_line.degree)
     {
-    case 3:
+    case 2:
       deriative = 2 * road_line.coeff[2] * i + road_line.coeff[1];
       break;
-    case 4:
+    case 3:
       deriative = 3 * road_line.coeff[3] * pow(i,2) + 2 * road_line.coeff[2] * i + road_line.coeff[1];
       break;
-    case 2:
+    case 1:
       deriative = road_line.coeff[1];
       break;
     }
@@ -1750,5 +1782,47 @@ void LaneDetector::calcRoadLinesParams()
   {
     center_line_.length = 0;
     center_line_.is_short = true;
+  }
+}
+
+void LaneDetector::decide3degree()
+{
+  if (left_line_.index != -1)
+  {
+    if(lines_vector_converted_[left_line_.index][0].x < DEGREE3_MIN_X &&
+      lines_vector_converted_[left_line_.index][lines_vector_converted_[left_line_.index].size() - 1].x > DEGREE3_MAX_X)
+    {
+      left_line_.degree = 3;
+    }
+    else
+    {
+      left_line_.degree = 2;
+    }
+  }
+
+  if (right_line_.index != -1)
+  {
+    if(lines_vector_converted_[right_line_.index][0].x < DEGREE3_MIN_X &&
+      lines_vector_converted_[right_line_.index][lines_vector_converted_[right_line_.index].size() - 1].x > DEGREE3_MAX_X)
+    {
+      right_line_.degree = 3;
+    }
+    else
+    {
+      right_line_.degree = 2;
+    }
+  }
+
+  if (center_line_.index != -1)
+  {
+    if(lines_vector_converted_[center_line_.index][0].x < DEGREE3_MIN_X &&
+      lines_vector_converted_[center_line_.index][lines_vector_converted_[center_line_.index].size() - 1].x > DEGREE3_MAX_X)
+    {
+      center_line_.degree = 3;
+    }
+    else
+    {
+      center_line_.degree = 2;
+    }
   }
 }
