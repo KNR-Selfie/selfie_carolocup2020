@@ -209,14 +209,10 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
 
   if (debug_mode_)
   {
-    visualization_frame_.rows = homography_frame_.rows;
-    visualization_frame_.cols = homography_frame_.cols;
-
     convertApproxToFrameCoordinate();
-    drawPoints(visualization_frame_);
-
+    drawAproxOnHomography();
     openCVVisualization();
-    aproxVisualization();
+    aproxRVIZVisualization();
     pointsRVIZVisualization();
   }
 }
@@ -270,23 +266,23 @@ void LaneDetector::detectLines(cv::Mat &input_frame, std::vector<std::vector<cv:
   }
 }
 
-void LaneDetector::drawPoints(cv::Mat &frame)
+void LaneDetector::drawAproxOnHomography()
 {
-  frame = cv::Mat::zeros(frame.size(), CV_8UC3);
+  cv::cvtColor(homography_frame_, homography_frame_, CV_GRAY2BGR);
   if (!aprox_lines_frame_coordinate_[2].empty())
     for (int i = 0; i < aprox_lines_frame_coordinate_[2].size(); ++i)
     {
-      cv::circle(frame, aprox_lines_frame_coordinate_[2][i], 3, cv::Scalar(255, 0, 0), CV_FILLED, cv::LINE_AA);
+      cv::circle(homography_frame_, aprox_lines_frame_coordinate_[2][i], 2, cv::Scalar(255, 0, 0), CV_FILLED, cv::LINE_AA);
     }
   if (!aprox_lines_frame_coordinate_[0].empty())
     for (int i = 0; i < aprox_lines_frame_coordinate_[0].size(); ++i)
     {
-      cv::circle(frame, aprox_lines_frame_coordinate_[0][i], 3, cv::Scalar(0, 0, 255), CV_FILLED, cv::LINE_AA);
+      cv::circle(homography_frame_, aprox_lines_frame_coordinate_[0][i], 2, cv::Scalar(0, 0, 255), CV_FILLED, cv::LINE_AA);
     }
   if (!aprox_lines_frame_coordinate_[1].empty())
     for (int i = 0; i < aprox_lines_frame_coordinate_[1].size(); ++i)
     {
-      cv::circle(frame, aprox_lines_frame_coordinate_[1][i], 3, cv::Scalar(0, 255, 0), CV_FILLED, cv::LINE_AA);
+      cv::circle(homography_frame_, aprox_lines_frame_coordinate_[1][i], 2, cv::Scalar(0, 255, 0), CV_FILLED, cv::LINE_AA);
     }
 }
 
@@ -303,9 +299,6 @@ void LaneDetector::openCVVisualization()
 
   cv::namedWindow("masked", cv::WINDOW_NORMAL);
   cv::imshow("masked", masked_frame_);
-
-  cv::namedWindow("Output", cv::WINDOW_NORMAL);
-  cv::imshow("Output", visualization_frame_);
 
   cv::namedWindow("Homography", cv::WINDOW_NORMAL);
   cv::imshow("Homography", homography_frame_);
@@ -725,7 +718,7 @@ void LaneDetector::convertApproxToFrameCoordinate()
   aprox_lines_frame_coordinate_[2].clear();
 
   cv::Point2f p;
-  float increment = 0.1;
+  float increment = 0.04;
   for (float x = TOPVIEW_MIN_X; x < TOPVIEW_MAX_X; x += increment)
   {
     p.x = x;
@@ -850,7 +843,7 @@ void LaneDetector::pointsRVIZVisualization()
   points_cloud_pub_.publish(points_cloud_);
 }
 
-void LaneDetector::aproxVisualization()
+void LaneDetector::aproxRVIZVisualization()
 {
   visualization_msgs::Marker marker;
 

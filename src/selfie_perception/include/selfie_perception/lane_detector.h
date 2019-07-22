@@ -73,7 +73,6 @@ class LaneDetector
   cv::Mat right_lane_ROI_;
   cv::Mat right_lane_frame_;
   cv::Mat canny_frame_;
-  cv::Mat visualization_frame_;
   cv::Mat homography_frame_;
   cv::Mat debug_frame_;
 
@@ -109,13 +108,6 @@ class LaneDetector
   void linesApproximation();
   void calcRoadLinesParams();
   void decide3degree();
-
-  void pointsRVIZVisualization();
-  void aproxVisualization();
-  sensor_msgs::PointCloud points_cloud_;
-  ros::Publisher points_cloud_pub_;
-  ros::Publisher aprox_visualization_pub_;
-  void lanesVectorVisualization(cv::Mat &visualization_frame);
   void removeCar(cv::Mat &frame);
   void addBottomPoint();
   bool polyfit(int nDegree, std::vector<cv::Point2f> line, RoadLine &road_line);
@@ -126,7 +118,15 @@ class LaneDetector
   void removeHorizontalLines();
   std::vector<cv::Point2f> createOffsetLine(RoadLine &road_line, float offset);
   void detectStartAndIntersectionLine();
-  void intersectionHandler();
+
+  // visualization
+  sensor_msgs::PointCloud points_cloud_;
+  ros::Publisher points_cloud_pub_;
+  ros::Publisher aprox_visualization_pub_;
+  void pointsRVIZVisualization();
+  void aproxRVIZVisualization();
+  void drawAproxOnHomography();
+  void lanesVectorVisualization(cv::Mat &visualization_frame);
 
   float min_length_search_line_;
   float min_length_lane_;
