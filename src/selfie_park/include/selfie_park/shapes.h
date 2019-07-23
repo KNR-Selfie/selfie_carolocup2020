@@ -221,7 +221,7 @@ public:
   }
   void print_lines() {}
 
-  void visualize(ros::Publisher &pub)
+  void visualize(ros::Publisher &pub, float red = 0.4, float green = 0.3, float blue = 0)
   {
     Point to_draw_1 = bottom_left;
     Point to_draw_2 = top_left;
@@ -235,9 +235,9 @@ public:
     marker.id = 4;
     marker.lifetime = ros::Duration();
 
-    marker.color.r = 0.4f;
-    marker.color.g = 0.3f;
-    marker.color.b = 0.0f;
+    marker.color.r = red;
+    marker.color.g = green;
+    marker.color.b = blue;
     marker.color.a = 1.0f;
 
     marker.scale.x = 0.01;
