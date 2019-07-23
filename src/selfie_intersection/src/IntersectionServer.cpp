@@ -46,7 +46,7 @@ void IntersectionServer::send_goal()
 {
   selfie_msgs::intersectionResult result;
   result.done = true;
-  intersectionServer_.setSucceded(result);
+  intersectionServer_.setSucceeded();
 }
 
 void IntersectionServer::filter_boxes(const selfie_msgs::PolygonArray &msg)
