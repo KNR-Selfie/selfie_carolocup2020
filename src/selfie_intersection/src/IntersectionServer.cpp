@@ -17,6 +17,7 @@ void IntersectionServer::init()
 {
   obstacles_sub_ = nh_.subscribe("/obstacles", 1, &IntersectionServer::manager, this);
   speed_publisher_ = nh_.advertise<std_msgs::Float64>("/max_speed", 0);
+  publishFeedback(STOPPED_ON_INTERSECTION);
 }
 
 void IntersectionServer::manager(const selfie_msgs::PolygonArray &boxes) {}
@@ -46,3 +47,9 @@ void IntersectionServer::filter_boxes(const selfie_msgs::PolygonArray &msg)
   }
 }
 // TODO filtering using also size of box
+
+void IntersectionServer::publishFeedback(program_states newStatus)
+{
+  action_status_.action_status=newStatus;
+  intersectionServer_.publishFeedback(action_status_);
+} 

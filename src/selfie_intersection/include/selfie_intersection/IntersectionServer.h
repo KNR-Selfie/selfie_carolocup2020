@@ -28,9 +28,11 @@ private:
   float point_max_y_;
 
   std::list<Box> filtered_boxes_;
+  selfie_msgs::intersectionFeedback action_status_;
 
   actionlib::SimpleActionServer<selfie_msgs::intersectionAction> intersectionServer_;
   void init();
   void manager(const selfie_msgs::PolygonArray &);
   void filter_boxes(const selfie_msgs::PolygonArray &);
+  void publishFeedback(program_states newStatus);
 };

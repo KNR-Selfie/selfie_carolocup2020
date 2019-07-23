@@ -25,6 +25,11 @@ typedef enum program_states
     OUT_PLACE, // car drives out of parking place
     READY_TO_DRIVE, // car ready to further ride
 
+    //intersection
+    STOPPED_ON_INTERSECTION,  //car stopped before intersection
+    FOUND_OBSTACLES //Found obstacles on priority road
+
+
 }feedback_variable;
 
 #endif // SCHEDULER_ENUMS_H
