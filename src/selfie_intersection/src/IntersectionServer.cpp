@@ -18,9 +18,36 @@ void IntersectionServer::init()
   obstacles_sub_ = nh_.subscribe("/obstacles", 1, &IntersectionServer::manager, this);
   speed_publisher_ = nh_.advertise<std_msgs::Float64>("/max_speed", 0);
   publishFeedback(STOPPED_ON_INTERSECTION);
+  ROS_INFO("Initialized");
 }
 
-void IntersectionServer::manager(const selfie_msgs::PolygonArray &boxes) {}
+void IntersectionServer::manager(const selfie_msgs::PolygonArray &boxes)
+{
+  if (!intersectionServer_.isActive())
+  {
+    ROS_INFO("Search server not active");
+    return;
+  }
+  filter_boxes(boxes);
+  if (filtered_boxes_.size() != 0)
+  {
+    ROS_INFO_THROTTLE(1.5, "Another car on the road");
+    if (action_status_.action_status != FOUND_OBSTACLES)
+      publishFeedback(FOUND_OBSTACLES);
+  } else
+  {
+    publishFeedback(ROAD_CLEAR);
+    ROS_INFO("Road clear");
+    send_goal();
+  }
+}
+
+void IntersectionServer::send_goal()
+{
+  selfie_msgs::intersectionResult result;
+  result.done = true;
+  intersectionServer_.setSucceded(result);
+}
 
 void IntersectionServer::filter_boxes(const selfie_msgs::PolygonArray &msg)
 {
@@ -50,6 +77,6 @@ void IntersectionServer::filter_boxes(const selfie_msgs::PolygonArray &msg)
 
 void IntersectionServer::publishFeedback(program_states newStatus)
 {
-  action_status_.action_status=newStatus;
+  action_status_.action_status = newStatus;
   intersectionServer_.publishFeedback(action_status_);
-} 
+}

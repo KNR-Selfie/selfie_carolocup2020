@@ -27,7 +27,8 @@ typedef enum program_states
 
     //intersection
     STOPPED_ON_INTERSECTION,  //car stopped before intersection
-    FOUND_OBSTACLES //Found obstacles on priority road
+    FOUND_OBSTACLES, //Found obstacles on priority road
+    ROAD_CLEAR  //none obstacles on priority road
 
 
 }feedback_variable;

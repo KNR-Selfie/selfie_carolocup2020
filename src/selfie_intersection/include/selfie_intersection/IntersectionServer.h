@@ -35,4 +35,5 @@ private:
   void manager(const selfie_msgs::PolygonArray &);
   void filter_boxes(const selfie_msgs::PolygonArray &);
   void publishFeedback(program_states newStatus);
+  void send_goal();
 };
