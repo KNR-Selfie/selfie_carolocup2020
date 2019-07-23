@@ -1,3 +1,8 @@
+/**
+*Copyright ( c ) 2019, KNR Selfie
+*This code is licensed under BSD license (see LICENSE for details)
+**/
+
 #include <selfie_intersection/IntersectionServer.h>
 
 IntersectionServer::IntersectionServer(const ros::NodeHandle &nh, const ros::NodeHandle &pnh)
