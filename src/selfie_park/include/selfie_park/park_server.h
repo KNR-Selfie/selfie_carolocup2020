@@ -59,7 +59,6 @@ private:
   void initParkingSpot(const geometry_msgs::Polygon &msg);
   void blinkLeft(bool a);
   void blinkRight(bool a);
-  geometry_msgs::Point pointParkingToOdom(float x, float y);
 
   enum Parking_State
   {

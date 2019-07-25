@@ -24,19 +24,6 @@ ParkService::ParkService(const ros::NodeHandle &nh, const ros::NodeHandle &pnh) 
   left_indicator_pub_ = nh_.advertise<std_msgs::Bool>("left_turn_indicator", 20);
 }
 
-geometry_msgs::Point ParkService::pointParkingToOdom(float x, float y)
-{
-  tf::Vector3 tf_point;
-  geometry_msgs::Point odom_point;
-  tf_point.setX(x);
-  tf_point.setY(y);
-  tf_point.setZ(0.0);
-  tf_point = parking_spot_position_.transform_ * tf_point;
-  odom_point.x = tf_point.x();
-  odom_point.y = tf_point.y();
-  return odom_point;
-}
-
 void ParkService::odomCallback(const nav_msgs::Odometry &msg)
 {
 
