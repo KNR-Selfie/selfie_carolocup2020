@@ -22,6 +22,7 @@ IntersectionServer::IntersectionServer(const ros::NodeHandle &nh, const ros::Nod
 
 void IntersectionServer::init()
 {
+  goal_=*(intersectionServer_.acceptNewGoal());
   obstacles_sub_ = nh_.subscribe("/obstacles", 1, &IntersectionServer::manager, this);
   speed_publisher_ = nh_.advertise<std_msgs::Float64>("/max_speed", 0);
   if (visualization)
