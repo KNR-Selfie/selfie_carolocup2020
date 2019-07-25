@@ -2,9 +2,9 @@
 
 
 ParkService::ParkService(const ros::NodeHandle &nh, const ros::NodeHandle &pnh) :
-        nh_(nh),
-        pnh_(pnh),
-        as_(nh_, "park", false)
+  nh_(nh),
+  pnh_(pnh),
+  as_(nh_, "park", false)
 {
   pnh_.param<std::string>("odom_topic", odom_topic_, "/odom");
   pnh_.param<std::string>("ackermann_topic", ackermann_topic_, "/drive");
@@ -300,9 +300,9 @@ ParkService::Position::Position(const nav_msgs::Odometry &msg, float offset)
 }
 
 ParkService::Position::Position(float x, float y, float rot) :
-        x_(x),
-        y_(y),
-        rot_(rot)
+  x_(x),
+  y_(y),
+  rot_(rot)
 {
   tf::Vector3 vec(x_, y_, 0);
   tf::Quaternion quat = tf::createQuaternionFromYaw(rot_);

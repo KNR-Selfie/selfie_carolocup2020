@@ -12,8 +12,6 @@
 #include <tf/tf.h>
 #include <vector>
 #include <ackermann_msgs/AckermannDriveStamped.h>
-#include <visualization_msgs/Marker.h>
-#include <visualization_msgs/MarkerArray.h>
 #include <std_msgs/Bool.h>
 
 #define ODOM_TO_FRONT 0.18
