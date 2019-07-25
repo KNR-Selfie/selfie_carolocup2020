@@ -28,3 +28,26 @@ rosrun selfie_park detect_parking_spot
  - `speed_when_found_place` (*float*, default: 0.3)
    - speed when found possible free place
 
+# Park Action
+## Usage
+```
+. devel/setup.bash
+rosrun selfie_park park_server
+```
+## Topics
+### Subscribed
+- /odom (nav_msgs/OdometryStamped)
+### Published
+- /drive (ackermann_msgs/AckermannDriveStamped)
+- /right_turn_indicator (std_msgs/Bool)
+- /left_turn_indicator (std_msgs/Bool)
+
+## Parameters
+- minimal_start_parking_x (float)
+distance, at which the car will start parking, in reference to the beginning of the parking spot
+- state_msgs (bool)
+printing messages indicating the current state of the parking manouvre
+- max_rot (float)
+maximal rotation of the vehicle when parking
+- parking_speed(float)
+
