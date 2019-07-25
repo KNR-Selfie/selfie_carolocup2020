@@ -110,8 +110,8 @@ class LaneDetector
   void decide3degree();
   void removeCar(cv::Mat &frame);
   void addBottomPoint();
-  bool polyfit(int nDegree, std::vector<cv::Point2f> line, RoadLine &road_line);
-  bool polyfit(int nDegree, RoadLine &road_line);
+  bool polyfit(std::vector<cv::Point2f> line, RoadLine &road_line);
+  bool polyfit(RoadLine &road_line);
   void adjust(RoadLine &good_road_line, RoadLine &short_road_line, bool left_offset);
   void calcRoadWidth();
   void generatePoints();
@@ -142,7 +142,6 @@ class LaneDetector
   float max_mid_line_gap_;
   float nominal_center_line_Y_;
   float points_density_;
-  int poly_nDegree_;
   bool init_imageCallback_;
   int treshold_block_size_;
   float real_window_size_;
