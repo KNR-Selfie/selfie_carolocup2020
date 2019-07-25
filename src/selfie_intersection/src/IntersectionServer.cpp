@@ -17,6 +17,7 @@ IntersectionServer::IntersectionServer(const ros::NodeHandle &nh, const ros::Nod
   pnh_.param<float>("point_min_y", point_min_y_, -3);
   pnh_.param<float>("point_max_y", point_max_y_, 3);
   pnh_.param<bool>("visualization", visualization, false);
+  ROS_INFO("Intersection server: active");
 }
 
 void IntersectionServer::init()
