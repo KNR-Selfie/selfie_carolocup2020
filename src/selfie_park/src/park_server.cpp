@@ -1,5 +1,9 @@
-#include "../include/selfie_park/park_server.h"
+/**
+*Copyright ( c ) 2019, KNR Selfie
+*This code is licensed under BSD license (see LICENSE for details)
+**/
 
+#include "../include/selfie_park/park_server.h"
 
 ParkService::ParkService(const ros::NodeHandle &nh, const ros::NodeHandle &pnh) :
   nh_(nh),

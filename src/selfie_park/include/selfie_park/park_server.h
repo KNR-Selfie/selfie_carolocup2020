@@ -49,8 +49,9 @@ private:
     Position operator-(const Position &other);
     Position(const tf::Transform &trans);
     Position(const Position &other, float offset = 0);
-  } actual_odom_position_, actual_parking_position_, parking_spot_position_, actual_back_odom_position_, actual_front_odom_position_,
-          actual_laser_odom_position_, actual_back_parking_position_, actual_front_parking_position_, actual_laser_parking_position_;
+  } actual_odom_position_, actual_parking_position_, parking_spot_position_, actual_back_odom_position_,
+          actual_front_odom_position_, actual_laser_odom_position_, actual_back_parking_position_,
+          actual_front_parking_position_, actual_laser_parking_position_;
 
   void drive(float speed, float steering_angle);
   bool toParkingSpot();
