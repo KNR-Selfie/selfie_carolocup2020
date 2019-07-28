@@ -11,12 +11,12 @@
 #define TOPVIEW_COLS 640
 
 #define TOPVIEW_MIN_X 0.3
-#define TOPVIEW_MAX_X 1.3
-#define TOPVIEW_MIN_Y -1.2
-#define TOPVIEW_MAX_Y 1.2
+#define TOPVIEW_MAX_X 1.5
+#define TOPVIEW_MIN_Y -1.3
+#define TOPVIEW_MAX_Y 1.3
 
 #define DEGREE3_MIN_X 0.5
-#define DEGREE3_MAX_X 1.0
+#define DEGREE3_MAX_X 1.1
 
 static int Acc_slider = 1;
 static double Acc_value = 0.7;
@@ -35,7 +35,6 @@ LaneDetector::LaneDetector(const ros::NodeHandle &nh, const ros::NodeHandle &pnh
   max_delta_y_lane_(0.08),
   nominal_center_line_Y_(0.2),
   min_length_to_2aprox_(0.56),
-  min_length_to_3aprox_(0.7),
   left_lane_width_(0.4),
   right_lane_width_(0.4),
   points_density_(15),
@@ -194,7 +193,8 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
     addBottomPoint();
     calcRoadLinesParams();
 
-    calcRoadWidth();
+    if(center_line_.index != -1)
+      calcRoadWidth();
     linesApproximation();
     publishMarkings();
   }
@@ -1399,76 +1399,76 @@ void LaneDetector::adjust(RoadLine &good_road_line,
 
 void LaneDetector::calcRoadWidth()
 {
-  std::vector<cv::Point2f> center_line_points;
-
   cv::Point2f p;
-  float increment = 0.05;
-  for (float x = TOPVIEW_MIN_X; x < TOPVIEW_MAX_X; x += increment)
+  cv::Point2f p_ahead;
+  p_ahead.x = 0.6;
+  p_ahead.y = getAproxY(center_line_.coeff, p_ahead.x);
+  double deriative;
+  if(center_line_.degree == 3)
+    deriative = 3 * center_line_.coeff[3] * pow(p_ahead.x, 2) + 2 * center_line_.coeff[2] * p_ahead.x + center_line_.coeff[1];
+  else
+    deriative = 2 * center_line_.coeff[2] * p_ahead.x + center_line_.coeff[1];
+
+  double a_param_orthg = -1 / deriative;
+  double b_param_orthg = p_ahead.y - a_param_orthg * p_ahead.x;
+
+  // right lane
+  if(right_line_.index != -1)
   {
-    p.x = x;
-    p.y = getAproxY(center_line_.coeff, x);
-    center_line_points.push_back(p);
+    p.y = p_ahead.y - 0.3;
+    float step = -0.01;
+    float last_dist = 9999999; // init huge value
+
+    while (true || std::fabs(p.y) > 1)
+    {
+      p.x = (p.y - b_param_orthg) / a_param_orthg;
+      cv::Point2f p_aprox;
+      p_aprox.x = p.x;
+      p_aprox.y = getAproxY(right_line_.coeff, p_aprox.x);
+      float dist = getDistance(p,p_aprox);
+      if(dist - last_dist > 0)
+      {
+        break;
+      }
+      else
+      {
+        last_dist = dist;
+        p.y += step;
+      }
+    }
+    float lane_width = getDistance(p_ahead, p);
+    if(lane_width > 0.3 && lane_width < 0.5)
+      right_lane_width_ = lane_width;
   }
 
-  float widthSum_r = 0;
-  float widthSum_l = 0;
-  float a_param_orthg = 0;
-  float b_param_orthg = 0;
-  float delta_right = 0, delta_left = 0;
-  float x1_r = 0, x2_r = 0, y1_r = 0, y2_r = 0;
-  float dst1_r = 0, dst2_r = 0;
-  float x1_l = 0, x2_l = 0, y1_l = 0, y2_l = 0;
-  float dst1_l = 0, dst2_l = 0;
-
-  for (int i = 0; i < center_line_points.size(); ++i)
+  // left lane
+  if(left_line_.index != -1)
   {
-    a_param_orthg = -1 / (2 * center_line_.coeff[2] * center_line_points[i].x + center_line_.coeff[1]);
-    // if full horizontal there are some errors in delta
-    if (std::abs(a_param_orthg) > 200)
-      a_param_orthg = 200;
-    b_param_orthg = center_line_points[i].y - a_param_orthg * center_line_points[i].x;
+    p.y = p_ahead.y + 0.3;
+    float step = 0.01;
+    float last_dist = 9999999; // init huge value
 
-    delta_right = ((right_line_.coeff[1] - a_param_orthg) * (right_line_.coeff[1] - a_param_orthg))
-                  - 4 * (right_line_.coeff[2] * (right_line_.coeff[0] - b_param_orthg));
-    delta_left = ((left_line_.coeff[1] - a_param_orthg) * (left_line_.coeff[1] - a_param_orthg))
-                  - 4 * (left_line_.coeff[2] * (left_line_.coeff[0] - b_param_orthg));
-
-    x1_r = (-1 * (right_line_.coeff[1] - a_param_orthg) - sqrtf(delta_right)) / (2 * right_line_.coeff[2]);
-    x2_r = (-1 * (right_line_.coeff[1] - a_param_orthg) + sqrtf(delta_right)) / (2 * right_line_.coeff[2]);
-    y1_r = a_param_orthg * x1_r + b_param_orthg;
-    y2_r = a_param_orthg * x2_r + b_param_orthg;
-
-    x1_l = (-1 * (left_line_.coeff[1] - a_param_orthg) - sqrtf(delta_left)) / (2 * left_line_.coeff[2]);
-    x2_l = (-1 * (left_line_.coeff[1] - a_param_orthg) + sqrtf(delta_left)) / (2 * left_line_.coeff[2]);
-    y1_l = a_param_orthg * x1_l + b_param_orthg;
-    y2_l = a_param_orthg * x2_l + b_param_orthg;
-
-    dst1_r = sqrtf(((x1_r - center_line_points[i].x) * (x1_r - center_line_points[i].x))
-            + ((y1_r - center_line_points[i].y) * (y1_r - center_line_points[i].y)));
-    dst2_r = sqrtf(((x2_r - center_line_points[i].x) * (x2_r - center_line_points[i].x))
-            + ((y2_r - center_line_points[i].y) * (y2_r - center_line_points[i].y)));
-
-    dst1_l = sqrtf(((x1_l - center_line_points[i].x) * (x1_l - center_line_points[i].x))
-            + ((y1_l - center_line_points[i].y) * (y1_l - center_line_points[i].y)));
-    dst2_l = sqrtf(((x2_l - center_line_points[i].x) * (x2_l - center_line_points[i].x))
-            + ((y2_l - center_line_points[i].y) * (y2_l - center_line_points[i].y)));
-
-    if (dst1_r > dst2_r)
-      widthSum_r += dst2_r;
-    else
-      widthSum_r += dst1_r;
-
-    if (dst1_l > dst2_l)
-      widthSum_l += dst2_l;
-    else
-      widthSum_l += dst1_l;
+    while (true || std::fabs(p.y) > 1)
+    {
+      p.x = (p.y - b_param_orthg) / a_param_orthg;
+      cv::Point2f p_aprox;
+      p_aprox.x = p.x;
+      p_aprox.y = getAproxY(left_line_.coeff, p_aprox.x);
+      float dist = getDistance(p,p_aprox);
+      if(dist - last_dist > 0)
+      {
+        break;
+      }
+      else
+      {
+        last_dist = dist;
+        p.y += step;
+      }
+    }
+    float lane_width = getDistance(p_ahead, p);
+    if(lane_width > 0.3 && lane_width < 0.5)
+      left_lane_width_ = lane_width;
   }
-
-  if (widthSum_r / center_line_points.size() < 0.47 && widthSum_r / center_line_points.size() > 0.35)
-    right_lane_width_ = widthSum_r / center_line_points.size();
-
-  if (widthSum_l / center_line_points.size() < 0.47 && widthSum_l / center_line_points.size() > 0.35)
-    left_lane_width_ = widthSum_l / center_line_points.size();
 }
 
 void LaneDetector::generatePoints()

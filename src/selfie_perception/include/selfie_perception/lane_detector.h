@@ -132,7 +132,6 @@ class LaneDetector
   float min_length_lane_;
   float max_delta_y_lane_;
   float min_length_to_2aprox_;
-  float min_length_to_3aprox_;
   float left_lane_width_;
   float right_lane_width_;
 
