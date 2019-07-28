@@ -193,7 +193,7 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
     addBottomPoint();
     calcRoadLinesParams();
 
-    if(center_line_.index != -1)
+    if (center_line_.index != -1)
       calcRoadWidth();
     linesApproximation();
     publishMarkings();
@@ -204,10 +204,7 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
     debug_frame_.rows = homography_frame_.rows;
     debug_frame_.cols = homography_frame_.cols;
     lanesVectorVisualization(debug_frame_);
-  }
 
-  if (debug_mode_)
-  {
     convertApproxToFrameCoordinate();
     drawAproxOnHomography();
     openCVVisualization();
@@ -271,17 +268,17 @@ void LaneDetector::drawAproxOnHomography()
   if (!aprox_lines_frame_coordinate_[2].empty())
     for (int i = 0; i < aprox_lines_frame_coordinate_[2].size(); ++i)
     {
-      cv::circle(homography_frame_, aprox_lines_frame_coordinate_[2][i], 2, cv::Scalar(255, 0, 0), CV_FILLED, cv::LINE_AA);
+      cv::circle(homography_frame_, aprox_lines_frame_coordinate_[2][i], 2, cv::Scalar(255, 0, 0), CV_FILLED);
     }
   if (!aprox_lines_frame_coordinate_[0].empty())
     for (int i = 0; i < aprox_lines_frame_coordinate_[0].size(); ++i)
     {
-      cv::circle(homography_frame_, aprox_lines_frame_coordinate_[0][i], 2, cv::Scalar(0, 0, 255), CV_FILLED, cv::LINE_AA);
+      cv::circle(homography_frame_, aprox_lines_frame_coordinate_[0][i], 2, cv::Scalar(0, 0, 255), CV_FILLED);
     }
   if (!aprox_lines_frame_coordinate_[1].empty())
     for (int i = 0; i < aprox_lines_frame_coordinate_[1].size(); ++i)
     {
-      cv::circle(homography_frame_, aprox_lines_frame_coordinate_[1][i], 2, cv::Scalar(0, 255, 0), CV_FILLED, cv::LINE_AA);
+      cv::circle(homography_frame_, aprox_lines_frame_coordinate_[1][i], 2, cv::Scalar(0, 255, 0), CV_FILLED);
     }
 }
 
@@ -1360,15 +1357,15 @@ void LaneDetector::adjust(RoadLine &good_road_line,
   float step = 0.03;
   float offset = 0.2;
   int count = 0;
-  if(!left_offset)
+  if (!left_offset)
   {
     step *= -1;
     offset *= -1;
   }
-  float last_cost = 9999999; // init huge value
+  float last_cost = 9999999;  // init huge value
   while (true || std::fabs(offset) > 1)
   {
-    if(polyfit(createOffsetLine(good_road_line, offset), short_road_line))
+    if (polyfit(createOffsetLine(good_road_line, offset), short_road_line))
     {
       float current_cost = 0;
       for (int i = 0; i < lines_vector_converted_[short_road_line.index].size() - 1; ++i)
@@ -1385,16 +1382,15 @@ void LaneDetector::adjust(RoadLine &good_road_line,
     ++count;
   }
   offset -= step;
-  if(!polyfit(createOffsetLine(good_road_line, offset), short_road_line))
+  if (!polyfit(createOffsetLine(good_road_line, offset), short_road_line))
   {
     std::vector<float> coeff = good_road_line.coeff;
-    if(left_offset)
+    if (left_offset)
       good_road_line.coeff[0] += left_lane_width_;
     else
       good_road_line.coeff[0] -= right_lane_width_;
     short_road_line.coeff = coeff;
   }
-
 }
 
 void LaneDetector::calcRoadWidth()
@@ -1404,20 +1400,23 @@ void LaneDetector::calcRoadWidth()
   p_ahead.x = 0.6;
   p_ahead.y = getAproxY(center_line_.coeff, p_ahead.x);
   double deriative;
-  if(center_line_.degree == 3)
-    deriative = 3 * center_line_.coeff[3] * pow(p_ahead.x, 2) + 2 * center_line_.coeff[2] * p_ahead.x + center_line_.coeff[1];
+  if (center_line_.degree == 3)
+    deriative = 3 * center_line_.coeff[3] * pow(p_ahead.x, 2)
+              + 2 * center_line_.coeff[2] * p_ahead.x
+              + center_line_.coeff[1];
   else
-    deriative = 2 * center_line_.coeff[2] * p_ahead.x + center_line_.coeff[1];
+    deriative = 2 * center_line_.coeff[2] * p_ahead.x
+              + center_line_.coeff[1];
 
   double a_param_orthg = -1 / deriative;
   double b_param_orthg = p_ahead.y - a_param_orthg * p_ahead.x;
 
   // right lane
-  if(right_line_.index != -1)
+  if (right_line_.index != -1)
   {
     p.y = p_ahead.y - 0.3;
     float step = -0.01;
-    float last_dist = 9999999; // init huge value
+    float last_dist = 9999999;  // init huge value
 
     while (true || std::fabs(p.y) > 1)
     {
@@ -1425,8 +1424,8 @@ void LaneDetector::calcRoadWidth()
       cv::Point2f p_aprox;
       p_aprox.x = p.x;
       p_aprox.y = getAproxY(right_line_.coeff, p_aprox.x);
-      float dist = getDistance(p,p_aprox);
-      if(dist - last_dist > 0)
+      float dist = getDistance(p, p_aprox);
+      if (dist - last_dist > 0)
       {
         break;
       }
@@ -1437,16 +1436,16 @@ void LaneDetector::calcRoadWidth()
       }
     }
     float lane_width = getDistance(p_ahead, p);
-    if(lane_width > 0.3 && lane_width < 0.5)
+    if (lane_width > 0.3 && lane_width < 0.5)
       right_lane_width_ = lane_width;
   }
 
   // left lane
-  if(left_line_.index != -1)
+  if (left_line_.index != -1)
   {
     p.y = p_ahead.y + 0.3;
     float step = 0.01;
-    float last_dist = 9999999; // init huge value
+    float last_dist = 9999999;  // init huge value
 
     while (true || std::fabs(p.y) > 1)
     {
@@ -1454,8 +1453,8 @@ void LaneDetector::calcRoadWidth()
       cv::Point2f p_aprox;
       p_aprox.x = p.x;
       p_aprox.y = getAproxY(left_line_.coeff, p_aprox.x);
-      float dist = getDistance(p,p_aprox);
-      if(dist - last_dist > 0)
+      float dist = getDistance(p, p_aprox);
+      if (dist - last_dist > 0)
       {
         break;
       }
@@ -1466,7 +1465,7 @@ void LaneDetector::calcRoadWidth()
       }
     }
     float lane_width = getDistance(p_ahead, p);
-    if(lane_width > 0.3 && lane_width < 0.5)
+    if (lane_width > 0.3 && lane_width < 0.5)
       left_lane_width_ = lane_width;
   }
 }
@@ -1587,13 +1586,13 @@ std::vector<cv::Point2f> LaneDetector::createOffsetLine(RoadLine &road_line, flo
   for (float i = TOPVIEW_MIN_X - 0.1; i < TOPVIEW_MAX_X + 0.1; i += 0.05)
   {
     float deriative;
-    switch(road_line.degree)
+    switch (road_line.degree)
     {
     case 2:
       deriative = 2 * road_line.coeff[2] * i + road_line.coeff[1];
       break;
     case 3:
-      deriative = 3 * road_line.coeff[3] * pow(i,2) + 2 * road_line.coeff[2] * i + road_line.coeff[1];
+      deriative = 3 * road_line.coeff[3] * pow(i, 2) + 2 * road_line.coeff[2] * i + road_line.coeff[1];
       break;
     case 1:
       deriative = road_line.coeff[1];
@@ -1785,7 +1784,7 @@ void LaneDetector::decide3degree()
 {
   if (left_line_.index != -1)
   {
-    if(lines_vector_converted_[left_line_.index][0].x < DEGREE3_MIN_X &&
+    if (lines_vector_converted_[left_line_.index][0].x < DEGREE3_MIN_X &&
       lines_vector_converted_[left_line_.index][lines_vector_converted_[left_line_.index].size() - 1].x > DEGREE3_MAX_X)
     {
       left_line_.degree = 3;
@@ -1798,7 +1797,7 @@ void LaneDetector::decide3degree()
 
   if (right_line_.index != -1)
   {
-    if(lines_vector_converted_[right_line_.index][0].x < DEGREE3_MIN_X &&
+    if (lines_vector_converted_[right_line_.index][0].x < DEGREE3_MIN_X &&
       lines_vector_converted_[right_line_.index][lines_vector_converted_[right_line_.index].size() - 1].x > DEGREE3_MAX_X)
     {
       right_line_.degree = 3;
@@ -1811,7 +1810,7 @@ void LaneDetector::decide3degree()
 
   if (center_line_.index != -1)
   {
-    if(lines_vector_converted_[center_line_.index][0].x < DEGREE3_MIN_X &&
+    if (lines_vector_converted_[center_line_.index][0].x < DEGREE3_MIN_X &&
       lines_vector_converted_[center_line_.index][lines_vector_converted_[center_line_.index].size() - 1].x > DEGREE3_MAX_X)
     {
       center_line_.degree = 3;
