@@ -16,13 +16,13 @@ IntersectionServer::IntersectionServer(const ros::NodeHandle &nh, const ros::Nod
   pnh_.param<float>("point_max_x", point_max_x_, 0.95);
   pnh_.param<float>("point_min_y", point_min_y_, -3);
   pnh_.param<float>("point_max_y", point_max_y_, 3);
-  pnh_.param<bool>("visualization", visualization, false);
+  pnh_.param<bool>("visualization", visualization, true);
   ROS_INFO("Intersection server: active");
 }
 
 void IntersectionServer::init()
 {
-  goal_=*(intersectionServer_.acceptNewGoal());
+  goal_ = *(intersectionServer_.acceptNewGoal());
   obstacles_sub_ = nh_.subscribe("/obstacles", 1, &IntersectionServer::manager, this);
   speed_publisher_ = nh_.advertise<std_msgs::Float64>("/max_speed", 0);
   if (visualization)
@@ -45,7 +45,7 @@ void IntersectionServer::manager(const selfie_msgs::PolygonArray &boxes)
   {
     ROS_INFO_THROTTLE(1.5, "Another car on the road");
     if (visualization)
-      visualizeBoxes(filtered_boxes_, 1, 0.05, 0.05);
+      Box().visualizeList(filtered_boxes_, visualize_intersection, "obstacles_on_road", 0.9, 0.9, 0.9);
     if (action_status_.action_status != FOUND_OBSTACLES)
       publishFeedback(FOUND_OBSTACLES);
   } else
@@ -83,7 +83,11 @@ void IntersectionServer::filter_boxes(const selfie_msgs::PolygonArray &msg)
     if (box_ok)
     {
       Box temp_box(polygon);
-      filtered_boxes_.insert(filtered_boxes_.begin(), temp_box);
+      filtered_boxes_.push_back(temp_box);
+      if (visualization == false)
+      {
+        return; // for better optimalization
+      }
     }
   }
 }
@@ -93,12 +97,4 @@ void IntersectionServer::publishFeedback(program_states newStatus)
 {
   action_status_.action_status = newStatus;
   intersectionServer_.publishFeedback(action_status_);
-}
-
-void IntersectionServer::visualizeBoxes(std::list<Box> boxes, float r = 1, float g = 1, float b = 1)
-{
-  for (std::list<Box>::iterator iter = boxes.begin(); iter != boxes.end(); iter++)
-  {
-    iter->visualize(visualize_intersection, r, g, b);
-  }
 }
