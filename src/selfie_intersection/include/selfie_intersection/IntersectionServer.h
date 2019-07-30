@@ -33,6 +33,7 @@ private:
   std::list<Box> filtered_boxes_;
   selfie_msgs::intersectionFeedback action_status_;
   selfie_msgs::intersectionGoal goal_;
+  std_msgs::Float64 speed_;
 
   actionlib::SimpleActionServer<selfie_msgs::intersectionAction> intersectionServer_;
   void init();

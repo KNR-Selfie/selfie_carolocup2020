@@ -12,6 +12,7 @@ IntersectionServer::IntersectionServer(const ros::NodeHandle &nh, const ros::Nod
 {
   intersectionServer_.registerGoalCallback(boost::bind(&IntersectionServer::init, this));
   intersectionServer_.start();
+  speed_.data = 0;
   pnh_.param<float>("point_min_x", point_min_x_, 0.01);
   pnh_.param<float>("point_max_x", point_max_x_, 0.95);
   pnh_.param<float>("point_min_y", point_min_y_, -3);
@@ -29,6 +30,7 @@ void IntersectionServer::init()
   {
     visualize_intersection_ = nh_.advertise<visualization_msgs::Marker>("/intersection", 10);
   }
+  speed_publisher_.publish(speed_);
   publishFeedback(STOPPED_ON_INTERSECTION);
   ROS_INFO("Initialized");
 }
@@ -47,7 +49,10 @@ void IntersectionServer::manager(const selfie_msgs::PolygonArray &boxes)
     if (visualization_)
       Box().visualizeList(filtered_boxes_, visualize_intersection_, "obstacles_on_road", 0.9, 0.9, 0.9);
     if (action_status_.action_status != FOUND_OBSTACLES)
+    {
+      speed_publisher_.publish(speed_);
       publishFeedback(FOUND_OBSTACLES);
+    }
   } else
   {
     publishFeedback(ROAD_CLEAR);
