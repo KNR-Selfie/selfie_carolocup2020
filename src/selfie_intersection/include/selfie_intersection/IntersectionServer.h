@@ -26,13 +26,13 @@ private:
   ros::Subscriber obstacles_sub_;
   ros::Publisher visualize_free_place_;
   ros::Publisher speed_publisher_;
-  ros::Publisher visualize_intersection;
+  ros::Publisher visualize_intersection_;
 
   float point_min_x_; // Area of interest
   float point_max_x_;
   float point_min_y_;
   float point_max_y_;
-  bool visualization;
+  bool visualization_;
 
   std::list<Box> filtered_boxes_;
   selfie_msgs::intersectionFeedback action_status_;
