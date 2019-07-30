@@ -91,7 +91,6 @@ void IntersectionServer::filter_boxes(const selfie_msgs::PolygonArray &msg)
     }
   }
 }
-// TODO filtering using also size of box
 
 void IntersectionServer::publishFeedback(program_states newStatus)
 {

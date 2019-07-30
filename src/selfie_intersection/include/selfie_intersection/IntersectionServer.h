@@ -9,10 +9,6 @@
 #include <selfie_park/shapes.h>
 #include <selfie_scheduler/scheduler_enums.h>
 
-/*
-TODO
-dokumentacja
-*/
 
 class IntersectionServer
 {
