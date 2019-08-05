@@ -4,7 +4,7 @@
 **/
 
 #include "ros/ros.h"
-#include <selfie_intersection/IntersectionServer.h>
+#include <selfie_intersection/intersection_server.h>
 
 int main(int argc, char **argv)
 {

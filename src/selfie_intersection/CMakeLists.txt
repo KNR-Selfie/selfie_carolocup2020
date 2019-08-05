@@ -198,8 +198,8 @@ include_directories(
 
 
 add_executable(intersection_server_node
-  src/IntersectionServer.cpp
-  include/selfie_intersection/IntersectionServer.h
+  src/intersection_server.cpp
+  include/selfie_intersection/intersection_server.h
   src/intersection_server_node.cpp
 )
 add_dependencies(intersection_server_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})

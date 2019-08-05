@@ -3,7 +3,7 @@
 *This code is licensed under BSD license (see LICENSE for details)
 **/
 
-#include <selfie_intersection/IntersectionServer.h>
+#include <selfie_intersection/intersection_server.h>
 
 IntersectionServer::IntersectionServer(const ros::NodeHandle &nh, const ros::NodeHandle &pnh)
     : nh_(nh)
