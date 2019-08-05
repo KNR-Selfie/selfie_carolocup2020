@@ -197,12 +197,12 @@ include_directories(
 # catkin_add_nosetests(test)
 
 
-add_executable(intersection_server
+add_executable(intersection_server_node
   src/IntersectionServer.cpp
   include/selfie_intersection/IntersectionServer.h
-  src/intersection_server.cpp
+  src/intersection_server_node.cpp
 )
-add_dependencies(intersection_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(intersection_server
+add_dependencies(intersection_server_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(intersection_server_node
   ${catkin_LIBRARIES}
 )
