@@ -20,7 +20,6 @@ private:
   ros::NodeHandle nh_;
   ros::NodeHandle pnh_;
   ros::Subscriber obstacles_sub_;
-  ros::Publisher visualize_free_place_;
   ros::Publisher speed_publisher_;
   ros::Publisher visualize_intersection_;
 

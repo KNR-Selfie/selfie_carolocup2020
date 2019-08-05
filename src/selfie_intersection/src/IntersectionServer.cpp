@@ -25,7 +25,7 @@ void IntersectionServer::init()
 {
   goal_ = *(intersectionServer_.acceptNewGoal());
   obstacles_sub_ = nh_.subscribe("/obstacles", 1, &IntersectionServer::manager, this);
-  speed_publisher_ = nh_.advertise<std_msgs::Float64>("/max_speed", 0);
+  speed_publisher_ = nh_.advertise<std_msgs::Float64>("/max_speed", 2);
   if (visualization_)
   {
     visualize_intersection_ = nh_.advertise<visualization_msgs::Marker>("/intersection", 10);
@@ -39,7 +39,7 @@ void IntersectionServer::manager(const selfie_msgs::PolygonArray &boxes)
 {
   if (!intersectionServer_.isActive())
   {
-    ROS_INFO_THROTTLE(1.5, "Search server not active");
+    ROS_INFO_ONCE("Search server not active");
     return;
   }
   filter_boxes(boxes);
@@ -72,26 +72,29 @@ void IntersectionServer::filter_boxes(const selfie_msgs::PolygonArray &msg)
 {
   filtered_boxes_.clear();
   bool box_ok;
-  for (int box_nr = msg.polygons.size() - 1; box_nr >= 0; box_nr--)
+  if (!msg.polygons.empty())
   {
-    geometry_msgs::Polygon polygon = msg.polygons[box_nr];
-    box_ok = true;
-    for (int a = 0; a < 4; ++a)
+    for (int box_nr = msg.polygons.size() - 1; box_nr >= 0; box_nr--)
     {
-      Point p(polygon.points[a]);
-      if (!p.check_position(point_min_x_, point_max_x_, point_min_y_, point_max_y_))
+      geometry_msgs::Polygon polygon = msg.polygons[box_nr];
+      box_ok = true;
+      for (int a = 0; a < 4; ++a)
       {
-        box_ok = false;
-        break;
+        Point p(polygon.points[a]);
+        if (!p.check_position(point_min_x_, point_max_x_, point_min_y_, point_max_y_))
+        {
+          box_ok = false;
+          break;
+        }
       }
-    }
-    if (box_ok)
-    {
-      Box temp_box(polygon);
-      filtered_boxes_.push_back(temp_box);
-      if (visualization_ == false)
+      if (box_ok)
       {
-        return; // for better optimalization
+        Box temp_box(polygon);
+        filtered_boxes_.push_back(temp_box);
+        if (visualization_ == false)
+        {
+          return; // for better optimalization
+        }
       }
     }
   }
