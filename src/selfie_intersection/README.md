@@ -10,7 +10,7 @@ Server uses [intersection.action](https://github.com/KNR-Selfie/selfie_carolocup
 
 source ./devel/setup.bash
 
-rosrun selfie_intersection intersection_server
+rosrun selfie_intersection intersection_server_node
 
 ```
 

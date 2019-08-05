@@ -8,7 +8,7 @@
 
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "intersection_server");
+  ros::init(argc, argv, "intersection_server_node");
   ros::NodeHandle nh;
   ros::NodeHandle pnh("~");
   IntersectionServer server(nh, pnh);
