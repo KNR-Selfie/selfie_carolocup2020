@@ -13,12 +13,10 @@
 #include <vector>
 #include <ackermann_msgs/AckermannDriveStamped.h>
 #include <std_msgs/Bool.h>
+#include <string>
+#include <vector>
+#include <selfie_scheduler/scheduler_enums.h>
 
-#define ODOM_TO_FRONT 0.18
-#define ODOM_TO_BACK -0.33
-#define ODOM_TO_LASER 0.2
-#define CAR_WIDTH 0.22
-#define MAX_TURN 0.8
 
 class ParkService
 {
@@ -49,17 +47,17 @@ private:
     Position operator-(const Position &other);
     Position(const tf::Transform &trans);
     Position(const Position &other, float offset = 0);
-  } actual_odom_position_, actual_parking_position_, parking_spot_position_, actual_back_odom_position_,
-          actual_front_odom_position_, actual_laser_odom_position_, actual_back_parking_position_,
-          actual_front_parking_position_, actual_laser_parking_position_;
+  } actual_odom_position_, actual_parking_position_,
+  parking_spot_position_, actual_laser_odom_position_,
+  actual_back_parking_position_, actual_front_parking_position_;
 
   void drive(float speed, float steering_angle);
   bool toParkingSpot();
   bool park();
   bool leave();
   void initParkingSpot(const geometry_msgs::Polygon &msg);
-  void blinkLeft(bool a);
-  void blinkRight(bool a);
+  void blinkLeft(bool on);
+  void blinkRight(bool on);
 
   enum Parking_State
   {
@@ -73,13 +71,15 @@ private:
     go_back = 6
   } parking_state_;
 
+  feedback_variable action_status_;
+
   float front_wall_;
   float back_wall_;
   float middle_of_parking_spot_y_;
   float middle_of_parking_spot_x_;
   float parking_spot_width_;
   float leaving_target_;
-  float PARKING_SPEED;
+  float parking_speed_;
   float mid_y_;
 
   enum Move_State
@@ -98,4 +98,9 @@ private:
   float max_rot_;
   float max_distance_to_wall_;
   float dist_turn_;
+  float odom_to_front_;
+  float odom_to_back_;
+  float odom_to_laser_;
+  float max_turn_;
+  float idle_time_;
 };
