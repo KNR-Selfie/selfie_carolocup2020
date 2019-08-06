@@ -16,7 +16,7 @@ as_(nh_, "park", false)
   pnh_.param<bool>("state_msgs", state_msgs_, false);
   pnh_.param<float>("max_rot", max_rot_, 0.8);
   pnh_.param<float>("dist_turn", dist_turn_, 0.17);
-  pnh_.param<float>("parking_speed", parking_speed_, 0.4)
+  pnh_.param<float>("parking_speed", parking_speed_, 0.4);
   pnh_.param<float>("odom_to_laser", odom_to_laser_, 0.2);
   pnh_.param<float>("odom_to_front", odom_to_front_, 0.18);
   pnh_.param<float>("odom_to_back", odom_to_back_, -0.33);
