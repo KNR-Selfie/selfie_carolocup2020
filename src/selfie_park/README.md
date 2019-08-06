@@ -49,5 +49,13 @@ distance, at which the car will start parking, in reference to the beginning of 
 printing messages indicating the current state of the parking manouvre
 - max_rot (float)
 maximal rotation of the vehicle when parking
-- parking_speed(float)
+- parking_speed (float)
+- odom_to_laser (float)
+distance between imu and the laser sensor of the vehicle
+- odom_to_front (float)
+distance between imu and the front of the vehicle
+- odom_to_back (float)
+distance between imu and the back of the vehicle
+- idle_time (float)
+time spent idle in the parking spot
 
