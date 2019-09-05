@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(selfie_scheduler)
 
+
 ## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+add_compile_options(-std=c++17)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -11,10 +12,11 @@ find_package(catkin REQUIRED COMPONENTS
   actionlib
   roscpp
   std_msgs
+  selfie_msgs
 )
 
 ## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED COMPONENTS system)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -118,6 +120,7 @@ catkin_package(
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -197,3 +200,8 @@ install(DIRECTORY include/${PROJECT_NAME}/
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+file(GLOB CLIENTS "src/clients/*.cpp")
+add_executable(scheduler src/scheduler_node.cpp src/scheduler.cpp ${CLIENTS})
+target_link_libraries(scheduler ${catkin_LIBRARIES})
+add_dependencies(scheduler ${catkin_EXPORTED_TARGETS})

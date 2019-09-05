@@ -14,7 +14,6 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   selfie_msgs
   selfie_scheduler
-  roslint
 )
 
 ## System dependencies are found with CMake's conventions
@@ -207,5 +206,3 @@ install(DIRECTORY include/${PROJECT_NAME}/
 add_executable(starting_procedure src/starting_procedure_action.cpp src/starting_procedure.cpp)
 target_link_libraries(starting_procedure ${catkin_LIBRARIES})
 add_dependencies(starting_procedure ${catkin_EXPORTED_TARGETS})
-
-roslint_cpp(src/starting_procedure_action.cpp src/starting_procedure.cpp)
