@@ -2,12 +2,10 @@
 
 StartingProcedureAction::StartingProcedureAction(std::string name) :
     pnh_("~"), as_(nh_, name, boost::bind(&StartingProcedureAction::executeCB, this, _1), false),
-  action_name_(name)
+  action_name_(name),starting_speed_(2.0)
 {
-    if(!pnh_.getParam("starting_speed",starting_speed_))
-    {
-        pnh_.setParam("starting_speed",2.0); //default value
-    }
+    pnh_.getParam("starting_speed",starting_speed_);
+
     button_sub_ = nh_.subscribe("start_button", 1000, &StartingProcedureAction::buttonCB, this);
     distance_sub_ = nh_.subscribe("distance",10,&StartingProcedureAction::distanceCB, this);
     drive_pub_ = nh_.advertise<ackermann_msgs::AckermannDriveStamped>("drive",1);

@@ -94,8 +94,9 @@ bool Scheduler::checkCurrentClientType()
 void Scheduler::shiftAction()
 {
     if (checkCurrentClientType<StartingProcedureClient*>())
-    {
-        startAction(DRIVING);
+    {	
+      	startAction(DRIVING);
+	startCmdCreator();
     }
     else if (checkCurrentClientType<DriveClient*>())
     {
