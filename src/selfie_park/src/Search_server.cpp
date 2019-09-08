@@ -22,7 +22,7 @@ Search_server::Search_server(const ros::NodeHandle &nh,
   pnh_.param<float>("default_speed_in_parking_zone",
                     default_speed_in_parking_zone, 0.8);
   pnh_.param<float>("speed_when_found_place", speed_when_found_place, 0.3);
-  pnh_.param<bool>("visualization_in_searching", visualization, false);
+  pnh_.param<bool>("visualization_in_searching", visualization, true);
 
   speed_current.data = default_speed_in_parking_zone;
 }
@@ -111,13 +111,13 @@ void Search_server::filter_boxes(const selfie_msgs::PolygonArray &msg)
   for (int box_nr = msg.polygons.size() - 1; box_nr >= 0; box_nr--)
   {
     geometry_msgs::Polygon polygon = msg.polygons[box_nr];
-    bool box_ok = true;
+    bool box_ok = false;
     for (int a = 0; a < 4; ++a)
     {
       Point p(polygon.points[a]);
-      if (!p.check_position(point_min_x, point_max_x, point_min_y, point_max_y))
+      if (p.check_position(point_min_x, point_max_x, point_min_y, point_max_y))
       {
-        box_ok = false;
+        box_ok = true;
         break;
       }
     }
