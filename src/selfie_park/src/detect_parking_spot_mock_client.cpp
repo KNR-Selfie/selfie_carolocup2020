@@ -16,16 +16,13 @@ int main(int argc, char **argv)
   ros::Duration(1).sleep();
 
   float len = 0.5;
-  bool mock_obstacles = false;
   ros::Timer timer;
 
-  std::cout << argc;
   if (argc >= 2)
   {
-    if (std::strcmp(argv[1], "-o"))
+    if (std::strcmp(argv[1], "-o")==0)
     {
       std::cout << "mock obstacles active\n";
-      mock_obstacles = true;
       Search_client_mock::obstacles_pub_ = nh.advertise<selfie_msgs::PolygonArray>("obstacles", 1);
       timer = nh.createTimer(ros::Duration(0.4), sendMockObstacles);
       if (argc == 3)
@@ -34,7 +31,6 @@ int main(int argc, char **argv)
     {
       std::cout << "mock obstacles disabled ( -o to activate)\n";
       len = atof(argv[1]);
-      std::cout << argv[1];
     }
   }
 

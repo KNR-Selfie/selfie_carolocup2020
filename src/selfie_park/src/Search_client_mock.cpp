@@ -70,17 +70,17 @@ void Search_client_mock::doneCb(const actionlib::SimpleClientGoalState &state,
 void sendMockObstacles(const ros::TimerEvent &)
 {
   selfie_msgs::PolygonArray obstacle_array_;
-  geometry_msgs::Polygon obstacle;
   geometry_msgs::Point32 p;
   p.z = 0;
-  unsigned int mock_box_size_ = 0.3;
-  float boxes_x[] = {0.9, 1, 1.6};
-  float boxes_y[] = {-0.3 - 0.35, -0.3};
+  float mock_box_size_ = 0.3;
+  float boxes_x[] = {0.1, 1.33, 1.6};
+  float boxes_y[] = {-0.3, -0.35, -0.3};
   obstacle_array_.polygons.clear();
   obstacle_array_.header.stamp = ros::Time::now();
   obstacle_array_.header.frame_id = "laser";
   for (unsigned int i = 0; i < 3; i++)
   {
+    geometry_msgs::Polygon obstacle;
     for (unsigned int ii = 0; ii < 4; ii++)
     {
       p.x = boxes_x[i];
