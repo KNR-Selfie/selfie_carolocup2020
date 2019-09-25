@@ -9,11 +9,9 @@
 
 #include <geometry_msgs/Polygon.h>
 #include <geometry_msgs/PolygonStamped.h>
-#include <nav_msgs/Odometry.h>
 #include <selfie_msgs/PolygonArray.h>
-#include <std_msgs/Float64.h>
-#include <std_msgs/Int16.h>
 #include <visualization_msgs/Marker.h>
+#include <selfie_msgs/RoadMarkings.h>
 
 #include <ros/console.h>
 
@@ -31,6 +29,7 @@ private:
   ros::NodeHandle nh_;
   ros::NodeHandle pnh_;
   ros::Subscriber obstacles_sub_;
+  ros::Subscriber markings_sub_;
   ros::Publisher visualizer_;
 
 
@@ -39,12 +38,11 @@ private:
 
   bool visualization_;
   
-/*
-  bool init();
+
   void obstacle_callback(const selfie_msgs::PolygonArray &);  //filters boxes and saves in filtered_boxes_
   void road_markings_callback(const selfie_msgs::RoadMarkings &); //checks if boxes from filtered_boxes_ are on right lane
 
-
+/*
   void display_places(std::vector<Box> &, const std::string &);
   void display_place(Box &, const std::string &);
   */
