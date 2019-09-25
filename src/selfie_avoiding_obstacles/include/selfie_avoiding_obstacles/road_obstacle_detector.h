@@ -4,14 +4,14 @@
 #include <chrono>
 #include <cmath>
 #include <iostream>
+#include <list>
 #include <ros/ros.h>
-#include <vector>
 
 #include <geometry_msgs/Polygon.h>
 #include <geometry_msgs/PolygonStamped.h>
 #include <selfie_msgs/PolygonArray.h>
-#include <visualization_msgs/Marker.h>
 #include <selfie_msgs/RoadMarkings.h>
+#include <visualization_msgs/Marker.h>
 
 #include <ros/console.h>
 
@@ -32,18 +32,17 @@ private:
   ros::Subscriber markings_sub_;
   ros::Publisher visualizer_;
 
-
-  std::vector<Box> filtered_boxes_; // boxes are sorted by x valule
-                                            // ascendend (near->far)
+  std::list<Box> filtered_boxes_; // boxes are sorted by x valule
+                                  // ascendend (near->far)
 
   bool visualization_;
-  
 
-  void obstacle_callback(const selfie_msgs::PolygonArray &);  //filters boxes and saves in filtered_boxes_
-  void road_markings_callback(const selfie_msgs::RoadMarkings &); //checks if boxes from filtered_boxes_ are on right lane
+  void filter_boxes(const selfie_msgs::PolygonArray &);           // filters boxes and saves in filtered_boxes_
+  void road_markings_callback(const selfie_msgs::RoadMarkings &); // checks if boxes from filtered_boxes_ are on right lane
 
-/*
-  void display_places(std::vector<Box> &, const std::string &);
-  void display_place(Box &, const std::string &);
-  */
+  bool is_on_right_lane(const Point &);
+  /*
+    void display_places(std::vector<Box> &, const std::string &);
+    void display_place(Box &, const std::string &);
+    */
 };
