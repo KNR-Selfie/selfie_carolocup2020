@@ -32,9 +32,9 @@ private:
   ros::Subscriber markings_sub_;
   ros::Publisher visualizer_;
   // Polymonial coefficients describing road markings
-  float left_line_[3];
-  float center_line_[3];
-  float right_line_[3];
+  float left_line_[4];
+  float center_line_[4];
+  float right_line_[4];
 
   std::list<Box> filtered_boxes_; // boxes are sorted by x valule
                                   // ascendend (near->far)
