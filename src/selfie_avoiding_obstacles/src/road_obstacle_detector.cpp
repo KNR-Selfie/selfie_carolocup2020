@@ -16,7 +16,7 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
   {
     visualizer_ = nh_.advertise<visualization_msgs::Marker>("/avoiding_obstacles", 1);
   }
-
+  received_road_markings_ = false;
   ROS_INFO("Initialized");
 }
 
@@ -65,6 +65,19 @@ void Road_obstacle_detector::road_markings_callback(const selfie_msgs::RoadMarki
     center_line_[2] = 0;
     right_line_[2] = 0;
   }
+  received_road_markings_ = true;
 }
 
-bool Road_obstacle_detector::is_on_right_lane(const Point &point) {}
+bool Road_obstacle_detector::is_on_right_lane(const Point &point)
+{
+  if (received_road_markings_ == false)
+    return false;
+
+  float right_value = right_line_[0] + point.x * right_line_[1] + point.x * point.x * right_line_[2] +
+                      point.x * point.x * point.x * right_line_[3];
+  float center_value = center_line_[0] + point.x * center_line_[1] + point.x * point.x * center_line_[2] +
+                       point.x * point.x * point.x * center_line_[3];
+
+  if (point.y > right_value && point.y < center_value)
+    return true;
+}
