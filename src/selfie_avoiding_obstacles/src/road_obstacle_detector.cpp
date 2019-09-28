@@ -11,7 +11,7 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
 {
   pnh_.param<bool>("vizualization", visualization_, false);
   // obstacles_sub_ = nh_.subscribe("/obstacles", 1, &Road_obstacle_detector::obstacle_callback, this);
-  // markings_sub_ = nh_.subscribe("/road_markings", 1, &Road_obstacle_detector::road_markings_callback, this);
+  markings_sub_ = nh_.subscribe("/road_markings", 1, &Road_obstacle_detector::road_markings_callback, this);
   if (visualization_)
   {
     visualizer_ = nh_.advertise<visualization_msgs::Marker>("/avoiding_obstacles", 1);
@@ -45,6 +45,25 @@ void Road_obstacle_detector::filter_boxes(const selfie_msgs::PolygonArray &msg)
       Box temp_box(polygon);
       filtered_boxes_.insert(filtered_boxes_.begin(), temp_box);
     }
+  }
+}
+
+void Road_obstacle_detector::road_markings_callback(const selfie_msgs::RoadMarkings &msg)
+{
+  int size = msg.left_line.size();
+  if (size != 2 && size != 3)
+    ROS_ERROR("Invalid number of args in RoadMarkings");
+  for (int i = 0; i < size; i++)
+  {
+    left_line_[i] = msg.left_line[i];
+    center_line_[i] = msg.center_line[i];
+    right_line_[i] = msg.right_line[i];
+  }
+  if (size == 2)
+  {
+    left_line_[2] = 0;
+    center_line_[2] = 0;
+    right_line_[2] = 0;
   }
 }
 

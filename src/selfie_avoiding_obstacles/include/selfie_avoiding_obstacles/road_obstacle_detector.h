@@ -32,6 +32,9 @@ private:
   ros::Subscriber markings_sub_;
   ros::Publisher visualizer_;
 
+  float left_line_[3];
+  float center_line_[3];
+  float right_line_[3];
   std::list<Box> filtered_boxes_; // boxes are sorted by x valule
                                   // ascendend (near->far)
 
