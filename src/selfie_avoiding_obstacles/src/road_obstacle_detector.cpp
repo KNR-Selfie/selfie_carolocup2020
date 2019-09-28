@@ -10,17 +10,20 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
     , pnh_(pnh)
 {
   pnh_.param<bool>("vizualization", visualization_, false);
-  // obstacles_sub_ = nh_.subscribe("/obstacles", 1, &Road_obstacle_detector::obstacle_callback, this);
+  obstacles_sub_ = nh_.subscribe("/obstacles", 1, &Road_obstacle_detector::obstacle_callback, this);
   markings_sub_ = nh_.subscribe("/road_markings", 1, &Road_obstacle_detector::road_markings_callback, this);
   if (visualization_)
   {
     visualizer_ = nh_.advertise<visualization_msgs::Marker>("/avoiding_obstacles", 1);
   }
   received_road_markings_ = false;
+  status_ = CLEAR;
   ROS_INFO("Initialized");
 }
 
 Road_obstacle_detector::~Road_obstacle_detector() {}
+
+void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &msg) {}
 
 void Road_obstacle_detector::filter_boxes(const selfie_msgs::PolygonArray &msg)
 {

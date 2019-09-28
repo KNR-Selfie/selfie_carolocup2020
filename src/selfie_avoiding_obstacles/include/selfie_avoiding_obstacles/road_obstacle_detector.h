@@ -26,6 +26,11 @@ public:
   ~Road_obstacle_detector();
 
 private:
+  enum status
+  {
+    CLEAR,
+    OVERTAKING
+  };
   ros::NodeHandle nh_;
   ros::NodeHandle pnh_;
   ros::Subscriber obstacles_sub_;
@@ -41,9 +46,11 @@ private:
 
   bool visualization_;
   bool received_road_markings_;
+  status status_;
 
   void filter_boxes(const selfie_msgs::PolygonArray &);           // filters boxes and saves in filtered_boxes_
   void road_markings_callback(const selfie_msgs::RoadMarkings &); // checks if boxes from filtered_boxes_ are on right lane
+  void obstacle_callback(const selfie_msgs::PolygonArray &);
 
   bool is_on_right_lane(const Point &);
   /*
