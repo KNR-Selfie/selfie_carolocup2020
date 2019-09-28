@@ -42,7 +42,9 @@ private:
   float right_line_[4];
 
   std::list<Box> filtered_boxes_; // boxes are sorted by x valule
-                                  // ascendend (near->far)
+  // ascendend (near->far)
+  unsigned int boxes_in_front_of_car_;
+  std::list<Box>::iterator nearest_box_in_front_of_car_;
 
   bool visualization_;
   bool received_road_markings_;

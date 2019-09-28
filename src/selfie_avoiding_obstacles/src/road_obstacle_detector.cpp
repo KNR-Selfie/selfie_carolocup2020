@@ -28,18 +28,19 @@ void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &
 void Road_obstacle_detector::filter_boxes(const selfie_msgs::PolygonArray &msg)
 {
   filtered_boxes_.clear();
+  boxes_in_front_of_car_ = 0;
   geometry_msgs::Polygon polygon;
   for (int box_nr = msg.polygons.size() - 1; box_nr >= 0; box_nr--)
   {
     polygon = msg.polygons[box_nr];
-    bool box_ok = true;
+    bool box_ok = false;
     for (int a = 0; a < 4; ++a)
     {
       Point p(polygon.points[a]);
 
-      if (!is_on_right_lane(p))
+      if (is_on_right_lane(p))
       {
-        box_ok = false;
+        box_ok = true;
         break;
       }
     }
@@ -47,6 +48,11 @@ void Road_obstacle_detector::filter_boxes(const selfie_msgs::PolygonArray &msg)
     {
       Box temp_box(polygon);
       filtered_boxes_.insert(filtered_boxes_.begin(), temp_box);
+      if (temp_box.bottom_left.x > 0)
+      {
+        boxes_in_front_of_car_++;
+        nearest_box_in_front_of_car_ = filtered_boxes_.begin();
+      }
     }
   }
 }
