@@ -30,6 +30,8 @@ private:
   float point_min_y_;
   float point_max_y_;
   float road_width_;
+  float max_distance_to_intersection_; // Describrs how far before intersection
+                                       // car should stop
   bool visualization_;
 
   std::list<Box> filtered_boxes_;

@@ -8,15 +8,18 @@
 IntersectionServer::IntersectionServer(const ros::NodeHandle &nh,
                                        const ros::NodeHandle &pnh)
     : nh_(nh), pnh_(pnh), intersectionServer_(nh_, "intersection", false),
-      point_max_x_(0.95), point_min_x_(0.01) {
+      point_max_x_(0.95) {
   intersectionServer_.registerGoalCallback(
       boost::bind(&IntersectionServer::init, this));
   intersectionServer_.start();
   speed_.data = 0;
+  pnh_.param<float>("distance_to_intersection", max_distance_to_intersection_,
+                    0.25);
   pnh_.param<float>("road_width", road_width_, 0.95);
   pnh_.param<float>("point_min_y", point_min_y_, -3);
   pnh_.param<float>("point_max_y", point_max_y_, 3);
   pnh_.param<bool>("visualization", visualization_, true);
+  point_min_x_ = max_distance_to_intersection_;
   ROS_INFO("Intersection server: active");
 }
 
@@ -36,22 +39,33 @@ void IntersectionServer::init() {
   ROS_INFO("Initialized");
 }
 
-void IntersectionServer::manager(const selfie_msgs::PolygonArray &boxes) {
-  if (!intersectionServer_.isActive()) {
+void IntersectionServer::manager(const selfie_msgs::PolygonArray &boxes)
+{
+  if (!intersectionServer_.isActive())
+  {
     ROS_INFO_ONCE("Search server not active");
     return;
   }
   filter_boxes(boxes);
-  if (filtered_boxes_.size() != 0) {
+  if (filtered_boxes_.size() != 0)
+  {
     ROS_INFO_THROTTLE(1.5, "Another car on the road");
     if (visualization_)
-      Box().visualizeList(filtered_boxes_, visualize_intersection_,
-                          "obstacles_on_road", 0.9, 0.9, 0.9);
-    if (action_status_.action_status != FOUND_OBSTACLES) {
-      speed_publisher_.publish(speed_);
-      publishFeedback(FOUND_OBSTACLES);
+      Box().visualizeList(filtered_boxes_, visualize_intersection_, "obstacles_on_road", 0.9, 0.9, 0.9);
+    if (action_status_.action_status != FOUND_OBSTACLES)
+    {
+      if (max_distance_to_intersection_ > point_min_x_)
+      {
+        speed_publisher_.publish(speed_);
+        publishFeedback(FOUND_OBSTACLES);
+      } else
+      {
+        publishFeedback(APPROACHING_TO_INTERSECTION_WITH_OBSTACLES);
+      }
     }
-  } else {
+  }
+  else
+  {
     publishFeedback(ROAD_CLEAR);
     ROS_INFO("Road clear");
     send_goal();
