@@ -10,7 +10,6 @@
 #include <selfie_park/shapes.h>
 #include <selfie_scheduler/scheduler_enums.h>
 
-
 class IntersectionServer
 {
 public:
@@ -46,5 +45,5 @@ private:
   void filter_boxes(const selfie_msgs::PolygonArray &);
   void publishFeedback(program_states newStatus);
   void send_goal();
-  void visualizeBoxes(std::list<Box> boxes,float r,float g, float b);
+  void visualizeBoxes(std::list<Box> boxes, float r, float g, float b);
 };

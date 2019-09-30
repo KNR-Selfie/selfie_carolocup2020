@@ -5,16 +5,16 @@
 
 #include <selfie_intersection/intersection_server.h>
 
-IntersectionServer::IntersectionServer(const ros::NodeHandle &nh,
-                                       const ros::NodeHandle &pnh)
-    : nh_(nh), pnh_(pnh), intersectionServer_(nh_, "intersection", false),
-      point_max_x_(0.95) {
-  intersectionServer_.registerGoalCallback(
-      boost::bind(&IntersectionServer::init, this));
+IntersectionServer::IntersectionServer(const ros::NodeHandle &nh, const ros::NodeHandle &pnh)
+    : nh_(nh)
+    , pnh_(pnh)
+    , intersectionServer_(nh_, "intersection", false)
+    , point_max_x_(0.95)
+{
+  intersectionServer_.registerGoalCallback(boost::bind(&IntersectionServer::init, this));
   intersectionServer_.start();
   speed_.data = 0;
-  pnh_.param<float>("distance_to_intersection", max_distance_to_intersection_,
-                    0.25);
+  pnh_.param<float>("distance_to_intersection", max_distance_to_intersection_, 0.25);
   pnh_.param<float>("road_width", road_width_, 0.95);
   pnh_.param<float>("point_min_y", point_min_y_, -3);
   pnh_.param<float>("point_max_y", point_max_y_, 3);
@@ -23,16 +23,15 @@ IntersectionServer::IntersectionServer(const ros::NodeHandle &nh,
   ROS_INFO("Intersection server: active");
 }
 
-void IntersectionServer::init() {
+void IntersectionServer::init()
+{
   goal_ = *(intersectionServer_.acceptNewGoal());
-  intersection_subscriber_ = nh_.subscribe(
-      "/intersection", 1, &IntersectionServer::intersection_callback, this);
-  obstacles_sub_ =
-      nh_.subscribe("/obstacles", 1, &IntersectionServer::manager, this);
+  intersection_subscriber_ = nh_.subscribe("/intersection", 1, &IntersectionServer::intersection_callback, this);
+  obstacles_sub_ = nh_.subscribe("/obstacles", 1, &IntersectionServer::manager, this);
   speed_publisher_ = nh_.advertise<std_msgs::Float64>("/max_speed", 2);
-  if (visualization_) {
-    visualize_intersection_ =
-        nh_.advertise<visualization_msgs::Marker>("/intersection", 10);
+  if (visualization_)
+  {
+    visualize_intersection_ = nh_.advertise<visualization_msgs::Marker>("/intersection", 10);
   }
   speed_publisher_.publish(speed_);
   publishFeedback(STOPPED_ON_INTERSECTION);
@@ -63,8 +62,7 @@ void IntersectionServer::manager(const selfie_msgs::PolygonArray &boxes)
         publishFeedback(APPROACHING_TO_INTERSECTION_WITH_OBSTACLES);
       }
     }
-  }
-  else
+  } else
   {
     publishFeedback(ROAD_CLEAR);
     ROS_INFO("Road clear");
@@ -72,37 +70,45 @@ void IntersectionServer::manager(const selfie_msgs::PolygonArray &boxes)
   }
 }
 
-void IntersectionServer::intersection_callback(const std_msgs::Float32 &msg) {
+void IntersectionServer::intersection_callback(const std_msgs::Float32 &msg)
+{
   point_min_x_ = msg.data;
   point_max_x_ = point_min_x_ + road_width_;
   ROS_INFO_THROTTLE(1, "Distance to intersection: %lf", point_min_x_);
 }
 
-void IntersectionServer::send_goal() {
+void IntersectionServer::send_goal()
+{
   selfie_msgs::intersectionResult result;
   result.done = true;
   intersectionServer_.setSucceeded();
 }
 
-void IntersectionServer::filter_boxes(const selfie_msgs::PolygonArray &msg) {
+void IntersectionServer::filter_boxes(const selfie_msgs::PolygonArray &msg)
+{
   filtered_boxes_.clear();
   bool box_ok;
-  if (!msg.polygons.empty()) {
-    for (int box_nr = msg.polygons.size() - 1; box_nr >= 0; box_nr--) {
+  if (!msg.polygons.empty())
+  {
+    for (int box_nr = msg.polygons.size() - 1; box_nr >= 0; box_nr--)
+    {
       geometry_msgs::Polygon polygon = msg.polygons[box_nr];
       box_ok = true;
-      for (int a = 0; a < 4; ++a) {
+      for (int a = 0; a < 4; ++a)
+      {
         Point p(polygon.points[a]);
-        if (!p.check_position(point_min_x_, point_max_x_, point_min_y_,
-                              point_max_y_)) {
+        if (!p.check_position(point_min_x_, point_max_x_, point_min_y_, point_max_y_))
+        {
           box_ok = false;
           break;
         }
       }
-      if (box_ok) {
+      if (box_ok)
+      {
         Box temp_box(polygon);
         filtered_boxes_.push_back(temp_box);
-        if (visualization_ == false) {
+        if (visualization_ == false)
+        {
           return; // for better optimalization
         }
       }
@@ -110,7 +116,8 @@ void IntersectionServer::filter_boxes(const selfie_msgs::PolygonArray &msg) {
   }
 }
 
-void IntersectionServer::publishFeedback(program_states newStatus) {
+void IntersectionServer::publishFeedback(program_states newStatus)
+{
   action_status_.action_status = newStatus;
   intersectionServer_.publishFeedback(action_status_);
 }
