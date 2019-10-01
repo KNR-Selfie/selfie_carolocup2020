@@ -9,7 +9,7 @@ Scheduler::Scheduler() :
     pnh_("~"),
     begin_action_(STARTING),
     start_distance_(1.0),
-    parking_spot_(70.0)
+    parking_spot_(0.6)
 {
 
     //ovveride parameters
@@ -96,18 +96,20 @@ void Scheduler::shiftAction()
     if (checkCurrentClientType<StartingProcedureClient*>())
     {	
       	startAction(DRIVING);
-	startCmdCreator();
+	    startCmdCreator();
     }
     else if (checkCurrentClientType<DriveClient*>())
     {
         startAction(PARKING_SEARCH);
     }
     else if (checkCurrentClientType<SearchClient*>())
-    {
+    {   
+        stopCmdCreator();
         startAction(PARK);
     }
     else if (checkCurrentClientType<ParkClient*>())
-    {
+    {   
+        resetVision();
         startAction(DRIVING);
     }
     else

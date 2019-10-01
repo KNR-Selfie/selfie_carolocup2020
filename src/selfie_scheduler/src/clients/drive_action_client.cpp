@@ -58,7 +58,7 @@ void DriveClient::activeCb()
 }
 void DriveClient::feedbackCb(const selfie_msgs::drivingFeedbackConstPtr& feedback)
 {
-  ROS_INFO("Drive action feedback %d", feedback->action_status);
+  //ROS_INFO("Drive action feedback %d", feedback->action_status);
   action_state_ = (program_state)feedback->action_status;
 }
 
