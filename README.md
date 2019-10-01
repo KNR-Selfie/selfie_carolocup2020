@@ -19,6 +19,11 @@ conda env create -f environment.yml
 ```
 
 takes care of all magic happening behind the scenes. This configuration provides more or less compatibility with ROS environment. Current version of *Selfie* project is developed under ROS Kinetic, so neural networks are.
+The following command makes ROS to publish image on topic:
+
+```
+rosrun image_publisher image_publisher path/to/image
+```
 
  ## Testing
 
