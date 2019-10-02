@@ -4,6 +4,7 @@ SearchClient::SearchClient(std::string name):
     ac_(name, true)
 {
     next_action_ = PARK;
+    result_flag_ = false;
 }
 
 SearchClient::~SearchClient()
@@ -39,13 +40,14 @@ bool SearchClient::waitForResult(float timeout)
 }
 bool SearchClient::waitForServer(float timeout)
 {
+    result_flag_ = false;
     ROS_INFO("Wait for search action server");
     return ac_.waitForServer(ros::Duration(timeout));
 }
 void SearchClient::doneCb(const actionlib::SimpleClientGoalState& state,
             const selfie_msgs::searchResultConstPtr& result)
 {
-    ROS_INFO("Finished in state [%s]", state.toString().c_str());
+    ROS_INFO("Finished search in state [%s]", state.toString().c_str());
     result_ = result->parking_spot;
     result_flag_ = true;
 }

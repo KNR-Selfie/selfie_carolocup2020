@@ -40,14 +40,15 @@ bool StartingProcedureClient::waitForResult(float timeout)
 }
 bool StartingProcedureClient::waitForServer(float timeout)
 {
+    result_flag_ = false;
     ROS_INFO("Wait for starting procedure action server");
     return ac_.waitForServer(ros::Duration(timeout));
 }
 void StartingProcedureClient::doneCb(const actionlib::SimpleClientGoalState& state,
             const selfie_msgs::startingResultConstPtr& result)
 {
-  ROS_INFO("Finished in state [%s]", state.toString().c_str());
-  ROS_INFO("result: %i", result->drive_mode);
+  ROS_INFO("Finished starting in state [%s]", state.toString().c_str());
+  ROS_INFO("starting result: %i", result->drive_mode);
   result_ = result->drive_mode;
   result_flag_ = true;
 }

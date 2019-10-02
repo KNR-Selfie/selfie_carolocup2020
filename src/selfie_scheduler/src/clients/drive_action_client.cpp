@@ -40,14 +40,15 @@ bool DriveClient::waitForResult(float timeout)
 }
 bool DriveClient::waitForServer(float timeout)
 {
+    result_flag_ = false;
     ROS_INFO("Wait for driving action server");
     return ac_.waitForServer(ros::Duration(timeout));
 }
 void DriveClient::doneCb(const actionlib::SimpleClientGoalState& state,
             const selfie_msgs::drivingResultConstPtr& result)
 {
-    ROS_INFO("Finished in state [%s]", state.toString().c_str());
-    ROS_INFO("result: %d", result->parking_area);
+    ROS_INFO("Finished drive in state [%s]", state.toString().c_str());
+    ROS_INFO("drive result: %d", result->parking_area);
     result_ = result->parking_area;
     result_flag_ = true;
 }

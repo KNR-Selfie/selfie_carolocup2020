@@ -4,6 +4,7 @@ ParkClient::ParkClient(std::string name):
     ac_(name, true)
 {
     next_action_ = DRIVING;
+    result_flag_ = false;
 }
 
 ParkClient::~ParkClient()
@@ -39,13 +40,14 @@ bool ParkClient::waitForResult(float timeout)
 }
 bool ParkClient::waitForServer(float timeout)
 {
+    result_flag_ = false;
     ROS_INFO("Wait for park action server");
     return ac_.waitForServer(ros::Duration(timeout));
 }
 void ParkClient::doneCb(const actionlib::SimpleClientGoalState& state,
             const selfie_msgs::parkResultConstPtr& result)
 {
-    ROS_INFO("Finished in state [%s]", state.toString().c_str());
+    ROS_INFO("Finished park in state [%s]", state.toString().c_str());
     result_ = result->done;
     result_flag_ = true;
 }
