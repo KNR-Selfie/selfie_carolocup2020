@@ -41,9 +41,11 @@ private:
   float center_line_[4];
   float right_line_[4];
 
+  float maximum_length_of_obstacle_;
+  float distance_left_; //after covering this distance car resturns on right lane
+
   std::list<Box> filtered_boxes_; // boxes are sorted by x valule
   // ascendend (near->far)
-  unsigned int boxes_in_front_of_car_;
   std::list<Box>::iterator nearest_box_in_front_of_car_;
 
   bool visualization_;
@@ -53,6 +55,9 @@ private:
   void filter_boxes(const selfie_msgs::PolygonArray &);           // filters boxes and saves in filtered_boxes_
   void road_markings_callback(const selfie_msgs::RoadMarkings &); // checks if boxes from filtered_boxes_ are on right lane
   void obstacle_callback(const selfie_msgs::PolygonArray &);
+
+  void change_lane_to_left(){};
+  void change_lane_to_right(){};
 
   bool is_on_right_lane(const Point &);
   /*

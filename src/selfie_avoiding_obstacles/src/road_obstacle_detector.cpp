@@ -23,12 +23,33 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
 
 Road_obstacle_detector::~Road_obstacle_detector() {}
 
-void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &msg) {}
+void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &msg)
+{
+  switch (status_)
+  {
+  case CLEAR:
+    filter_boxes(msg);
+    if (!filtered_boxes_.empty())
+    {
+      change_lane_to_left();
+      status_=OVERTAKING;
+    }
+    break;
+  case OVERTAKING:
+    if(distance_left_<=0)
+    {
+      change_lane_to_right();
+      status_=CLEAR;
+    }
+    break;
+  default:
+    ROS_ERROR("Wrong avoiding_obstacle action status");
+  }
+}
 
 void Road_obstacle_detector::filter_boxes(const selfie_msgs::PolygonArray &msg)
 {
   filtered_boxes_.clear();
-  boxes_in_front_of_car_ = 0;
   geometry_msgs::Polygon polygon;
   for (int box_nr = msg.polygons.size() - 1; box_nr >= 0; box_nr--)
   {
@@ -50,7 +71,6 @@ void Road_obstacle_detector::filter_boxes(const selfie_msgs::PolygonArray &msg)
       filtered_boxes_.insert(filtered_boxes_.begin(), temp_box);
       if (temp_box.bottom_left.x > 0)
       {
-        boxes_in_front_of_car_++;
         nearest_box_in_front_of_car_ = filtered_boxes_.begin();
       }
     }
@@ -90,3 +110,5 @@ bool Road_obstacle_detector::is_on_right_lane(const Point &point)
   if (point.y > right_value && point.y < center_value)
     return true;
 }
+
+// TODO visualization
