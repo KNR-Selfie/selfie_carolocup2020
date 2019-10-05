@@ -6,6 +6,7 @@
 #ifndef SELFIE_PERCEPTION_LANE_DETECTOR_H
 #define SELFIE_PERCEPTION_LANE_DETECTOR_H
 #pragma once
+#define BOOST_UBLAS_TYPE_CHECK 0
 
 #include <ros/ros.h>
 #include <iostream>
@@ -29,6 +30,23 @@
 
 #include <visualization_msgs/Marker.h>
 #include <std_msgs/Float32.h>
+
+struct RoadLine
+{
+  int index     {-1};
+  int degree    {2};
+  float length  {0};
+  bool is_short {false};
+  std::vector<float> coeff;
+
+  RoadLine()
+  {
+    float empty_coeff = 0;
+    coeff.push_back(empty_coeff);
+    coeff.push_back(empty_coeff);
+    coeff.push_back(empty_coeff);
+  }
+};
 
 class LaneDetector
 {
@@ -55,41 +73,30 @@ class LaneDetector
 
   cv::Mat kernel_v_;
   cv::Mat current_frame_;
-  cv::Mat gray_frame_;
   cv::Mat binary_frame_;
+  cv::Mat binary_cut_frame_;
   cv::Mat dynamic_mask_;
   cv::Mat masked_frame_;
   cv::Mat left_lane_ROI_;
   cv::Mat left_lane_frame_;
   cv::Mat right_lane_ROI_;
   cv::Mat right_lane_frame_;
-  cv::Mat canny_frame_;
-  cv::Mat visualization_frame_;
   cv::Mat homography_frame_;
   cv::Mat debug_frame_;
+  cv::Mat hom_cut_mask_;
 
-  std::vector<std::vector<cv::Point> > lanes_vector_;
-  std::vector<std::vector<cv::Point2f> > lanes_vector_converted_;
+  std::vector<std::vector<cv::Point> > lines_vector_;
+  std::vector<std::vector<cv::Point2f> > lines_vector_converted_;
   std::vector<std::vector<cv::Point2f> > aprox_lines_frame_coordinate_;
 
-  std::vector<float> last_left_coeff_;
-  std::vector<float> last_middle_coeff_;
-  std::vector<float> last_right_coeff_;
-  std::vector<float> left_coeff_;
-  std::vector<float> middle_coeff_;
-  std::vector<float> right_coeff_;
-
-  int left_line_index_;
-  int center_line_index_;
-  int right_line_index_;
-  bool short_left_line_;
-  bool short_center_line_;
-  bool short_right_line_;
+  RoadLine left_line_;
+  RoadLine center_line_;
+  RoadLine right_line_;
 
   void imageCallback(const sensor_msgs::ImageConstPtr &msg);
   void computeTopView();
   void openCVVisualization();
-  void mergeMiddleLane();
+  void mergeMiddleLines();
   void quickSortLinesY(int left, int right);
   void quickSortPointsY(std::vector<cv::Point> &vector_in, int left, int right);
   float getDistance(cv::Point2f p1, cv::Point2f p2);
@@ -98,6 +105,7 @@ class LaneDetector
   void detectLines(cv::Mat &input_frame, std::vector<std::vector<cv::Point> > &output_lanes);
   void drawPoints(cv::Mat &frame);
   void homography(cv::Mat input_frame, cv::Mat &homography_frame);
+  void getParams();
   void printInfoParams();
   void dynamicMask(cv::Mat &input_frame, cv::Mat &output_frame);
   void ROILaneLeft(cv::Mat &input_frame, cv::Mat &output_frame);
@@ -107,43 +115,50 @@ class LaneDetector
   float getAproxY(std::vector<float> coeff, float x);
   void convertApproxToFrameCoordinate();
   void initRecognizeLines();
-  void linesApproximation(std::vector<std::vector<cv::Point2f> > lanes_vector);
-
-  void pointsRVIZVisualization();
-  void aproxVisualization();
-  sensor_msgs::PointCloud points_cloud_;
-  ros::Publisher points_cloud_pub_;
-  ros::Publisher aprox_visualization_pub_;
-  void lanesVectorVisualization(cv::Mat &visualization_frame);
+  void linesApproximation();
+  void calcRoadLinesParams();
   void removeCar(cv::Mat &frame);
   void addBottomPoint();
-  bool polyfit(int nDegree, std::vector<cv::Point2f> line, std::vector<float> &coeff);
-  std::vector<float> adjust(std::vector<float> good_poly_coeff, std::vector<cv::Point2f> line, bool left_offset);
+  bool polyfit(std::vector<cv::Point2f> line, RoadLine &road_line);
+  bool polyfit(RoadLine &road_line);
+  void adjust(RoadLine &good_road_line, RoadLine &short_road_line, bool left_offset);
   void calcRoadWidth();
   void generatePoints();
   void removeHorizontalLines();
-  std::vector<cv::Point2f> createOffsetLine(std::vector<float> coeff, float offset);
+  std::vector<cv::Point2f> createOffsetLine(RoadLine &road_line, float offset);
   void detectStartAndIntersectionLine();
-  void intersectionHandler();
 
-  float min_length_search_line_;
-  float min_length_lane_;
-  float max_delta_y_lane_;
-  float min_length_to_aprox_;
-  float left_lane_width_;
-  float right_lane_width_;
+  // visualization
+  sensor_msgs::PointCloud points_cloud_;
+  ros::Publisher points_cloud_pub_;
+  ros::Publisher aprox_visualization_pub_;
+  void pointsRVIZVisualization();
+  void aproxRVIZVisualization();
+  void drawAproxOnHomography();
+  void lanesVectorVisualization(cv::Mat &visualization_frame);
 
-  std::string config_file_;
-  bool debug_mode_;
-  float max_mid_line_distance_;
-  float max_mid_line_gap_;
-  float nominal_center_line_Y_;
-  float points_density_;
-  int poly_nDegree_;
-  bool init_imageCallback_;
-  int treshold_block_size_;
-  float real_window_size_;
-  int threshold_c_;
+  bool starting_line_           {false};
+  bool init_imageCallback_      {true};
+  float min_length_search_line_ {0.10};
+  float max_delta_y_lane_       {0.08};
+  float min_length_to_2aprox_   {0.56};
+  float left_lane_width_        {0.4};
+  float right_lane_width_       {0.4};
+
+// parameterized
+  std::string config_file_      {""};
+  bool debug_mode_              {false};
+  float max_mid_line_distance_  {0.12};
+  float max_mid_line_gap_       {0.9};
+  float nominal_center_line_Y_  {0.2};
+  float points_density_         {15};
+  int treshold_block_size_      {3};
+  float real_window_size_       {0.1};
+  int threshold_c_              {-40};
+  int hom_cut_l_x_              {0};
+  int hom_cut_l_y_              {0};
+  int hom_cut_r_x_              {0};
+  int hom_cut_r_y_              {0};
 };
 
 #endif  //  SELFIE_PERCEPTION_LANE_DETECTOR_H
