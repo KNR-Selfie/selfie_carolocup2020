@@ -148,6 +148,7 @@ class LaneDetector
 // parameterized
   std::string config_file_      {""};
   bool debug_mode_              {false};
+  bool hom_cut_tune_mode_       {false};
   float max_mid_line_distance_  {0.12};
   float max_mid_line_gap_       {0.9};
   float nominal_center_line_Y_  {0.2};

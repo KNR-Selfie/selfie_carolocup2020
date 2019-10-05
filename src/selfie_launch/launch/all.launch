@@ -15,8 +15,17 @@
 
   <include file="$(find selfie_launch)/launch/subsystems/control.launch"/>
 
-  <node name="detect_markings" type="detect_markings" pkg="selfie_perception" respawn="true">
+  <node name="detect_markings" type="detect_markings" pkg="selfie_perception" respawn="true" output="screen">
     <param name="config_file" value="$(arg homography_file)" />
+    <param name="threshold_c" value="-20"/>
+
+    <param name="debug_mode" value="false"/>
+    <param name="hom_cut_tune_mode" value="false"/>
+
+    <param name="hom_cut_l_x" value="0"/>
+    <param name="hom_cut_l_y" value="0"/>
+    <param name="hom_cut_r_x" value="0"/>
+    <param name="hom_cut_r_y" value="0"/>
   </node>
 
   <node name="extract_road_features" type="extract_road_features" pkg="selfie_path_planner">

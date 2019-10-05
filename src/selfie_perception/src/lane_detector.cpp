@@ -95,21 +95,11 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
   }
   homography(current_frame_, homography_frame_);
 
-  cv::namedWindow("homography_frame_", cv::WINDOW_NORMAL);
-  cv::imshow("homography_frame_", homography_frame_);
-
   cv::adaptiveThreshold(homography_frame_, binary_frame_, 255, cv::ADAPTIVE_THRESH_MEAN_C,
                         CV_THRESH_BINARY, treshold_block_size_, threshold_c_);
 
-cv::namedWindow("binary_frame_", cv::WINDOW_NORMAL);
-  cv::imshow("binary_frame_", binary_frame_);
-
   cv::bitwise_and(binary_frame_, hom_cut_mask_, binary_cut_frame_);
-
-  cv::namedWindow("binary_cut_frame_", cv::WINDOW_NORMAL);
-  cv::imshow("binary_cut_frame_", binary_cut_frame_);
-
-  cv::waitKey(1);
+  cv::medianBlur(binary_cut_frame_, binary_cut_frame_, 3);
 
   if (!init_imageCallback_)
   {
@@ -126,7 +116,6 @@ cv::namedWindow("binary_frame_", cv::WINDOW_NORMAL);
   {
     cv::filter2D(binary_cut_frame_, masked_frame_, -1, kernel_v_, cv::Point(-1, -1), 0, cv::BORDER_DEFAULT);
   }
-  cv::medianBlur(masked_frame_, masked_frame_, 5);
   
   detectLines(masked_frame_, lines_vector_);
   if (lines_vector_.empty())
@@ -273,15 +262,16 @@ void LaneDetector::homography(cv::Mat input_frame, cv::Mat &homography_frame)
 
 void LaneDetector::getParams()
 {
-  if (pnh_.getParam("config_file", config_file_))
+  cv::FileStorage fs;
+  if (pnh_.getParam("config_file", config_file_) && fs.open(config_file_, cv::FileStorage::READ))
   {
-    cv::FileStorage fs(config_file_, cv::FileStorage::READ);
     fs["world2cam"] >> world2cam_;
     fs.release();
   }
   else
   {
     // default homography matrix
+    ROS_INFO("Default homography matrix");
     world2cam_ = 
     (cv::Mat_<double>(3,3) << 
     -2866.861836770729,   1637.56986272477,     -421.4096359156129,
@@ -292,6 +282,7 @@ void LaneDetector::getParams()
   pnh_.getParam("real_window_size", real_window_size_);
   pnh_.getParam("threshold_c", threshold_c_);
   pnh_.getParam("debug_mode", debug_mode_);
+  pnh_.getParam("hom_cut_tune_mode", hom_cut_tune_mode_);
   pnh_.getParam("max_mid_line_gap", max_mid_line_gap_);
 
   pnh_.getParam("hom_cut_l_x", hom_cut_l_x_);
@@ -310,6 +301,15 @@ void LaneDetector::openCVVisualization()
   cv::vconcat(m_binary, m_std, m_four);
 
   cv::imshow("STD_DEBUG", m_four);
+
+  if (hom_cut_tune_mode_)
+  {
+    cv::namedWindow("binary_frame", cv::WINDOW_NORMAL);
+    cv::imshow("binary_frame", binary_frame_);
+
+    cv::namedWindow("binary_cut_frame", cv::WINDOW_NORMAL);
+    cv::imshow("binary_cut_frame", binary_cut_frame_);
+  }
   cv::waitKey(1);
 }
 
@@ -1689,8 +1689,7 @@ void LaneDetector::detectStartAndIntersectionLine()
     float d1, d2;
     d1 = getDistance(rect_vector[0], rect_vector[1]);
     d2 = getDistance(rect_vector[1], rect_vector[2]);
-    std::cout << "right d1: " << d1 << std::endl;
-    std::cout << "right d2: " << d2 << std::endl;
+
     if (d1 < detect_lenght && d2 < detect_lenght)
       continue;
     float a = 0;
@@ -1708,7 +1707,6 @@ void LaneDetector::detectStartAndIntersectionLine()
       else
         a = 100;
     }
-    std::cout << "Right a: " << a << std::endl;
 
     if (std::abs(a) > detect_slope)
     {
@@ -1735,8 +1733,7 @@ void LaneDetector::detectStartAndIntersectionLine()
     float d1, d2;
     d1 = getDistance(rect_vector[0], rect_vector[1]);
     d2 = getDistance(rect_vector[1], rect_vector[2]);
-    std::cout << "left d1: " << d1 << std::endl;
-    std::cout << "left d2: " << d2 << std::endl;
+
     if (d1 < detect_lenght && d2 < detect_lenght)
       continue;
     float a = 0;
@@ -1754,7 +1751,6 @@ void LaneDetector::detectStartAndIntersectionLine()
       else
         a = 100;
     }
-    std::cout << "Left a: " << a << std::endl;
 
     if (std::abs(a) > detect_slope)
     {
@@ -1811,7 +1807,6 @@ void LaneDetector::detectStartAndIntersectionLine()
     cv::imshow("LANE_DEBUG", m_all);
 	}
 
-  std::cout<< "!!!distance!!! : " << std::abs(right_distance - left_distance) << std::endl;
   if (std::abs(right_distance - left_distance) < 0.25 && left_distance > 0)
   {
     std_msgs::Float32 msg;
