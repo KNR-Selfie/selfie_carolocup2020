@@ -11,6 +11,7 @@
 #include <geometry_msgs/PolygonStamped.h>
 #include <selfie_msgs/PolygonArray.h>
 #include <selfie_msgs/RoadMarkings.h>
+#include <std_msgs/Float32.h>
 #include <visualization_msgs/Marker.h>
 
 #include <ros/console.h>
@@ -35,6 +36,7 @@ private:
   ros::NodeHandle pnh_;
   ros::Subscriber obstacles_sub_;
   ros::Subscriber markings_sub_;
+  ros::Subscriber speed_sub_;
   ros::Publisher visualizer_;
   // Polymonial coefficients describing road markings
   float left_line_[4];
@@ -42,7 +44,9 @@ private:
   float right_line_[4];
 
   float maximum_length_of_obstacle_;
-  float distance_left_; //after covering this distance car resturns on right lane
+  float time_left_; // after passing this time car resturns on right lane
+  float timer_duration_;
+  ros::Timer timer_;
 
   std::list<Box> filtered_boxes_; // boxes are sorted by x valule
   // ascendend (near->far)
@@ -50,11 +54,14 @@ private:
 
   bool visualization_;
   bool received_road_markings_;
+  bool is_time_calculated_for_overtake_;
   status status_;
 
   void filter_boxes(const selfie_msgs::PolygonArray &);           // filters boxes and saves in filtered_boxes_
   void road_markings_callback(const selfie_msgs::RoadMarkings &); // checks if boxes from filtered_boxes_ are on right lane
   void obstacle_callback(const selfie_msgs::PolygonArray &);
+  void calculate_overtake(const std_msgs::Float32 &);
+  void calculate_time(const ros::TimerEvent &);
 
   void change_lane_to_left(){};
   void change_lane_to_right(){};
