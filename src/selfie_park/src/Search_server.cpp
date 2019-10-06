@@ -25,6 +25,10 @@ Search_server::Search_server(const ros::NodeHandle &nh,
   pnh_.param<bool>("visualization_in_searching", visualization, true);
 
   speed_current.data = default_speed_in_parking_zone;
+  if (visualization)
+  {
+    visualize_free_place = nh_.advertise<visualization_msgs::Marker>("/free_place", 1);
+  }
 }
 
 Search_server::~Search_server() {}
@@ -32,10 +36,6 @@ Search_server::~Search_server() {}
 bool Search_server::init()
 {
   obstacles_sub = nh_.subscribe("/obstacles", 1, &Search_server::manager, this);
-  if (visualization)
-  {
-    visualize_free_place = nh_.advertise<visualization_msgs::Marker>("/free_place", 1);
-  }
   speed_publisher = nh_.advertise<std_msgs::Float64>("/max_speed", 0.5);
 
   speed_publisher.publish(speed_current);
