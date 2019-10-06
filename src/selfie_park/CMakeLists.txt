@@ -195,6 +195,15 @@ include_directories(
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
 
+add_executable(park_server
+  src/park_server.cpp
+        
+        )
+add_dependencies(park_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(park_server
+  ${catkin_LIBRARIES}
+)
+
 add_executable(detect_parking_spot
   include/selfie_park/shapes.h
   src/Search_server.cpp
