@@ -12,7 +12,7 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
     , is_time_calculated_for_overtake_(false)
     , received_road_markings_(false)
 {
-  pnh_.param<bool>("vizualization", visualization_, false);
+  pnh_.param<bool>("visualization", visualization_, false);
   obstacles_sub_ = nh_.subscribe("/obstacles", 1, &Road_obstacle_detector::obstacle_callback, this);
   markings_sub_ = nh_.subscribe("/road_markings", 1, &Road_obstacle_detector::road_markings_callback, this);
   if (visualization_)
