@@ -60,7 +60,7 @@ private:
   void filter_boxes(const selfie_msgs::PolygonArray &);           // filters boxes and saves in filtered_boxes_
   void road_markings_callback(const selfie_msgs::RoadMarkings &); // checks if boxes from filtered_boxes_ are on right lane
   void obstacle_callback(const selfie_msgs::PolygonArray &);
-  void calculate_overtake(const std_msgs::Float32 &);
+  void calculate_overtake_time(const std_msgs::Float32 &);
   void calculate_time(const ros::TimerEvent &);
 
   void change_lane_to_left(){};

@@ -35,7 +35,7 @@ void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &
     {
       change_lane_to_left();
       status_ = OVERTAKING;
-      speed_sub_ = nh_.subscribe("/speed", 1, &Road_obstacle_detector::calculate_overtake, this);
+      speed_sub_ = nh_.subscribe("/speed", 1, &Road_obstacle_detector::calculate_overtake_time, this);
     }
     break;
   case OVERTAKING:
@@ -115,7 +115,7 @@ bool Road_obstacle_detector::is_on_right_lane(const Point &point)
     return true;
 }
 
-void Road_obstacle_detector::calculate_overtake(const std_msgs::Float32 &msg)
+void Road_obstacle_detector::calculate_overtake_time(const std_msgs::Float32 &msg)
 {
   time_left_ = maximum_length_of_obstacle_ / msg.data;
   timer_ = nh_.createTimer(ros::Duration(timer_duration_), &Road_obstacle_detector::calculate_time, this);
