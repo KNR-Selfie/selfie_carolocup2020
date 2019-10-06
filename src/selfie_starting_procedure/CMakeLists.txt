@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(selfie_msgs)
+project(selfie_starting_procedure)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -8,13 +8,17 @@ project(selfie_msgs)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  geometry_msgs
-  message_generation
+  actionlib
   actionlib_msgs
+  roscpp
+  std_msgs
+  selfie_msgs
+  selfie_scheduler
+  roslint
 )
 
 ## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED COMPONENTS system)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -47,12 +51,11 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-add_message_files(
-  FILES
-  ParkingInfo.msg
-  PolygonArray.msg
-  RoadMarkings.msg
-)
+# add_message_files(
+#   FILES
+#   Message1.msg
+#   Message2.msg
+# )
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -62,26 +65,17 @@ add_message_files(
 # )
 
 ## Generate actions in the 'action' folder
- add_action_files(
-   DIRECTORY
-   action
-   
-   FILES
-   search.action
-   driving.action
-   starting.action
-   intersection.action
-   park.action
- )
+# add_action_files(
+#   FILES
+#   Action1.action
+#   Action2.action
+# )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES
-  geometry_msgs
-
-  actionlib_msgs
-  std_msgs
-)
+# generate_messages(
+#   DEPENDENCIES
+#   std_msgs
+# )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -113,7 +107,10 @@ generate_messages(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  CATKIN_DEPENDS geometry_msgs message_runtime actionlib_msgs
+   INCLUDE_DIRS include
+#  LIBRARIES selfie_starting_procedure
+#  CATKIN_DEPENDS actionlib roscpp std_msgs
+#  DEPENDS system_lib
 )
 
 ###########
@@ -123,13 +120,15 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
+  include
   ${catkin_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIRS}
+  ${selfie_scheduler_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/selfie_msgs.cpp
+#   src/${PROJECT_NAME}/selfie_starting_procedure.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -140,7 +139,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/selfie_msgs_node.cpp)
+# add_executable(${PROJECT_NAME}_node src/selfie_starting_procedure_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -179,11 +178,11 @@ include_directories(
 # )
 
 ## Mark cpp header files for installation
-# install(DIRECTORY include/${PROJECT_NAME}/
-#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-#   FILES_MATCHING PATTERN "*.h"
-#   PATTERN ".svn" EXCLUDE
-# )
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  FILES_MATCHING PATTERN "*.h"
+  PATTERN ".svn" EXCLUDE
+)
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 # install(FILES
@@ -197,10 +196,16 @@ include_directories(
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_selfie_msgs.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_selfie_starting_procedure.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+add_executable(starting_procedure src/starting_procedure_action.cpp src/starting_procedure.cpp)
+target_link_libraries(starting_procedure ${catkin_LIBRARIES})
+add_dependencies(starting_procedure ${catkin_EXPORTED_TARGETS})
+
+roslint_cpp(src/starting_procedure_action.cpp src/starting_procedure.cpp)
