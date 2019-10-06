@@ -21,6 +21,10 @@ IntersectionServer::IntersectionServer(const ros::NodeHandle &nh, const ros::Nod
   pnh_.param<bool>("visualization", visualization_, true);
   point_min_x_ = max_distance_to_intersection_;
   ROS_INFO("Intersection server: active");
+  if (visualization_)
+  {
+    visualize_intersection_ = nh_.advertise<visualization_msgs::Marker>("/intersection", 10);
+  }
 }
 
 void IntersectionServer::init()
@@ -29,10 +33,6 @@ void IntersectionServer::init()
   intersection_subscriber_ = nh_.subscribe("/intersection", 1, &IntersectionServer::intersection_callback, this);
   obstacles_sub_ = nh_.subscribe("/obstacles", 1, &IntersectionServer::manager, this);
   speed_publisher_ = nh_.advertise<std_msgs::Float64>("/max_speed", 2);
-  if (visualization_)
-  {
-    visualize_intersection_ = nh_.advertise<visualization_msgs::Marker>("/intersection", 10);
-  }
   speed_publisher_.publish(speed_);
   publishFeedback(STOPPED_ON_INTERSECTION);
   ROS_INFO("Initialized");
