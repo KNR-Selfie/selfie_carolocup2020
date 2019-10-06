@@ -18,6 +18,9 @@
 
 #include <selfie_park/shapes.h>
 
+#define LEFT 0.2
+#define RIGHT -0.2
+
 using namespace std;
 
 class Road_obstacle_detector
@@ -38,6 +41,7 @@ private:
   ros::Subscriber markings_sub_;
   ros::Subscriber speed_sub_;
   ros::Publisher visualizer_;
+  ros::Publisher setpoint_pub_;
   // Polymonial coefficients describing road markings
   float left_line_[4];
   float center_line_[4];
@@ -51,6 +55,7 @@ private:
   std::list<Box> filtered_boxes_; // boxes are sorted by x valule
   // ascendend (near->far)
   std::list<Box>::iterator nearest_box_in_front_of_car_;
+  std_msgs::Float32 setpoint_value_;
 
   bool visualization_;
   bool received_road_markings_;
@@ -63,8 +68,7 @@ private:
   void calculate_overtake_time(const std_msgs::Float32 &);
   void calculate_time(const ros::TimerEvent &);
 
-  void change_lane_to_left(){};
-  void change_lane_to_right(){};
+  void change_lane(float lane);
 
   bool is_on_right_lane(const Point &);
   /*

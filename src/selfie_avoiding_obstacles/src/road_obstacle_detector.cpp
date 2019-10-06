@@ -15,6 +15,8 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
   pnh_.param<bool>("visualization", visualization_, false);
   obstacles_sub_ = nh_.subscribe("/obstacles", 1, &Road_obstacle_detector::obstacle_callback, this);
   markings_sub_ = nh_.subscribe("/road_markings", 1, &Road_obstacle_detector::road_markings_callback, this);
+  setpoint_pub_ = nh_.advertise<std_msgs::Float32>("/setpoint", 1);
+
   if (visualization_)
   {
     visualizer_ = nh_.advertise<visualization_msgs::Marker>("/avoiding_obstacles", 1);
@@ -33,7 +35,7 @@ void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &
     filter_boxes(msg);
     if (!filtered_boxes_.empty())
     {
-      change_lane_to_left();
+      change_lane(LEFT);
       status_ = OVERTAKING;
       speed_sub_ = nh_.subscribe("/speed", 1, &Road_obstacle_detector::calculate_overtake_time, this);
     }
@@ -41,7 +43,7 @@ void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &
   case OVERTAKING:
     if (time_left_ <= 0 && is_time_calculated_for_overtake_)
     {
-      change_lane_to_right();
+      change_lane(RIGHT);
       status_ = CLEAR;
       is_time_calculated_for_overtake_ = false;
     }
@@ -121,6 +123,12 @@ void Road_obstacle_detector::calculate_overtake_time(const std_msgs::Float32 &ms
   timer_ = nh_.createTimer(ros::Duration(timer_duration_), &Road_obstacle_detector::calculate_time, this);
   is_time_calculated_for_overtake_ = true;
   speed_sub_.shutdown();
+}
+
+void Road_obstacle_detector::change_lane(float lane)
+{
+  // setpoint_value_.data = lane;
+  setpoint_pub_.publish(setpoint_value_);
 }
 
 void Road_obstacle_detector::calculate_time(const ros::TimerEvent &time) { time_left_ -= timer_duration_; }
