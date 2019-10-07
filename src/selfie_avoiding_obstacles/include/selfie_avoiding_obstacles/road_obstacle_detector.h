@@ -47,6 +47,7 @@ private:
   float center_line_[4];
   float right_line_[4];
 
+  float maximum_distance_to_obstacle_; // to avoid changing lane too early
   float maximum_length_of_obstacle_;
   float time_left_; // after passing this time car resturns on right lane
   float timer_duration_;
@@ -76,3 +77,11 @@ private:
     void display_place(Box &, const std::string &);
     */
 };
+
+/*
+//TODO
+visualization
+maximum_length_of_obstacle_ as param
+filtering box depends on camera's field of view
+
+*/

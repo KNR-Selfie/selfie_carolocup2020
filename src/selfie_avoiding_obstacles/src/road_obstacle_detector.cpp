@@ -11,6 +11,7 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
     , timer_duration_(0.3)
     , is_time_calculated_for_overtake_(false)
     , received_road_markings_(false)
+    , maximum_distance_to_obstacle_(0.5)
 {
   pnh_.param<bool>("visualization", visualization_, false);
   obstacles_sub_ = nh_.subscribe("/obstacles", 1, &Road_obstacle_detector::obstacle_callback, this);
@@ -34,11 +35,12 @@ void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &
   case CLEAR:
     filter_boxes(msg);
     if (!filtered_boxes_.empty())
-    {
-      change_lane(LEFT);
-      status_ = OVERTAKING;
-      speed_sub_ = nh_.subscribe("/speed", 1, &Road_obstacle_detector::calculate_overtake_time, this);
-    }
+      if (nearest_box_in_front_of_car_->bottom_left.x <= maximum_distance_to_obstacle_)
+      {
+        change_lane(LEFT);
+        status_ = OVERTAKING;
+        speed_sub_ = nh_.subscribe("/speed", 1, &Road_obstacle_detector::calculate_overtake_time, this);
+      }
     break;
   case OVERTAKING:
     if (time_left_ <= 0 && is_time_calculated_for_overtake_)
@@ -119,7 +121,7 @@ bool Road_obstacle_detector::is_on_right_lane(const Point &point)
 
 void Road_obstacle_detector::calculate_overtake_time(const std_msgs::Float32 &msg)
 {
-  time_left_ = maximum_length_of_obstacle_ / msg.data;
+  time_left_ = (maximum_length_of_obstacle_ + maximum_distance_to_obstacle_) / msg.data;
   timer_ = nh_.createTimer(ros::Duration(timer_duration_), &Road_obstacle_detector::calculate_time, this);
   is_time_calculated_for_overtake_ = true;
   speed_sub_.shutdown();
@@ -129,6 +131,10 @@ void Road_obstacle_detector::change_lane(float lane)
 {
   // setpoint_value_.data = lane;
   setpoint_pub_.publish(setpoint_value_);
+  if (lane == LEFT)
+    ROS_INFO("Lane changed to left");
+  else
+    ROS_INFO("Lane changed to right");
 }
 
 void Road_obstacle_detector::calculate_time(const ros::TimerEvent &time) { time_left_ -= timer_duration_; }
