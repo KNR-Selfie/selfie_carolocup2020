@@ -6,20 +6,31 @@ import threading
 from std_srvs.srv import Empty
 import dynamic_reconfigure.client
 from struct import pack, unpack
+from lxml import etree
+
 class Communicator:
     def __init__(self):
+    
         self.connections = []
+        self.toTransmit = []
+        self.clientFromCode = {}
         self.port = 1
         self.server_socket = bt.BluetoothSocket(bt.RFCOMM)
         self.server_socket.bind(("", self.port))
         self.server_socket.listen(7)
-        self.pidClient = dynamic_reconfigure.client.Client('controller')
+	try:
+            self.pidClient = dynamic_reconfigure.client.Client('controller',timeout = 0.5)
+	except:
+	    pass
         self.server_socket.setblocking(False)
         BTThread = threading.Thread(name="BTthread", target=self.BTfun)
         self.resetVisionService = rospy.ServiceProxy('resetVision', Empty)
         BTThread.start()
         #a = rospy.get_param("~operations")
         #print a
+    def parse(self):
+        parsed = etree.parse('../settings.xml').getroot()
+        print parsed
     def BTfun(self):
         while not rospy.is_shutdown():
             readable, writable, xd = select.select(self.connections + [self.server_socket], self.connections, [], 0.01)
@@ -56,7 +67,9 @@ class Communicator:
                     print "xd"
                 else:
                     print "received " + data
-
+            for wrote in writable:
+                wrote.send('\x01\x01\x04' + pack('f',1.5))
+                print 'sending '+ '\x01\x01\x04' + pack('f',1.5)
 
 
 

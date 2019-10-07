@@ -1,0 +1,19 @@
+<app>
+    <tab name="tab1">
+        <row name="input">
+            <dyn name="pid" dynname="controller">
+                <var name="Kp" varname="Kp" code="010103" type="f"/>
+                <var name="Ki" varname="Ki" code="010101" type="f"/>
+                <var name="Kd" varname="Kd" code="010102" type="f"/>
+                <var name="Kp_scale" varname="Kp_scale" code="010109" type="f"/>
+                <var name="Ki_scale" varname="Ki_scale" code="010110" type="f"/>
+                <var name="Kd_scale" varname="Kd_scale" code="010111" type="f"/>
+            </dyn>
+            <sens name="sens" type="f" topic="distance" code="010104"/>
+            <sens name="sens2" type="f" topic="speed" code="010106"/>
+            <srv name="srv" srvname="resetVision" type="e" code="010105"/>
+        </row>
+        <row name="output"/>
+    </tab>
+    <tab name="tab2"/>
+</app>
