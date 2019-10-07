@@ -56,4 +56,7 @@
 <exec_depend>actionlib</exec_depend>
 <exec_depend>selfie_scheduler</exec_depend>
 <exec_depend>selfie_park</exec_depend>
+<build_depend>geometry_msgs</build_depend>
+<build_export_depend>geometry_msgs</build_export_depend>
+<exec_depend>geometry_msgs</exec_depend>
 </package>
