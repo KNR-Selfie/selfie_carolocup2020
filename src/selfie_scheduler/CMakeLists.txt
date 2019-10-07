@@ -9,6 +9,7 @@ add_compile_options(-std=c++17)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+  roslint
   actionlib
   roscpp
   std_msgs
@@ -203,5 +204,6 @@ install(DIRECTORY include/${PROJECT_NAME}/
 
 file(GLOB CLIENTS "src/clients/*.cpp")
 add_executable(scheduler src/scheduler_node.cpp src/scheduler.cpp ${CLIENTS})
+roslint_cpp(src/scheduler_node.cpp src/scheduler.cpp ${CLIENTS})
 target_link_libraries(scheduler ${catkin_LIBRARIES})
 add_dependencies(scheduler ${catkin_EXPORTED_TARGETS})

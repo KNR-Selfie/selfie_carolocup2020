@@ -11,13 +11,11 @@ Scheduler::Scheduler() :
     start_distance_(1.0),
     parking_spot_(0.6)
 {
-
-    //ovveride parameters
     pnh_.getParam("begin_action", begin_action_);
     pnh_.getParam("starting_distance", start_distance_);
     pnh_.getParam("parking_spot", parking_spot_);
 
-    ROS_INFO("Created scheduler with params: BA: %d, SD: %f, PS: %f",begin_action_,start_distance_,parking_spot_);
+    ROS_INFO("Created scheduler with params: BA: %d, SD: %f, PS: %f", begin_action_, start_distance_, parking_spot_);
 
     visionReset_ = nh_.serviceClient<std_srvs::Empty>("resetVision");
     cmdCreatorStartPub_ = nh_.serviceClient<std_srvs::Empty>("cmd_start_pub");
@@ -45,6 +43,17 @@ Scheduler::~Scheduler()
 void Scheduler::init()
 {
     startAction((action)begin_action_);
+
+    switch(begin_action_)
+    {
+        case(DRIVING):
+            startCmdCreator();
+            break;
+        case(PARK):
+            stopCmdCreator();
+            break;
+    }
+
 }
 void Scheduler::startAction(action action_to_set)
 {
@@ -94,23 +103,24 @@ bool Scheduler::checkCurrentClientType()
 void Scheduler::shiftAction()
 {
     if (checkCurrentClientType<StartingProcedureClient*>())
-    {	
-      	startAction(DRIVING);
-	    startCmdCreator();
+    {
+        startAction(DRIVING);
+        startCmdCreator();
     }
     else if (checkCurrentClientType<DriveClient*>())
     {
         startAction(PARKING_SEARCH);
     }
     else if (checkCurrentClientType<SearchClient*>())
-    {   
+    {
         stopCmdCreator();
         startAction(PARK);
     }
     else if (checkCurrentClientType<ParkClient*>())
-    {   
+    {
         resetVision();
         startAction(DRIVING);
+        startCmdCreator();
     }
     else
     {
@@ -121,11 +131,11 @@ void Scheduler::stateMachine()
 {
     current_car_state_ = current_client_ptr_->getActionState();
 
-    if(current_car_state_ == previous_car_state_)
+    if (current_car_state_ == previous_car_state_)
     {
         return;
     }
-    switch(current_car_state_)
+    switch (current_car_state_)
     {
         case SELFIE_READY:
             ROS_INFO("STATE_SELFIE_READY");
@@ -148,5 +158,4 @@ void Scheduler::stateMachine()
             previous_car_state_ = END_DRIVE;
             break;
     }
-
 }

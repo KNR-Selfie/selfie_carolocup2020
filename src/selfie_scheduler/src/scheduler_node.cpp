@@ -9,11 +9,7 @@
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "scheduler");
-
-    feedback_variable current_car_state = SELFIE_IDLE;
-    feedback_variable previous_car_state = SELFIE_IDLE;
-
-    Scheduler selfie_scheduler; //action initialization
+    Scheduler selfie_scheduler;  // action initialization
     selfie_scheduler.init();
     while (ros::ok())
     {

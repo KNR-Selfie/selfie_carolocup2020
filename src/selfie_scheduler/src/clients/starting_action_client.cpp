@@ -6,13 +6,9 @@ StartingProcedureClient::StartingProcedureClient(std::string name):
     result_flag_ = false;
     next_action_ = DRIVING;
 }
-
 StartingProcedureClient::~StartingProcedureClient()
 {
-
 }
-
-
 void StartingProcedureClient::setGoal(boost::any goal)
 {
     float distance;
@@ -23,15 +19,13 @@ void StartingProcedureClient::setGoal(boost::any goal)
     }
     catch (boost::bad_any_cast &e)
     {
-        ROS_ERROR("bad casting %s",e.what());
+        ROS_ERROR("bad casting %s", e.what());
         return;
     }
-
-    ROS_INFO("Good goal cast");
     goal_.distance = distance;
-    ac_.sendGoal(goal_,boost::bind(&StartingProcedureClient::doneCb, this, _1,_2),
-                boost::bind(&StartingProcedureClient::activeCb,this),
-                boost::bind(&StartingProcedureClient::feedbackCb,this,_1));
+    ac_.sendGoal(goal_, boost::bind(&StartingProcedureClient::doneCb, this, _1, _2),
+                boost::bind(&StartingProcedureClient::activeCb, this),
+                boost::bind(&StartingProcedureClient::feedbackCb, this, _1));
 }
 
 bool StartingProcedureClient::waitForResult(float timeout)
@@ -56,19 +50,16 @@ void StartingProcedureClient::doneCb(const actionlib::SimpleClientGoalState& sta
 void StartingProcedureClient::activeCb()
 {
   ROS_INFO("Starting procedure server active");
-  //STARTING
 }
 void StartingProcedureClient::feedbackCb(const selfie_msgs::startingFeedbackConstPtr& feedback)
 {
-  //ROS_INFO("Starting procedure feedback %d", feedback->action_status);
+  ROS_INFO("Starting procedure feedback %d", feedback->action_status);
   action_state_ = (program_state)feedback->action_status;
 }
-
 void StartingProcedureClient::cancelAction()
 {
   ac_.cancelAllGoals();
 }
-
 program_state StartingProcedureClient::getActionState()
 {
     return action_state_;

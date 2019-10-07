@@ -6,13 +6,9 @@ DriveClient::DriveClient(std::string name):
     result_flag_ = false;
     next_action_ = PARKING_SEARCH;
 }
-
 DriveClient::~DriveClient()
 {
-
 }
-
-
 void DriveClient::setGoal(boost::any goal)
 {
     float drive_mode;
@@ -23,17 +19,14 @@ void DriveClient::setGoal(boost::any goal)
     }
     catch (boost::bad_any_cast &e)
     {
-        ROS_ERROR("bad casting %s",e.what());
+        ROS_ERROR("bad casting %s", e.what());
         return;
     }
-
-    ROS_INFO("Good goal cast");
     goal_.mode = drive_mode;
-    ac_.sendGoal(goal_,boost::bind(&DriveClient::doneCb, this, _1,_2),
-                boost::bind(&DriveClient::activeCb,this),
-                boost::bind(&DriveClient::feedbackCb,this,_1));
+    ac_.sendGoal(goal_, boost::bind(&DriveClient::doneCb, this, _1, _2),
+                boost::bind(&DriveClient::activeCb, this),
+                boost::bind(&DriveClient::feedbackCb, this, _1));
 }
-
 bool DriveClient::waitForResult(float timeout)
 {
     return ac_.waitForResult(ros::Duration(timeout));
@@ -52,34 +45,30 @@ void DriveClient::doneCb(const actionlib::SimpleClientGoalState& state,
     result_ = result->parking_area;
     result_flag_ = true;
 }
-
 void DriveClient::activeCb()
 {
     ROS_INFO("Drive action server active");
 }
 void DriveClient::feedbackCb(const selfie_msgs::drivingFeedbackConstPtr& feedback)
 {
-  //ROS_INFO("Drive action feedback %d", feedback->action_status);
+  ROS_INFO("Drive action feedback %d", feedback->action_status);
   action_state_ = (program_state)feedback->action_status;
 }
-
 void DriveClient::cancelAction()
 {
   ac_.cancelAllGoals();
 }
-
 program_state DriveClient::getActionState()
 {
     return action_state_;
 }
-
 bool DriveClient::isActionFinished()
 {
     return result_flag_;
 }
 void DriveClient::getActionResult(boost::any &result)
 {
-   //empty implementation
+    // result = result_;
 }
 action DriveClient::getNextAction()
 {
