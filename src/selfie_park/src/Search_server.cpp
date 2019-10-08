@@ -5,24 +5,22 @@
 
 #include <selfie_park/Search_server.h>
 
-Search_server::Search_server(const ros::NodeHandle &nh,
-                             const ros::NodeHandle &pnh)
+Search_server::Search_server(const ros::NodeHandle &nh, const ros::NodeHandle &pnh)
     : nh_(nh)
     , pnh_(pnh)
     , search_server_(nh_, "search", false)
 {
   search_server_.registerGoalCallback(boost::bind(&Search_server::init, this));
-  search_server_.registerPreemptCallback(
-      boost::bind(&Search_server::preemptCB, this));
+  search_server_.registerPreemptCallback(boost::bind(&Search_server::preemptCB, this));
   search_server_.start();
   pnh_.param<float>("point_min_x", point_min_x, 0.01);
   pnh_.param<float>("point_max_x", point_max_x, 2);
   pnh_.param<float>("point_min_y", point_min_y, -1);
   pnh_.param<float>("point_max_y", point_max_y, 0.2);
-  pnh_.param<float>("default_speed_in_parking_zone",
-                    default_speed_in_parking_zone, 0.8);
+  pnh_.param<float>("default_speed_in_parking_zone", default_speed_in_parking_zone, 0.8);
   pnh_.param<float>("speed_when_found_place", speed_when_found_place, 0.3);
   pnh_.param<bool>("visualization_in_searching", visualization, true);
+  pnh_.param<float>("max_distance_to_free_place", max_distance_to_free_place_, 0.8);
 
   speed_current.data = default_speed_in_parking_zone;
   if (visualization)
@@ -71,7 +69,7 @@ void Search_server::manager(const selfie_msgs::PolygonArray &msg)
   case FOUND_PLACE_MEASURING:
     if (find_free_places())
     {
-      if (first_free_place.bottom_left.x <= 0.3)
+      if (first_free_place.bottom_left.x <= max_distance_to_free_place_)
       {
         publishFeedback(FIND_PROPER_PLACE);
         speed_current.data = 0; // when we found proper place we should stop
