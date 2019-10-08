@@ -10,7 +10,8 @@ int main(int argc, char **argv)
 {
   ros::init(argc, argv, "detect_road_obstacle");
   ros::NodeHandle nh;
-
+  ros::NodeHandle pnh("~");
+  Road_obstacle_detector(nh, pnh);
 
   ros::spin();
   return 0;
