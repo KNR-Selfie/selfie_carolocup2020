@@ -25,8 +25,7 @@ void Search_client_mock::send_goal(const float spot_length = 0.5)
   last_speed_ = -1;
   selfie_msgs::searchGoal msg;
   msg.min_spot_lenght = spot_length;
-  ac_.sendGoal(msg, boost::bind(&Search_client_mock::doneCb, this, _1, _2),
-               &placeHolder, &feedbackCb);
+  ac_.sendGoal(msg, boost::bind(&Search_client_mock::doneCb, this, _1, _2), &placeHolder, &feedbackCb);
 }
 
 void feedbackCb(const selfie_msgs::searchFeedbackConstPtr &feedback)
@@ -66,4 +65,49 @@ void Search_client_mock::doneCb(const actionlib::SimpleClientGoalState &state,
   Box(result->parking_spot).print();
   ROS_INFO("Shuting down client node...");
   ros::shutdown();
+}
+
+void sendMockObstacles(const ros::TimerEvent &)
+{
+  selfie_msgs::PolygonArray obstacle_array_;
+  geometry_msgs::Point32 p;
+  p.z = 0;
+  float mock_box_size_ = 0.3;
+  float boxes_x[] = {0.1, 1.33, 1.6};
+  float boxes_y[] = {-0.3, -0.35, -0.3};
+  obstacle_array_.polygons.clear();
+  obstacle_array_.header.stamp = ros::Time::now();
+  obstacle_array_.header.frame_id = "laser";
+  for (unsigned int i = 0; i < 3; i++)
+  {
+    geometry_msgs::Polygon obstacle;
+    for (unsigned int ii = 0; ii < 4; ii++)
+    {
+      p.x = boxes_x[i];
+      p.y = boxes_y[i];
+      switch (ii)
+      {
+      case 0:
+        p.x += mock_box_size_ / 2;
+        p.y += mock_box_size_ / 2;
+        break;
+      case 1:
+        p.x += mock_box_size_ / 2;
+        p.y -= mock_box_size_ / 2;
+        break;
+      case 2:
+        p.x -= mock_box_size_ / 2;
+        p.y -= mock_box_size_ / 2;
+        break;
+      case 3:
+        p.x -= mock_box_size_ / 2;
+        p.y += mock_box_size_ / 2;
+        break;
+      }
+      obstacle.points.push_back(p);
+    }
+    obstacle_array_.polygons.push_back(obstacle);
+  }
+  Search_client_mock::obstacles_pub_.publish(obstacle_array_);
+  ROS_INFO_ONCE("Sending mock obstacles");
 }
