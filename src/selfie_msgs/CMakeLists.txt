@@ -68,6 +68,7 @@ add_message_files(
    
    FILES
    search.action
+   park.action
    driving.action
    starting.action
    intersection.action
