@@ -1,0 +1,14 @@
+<launch>
+        <!--<node pkg="selfie_stm32_bridge" type="selfie_stm32_bridge" name="selfie_stm32_bridge"/>-->
+
+        <node pkg="selfie_scheduler" type="scheduler" name="scheduler" output="screen">
+            <param name="begin_action" value="1"/>
+            <param name="starting_distance" value="2.0"/>
+            <param name="parking_spot" value="70.0"/>
+        </node>
+
+        <node pkg="selfie_starting_procedure" type="starting_procedure" name="starting_procedure" output="screen"/>
+        <node pkg="selfie_free_drive" type="free_drive" name="free_drive" output="screen"/>
+        <node name="detect_parking_spot" type="detect_parking_spot" pkg="selfie_park" output="screen"/>
+        <node name="park_server" type="park_server" pkg="selfie_park" output="screen"/>
+</launch>
