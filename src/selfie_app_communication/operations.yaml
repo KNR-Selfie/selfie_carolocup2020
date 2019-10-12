@@ -1,5 +1,0 @@
-operations:
-  resetVision:
-    opcode:  \x00\x00
-    args: []
-    service_name: resetVision

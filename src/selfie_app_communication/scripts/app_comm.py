@@ -7,7 +7,6 @@ import bluetooth as bt
 import select
 import threading
 from binascii import hexlify, unhexlify
-import struct #######
 from struct import pack, unpack
 from lxml import etree
 class AppComm:
@@ -15,19 +14,19 @@ class AppComm:
 
         rospy.init_node('app_comm')
 
-        self.active_connections = []
-        self.transmit_queues = {}
+        self.activeConnections = []
+        self.transmitQueues = {}
         self.port = 1
-        self.server_socket = bt.BluetoothSocket(bt.RFCOMM)
-        self.server_socket.bind(('',self.port))
-        self.server_socket.listen(7)
-        self.server_socket.setblocking(False)
+        self.serverSocket = bt.BluetoothSocket(bt.RFCOMM)
+        self.serverSocket.bind(('',self.port))
+        self.serverSocket.listen(7)
+        self.serverSocket.setblocking(False)
         self.btThread = threading.Thread(target=self.btFun,name='btThread')
 
         self.msgTypes = {}
         self.typeLengths = self.createTypeLengths()
 
-        self.subs=[]
+        self.subs = []
         self.dyns = {}
         self.srvs = {}
         self.targets = {}
@@ -38,16 +37,15 @@ class AppComm:
         self.btThread.start()
 
     def subCallbackFloat32(self,msg,code):
-        print hexlify(code)
-        for key in self.transmit_queues.keys():
-            self.transmit_queues[key] += (str(code) + str(pack('f',msg.data)))
-        #print self.transmit_queues.values()
+        for key in self.transmitQueues.keys():
+            self.transmitQueues[key] += (str(code) + str(pack(self.msgTypes[code],msg.data)))
 
     def parse(self):
         parser = etree.XMLParser(remove_blank_text=True)
         settings = rospy.get_param("app_settings")
         root = etree.XML(settings,parser)
         return root
+
     def create(self):
 
         for tab in self.root:
@@ -62,14 +60,11 @@ class AppComm:
                                 self.dyns[code] = dyn
                                 self.varNames[code] = var.get('varname')
                                 self.msgTypes[code] = var.get('type')
-                                print 'var'
                         except:
                             print 'cant open client'
                     elif tag == 'sens':
                         if element.get('type') == 'f':
-                            print element.get('code')
                             code = unhexlify(element.get('code'))
-                            print hexlify(code) + 'xd'
                             sub = rospy.Subscriber(element.get('topic'),Float32,lambda value,cd=code: self.subCallbackFloat32(value,cd))
 
                             self.subs.append(sub)
@@ -79,29 +74,26 @@ class AppComm:
                             code = unhexlify(element.get('code'))
                             self.srvs[code] = srv
                             self.msgTypes[code] = element.get('type')
-                            print 'srv'
 
     def btFun(self):
         while not rospy.is_shutdown():
-            readable, writable, xd = select.select(self.active_connections + [self.server_socket], self.active_connections, [], 0.01)
-            if self.server_socket in readable:
+            readable, writable, xd = select.select(self.activeConnections + [self.serverSocket], self.activeConnections, [], 0.01)
+            if self.serverSocket in readable:
                 try:
-                    remote_socket, (address,_) = self.server_socket.accept()
+                    remote_socket, (address,_) = self.serverSocket.accept()
                 except bt.BluetoothError:
                     print "couldnt accept the connection"
-                except:
-                    print "xd"
                 else:
                     print "connected to " + bt.lookup_name(address)
-                    self.active_connections.append(remote_socket)
-                    self.transmit_queues[remote_socket] = ''
-                readable.remove(self.server_socket)
+                    self.activeConnections.append(remote_socket)
+                    self.transmitQueues[remote_socket] = ''
+                readable.remove(self.serverSocket)
             for read in readable:
                 msg = ''
                 try:
                     msg = read.recv(5000)
                 except bt.BluetoothError:
-                    self.active_connections.remove(read)
+                    self.activeConnections.remove(read)
                     print 'disconnection'
                 msgs = self.seperate_msgs(msg)
                 self.handleMsgs(msgs)
@@ -109,11 +101,9 @@ class AppComm:
 
 
             for written in writable:
-                if self.transmit_queues[written]:
-                    print 'written'
-                    #print hexlify(self.transmit_queues[written])
-                    written.send(self.transmit_queues[written])
-                    self.transmit_queues[written] = ''
+                if self.transmitQueues[written]:
+                    written.send(self.transmitQueues[written])
+                    self.transmitQueues[written] = ''
 
     def seperate_msgs(self,msg):
         i = 0
