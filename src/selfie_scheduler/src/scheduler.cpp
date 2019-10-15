@@ -20,6 +20,7 @@ Scheduler::Scheduler() :
     visionReset_ = nh_.serviceClient<std_srvs::Empty>("resetVision");
     cmdCreatorStartPub_ = nh_.serviceClient<std_srvs::Empty>("cmd_start_pub");
     cmdCreatorStopPub_ = nh_.serviceClient<std_srvs::Empty>("cmd_stop_pub");
+    switchState_ = nh_.subscribe("switch_state", 1, &Scheduler::switchStateCallback, this);
 
     clients_[STARTING] = new StartingProcedureClient("starting_procedure");
     action_args_[STARTING] = start_distance_;
@@ -159,3 +160,14 @@ void Scheduler::stateMachine()
             break;
     }
 }
+void Scheduler::switchStateCallback(const std_msgs::UInt8ConstPtr &msg)
+{
+    // 0 manual
+    // 2 półautomat
+    // 1 automat
+    if(msg->data)
+    {
+
+    }
+}
+
