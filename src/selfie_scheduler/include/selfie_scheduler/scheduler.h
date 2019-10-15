@@ -38,6 +38,7 @@ class Scheduler
     ros::ServiceClient cmdCreatorStopPub_;
 
     ros::Subscriber switchState_;
+    rc_state previousRcState_;
     void switchStateCallback(const std_msgs::UInt8ConstPtr &msg);
 
     template <typename T> bool checkCurrentClientType();

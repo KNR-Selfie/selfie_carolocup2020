@@ -34,7 +34,7 @@ Scheduler::Scheduler() :
     clients_[PARK] = new ParkClient("park");
     action_args_[PARK] = [](geometry_msgs::Polygon x){return x;};
 
-
+    previousRcState_ = RC_MANUAL;
     ROS_INFO("Clients created successfully");
 }
 Scheduler::~Scheduler()
@@ -165,9 +165,24 @@ void Scheduler::switchStateCallback(const std_msgs::UInt8ConstPtr &msg)
     // 0 manual
     // 2 półautomat
     // 1 automat
-    if(msg->data)
-    {
 
+    if (previousRcState_ != msg->data)
+    {   
+        if ((rc_state)msg->data == RC_MANUAL)
+        {
+            ROS_INFO("STOP ALL ACTIONS");
+        }
+        else if((rc_state)msg->data == RC_AUTONOMOUS && previousRcState_ == RC_MANUAL)
+        {
+            ROS_INFO("START DRIVE ACTION");
+        }   
+        else if((rc_state)msg->data == RC_HALF_AUTONOMOUS && previousRcState_ == RC_MANUAL)
+        {
+            ROS_INFO("START DRIVE ACTION");
+        }
     }
+
+
+    previousRcState_ = (rc_state)msg->data;
 }
 

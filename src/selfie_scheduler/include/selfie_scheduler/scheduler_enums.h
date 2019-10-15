@@ -54,4 +54,14 @@ typedef enum action
     ERROR,
 
 }action_variable;
+
+typedef enum rc_state
+{
+    RC_MANUAL = 0,
+    RC_HALF_AUTONOMOUS,
+    RC_AUTONOMOUS,
+
+}rc_state_variable;
+
+
 #endif // SCHEDULER_ENUMS_H
