@@ -7,16 +7,16 @@
 #include <vector>
 #include <algorithm>
 
-#define TOPVIEW_ROWS 172
+#define TOPVIEW_ROWS 197
 #define TOPVIEW_COLS 640
 
 #define TOPVIEW_MIN_X 0.3
-#define TOPVIEW_MAX_X 1.0
+#define TOPVIEW_MAX_X 1.1
 #define TOPVIEW_MIN_Y -1.3
 #define TOPVIEW_MAX_Y 1.3
 
 static double Acc_value = 1.0;
-static int Acc_filt = 5;
+static int Acc_filt = 0.1;
 
 LaneDetector::LaneDetector(const ros::NodeHandle &nh, const ros::NodeHandle &pnh) :
   nh_(nh),
@@ -77,6 +77,19 @@ bool LaneDetector::init()
     aprox_visualization_pub_ = nh_.advertise<visualization_msgs::Marker>("aprox", 10);
   }
 
+  float increment = (TOPVIEW_MAX_X - TOPVIEW_MIN_X) / (pf_num_points_ - 1);
+  for (int i = 0; i < pf_num_points_; ++i)
+  {
+    float x = i * increment + TOPVIEW_MIN_X;
+    x_filter_points_.push_back(x);
+  }
+
+  pf_c.setNumParticles(pf_num_samples_);
+  pf_c.setNumPoints(pf_num_points_);
+
+  pf_r.setNumParticles(pf_num_samples_);
+  pf_r.setNumPoints(pf_num_points_);
+
   computeTopView();
   printInfoParams();
   return true;
@@ -113,9 +126,15 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
     detectStartAndIntersectionLine();
   }
   else
-  {
     cv::filter2D(binary_cut_frame_, masked_frame_, -1, kernel_v_, cv::Point(-1, -1), 0, cv::BORDER_DEFAULT);
-  }
+  //else
+  //{
+    /*
+    cv::Mat test;
+    cv::filter2D(binary_cut_frame_, test, -1, kernel_v_, cv::Point(-1, -1), 0, cv::BORDER_DEFAULT);
+    cv::namedWindow("test", cv::WINDOW_NORMAL);
+    cv::imshow("test", test);
+  //}*/
   
   detectLines(masked_frame_, lines_vector_);
   if (lines_vector_.empty())
@@ -161,12 +180,14 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
   {
     recognizeLines();
     generatePoints();
-    addBottomPoint();
+    //addBottomPoint();
     calcRoadLinesParams();
 
     if (center_line_.index != -1)
       calcRoadWidth();
     linesApproximation();
+
+    
 
     publishMarkings();
   }
@@ -179,6 +200,7 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
 
     convertApproxToFrameCoordinate();
     drawAproxOnHomography();
+    particleFilter();
     openCVVisualization();
     aproxRVIZVisualization();
     pointsRVIZVisualization();
@@ -252,6 +274,17 @@ void LaneDetector::drawAproxOnHomography()
     {
       cv::circle(homography_frame_, aprox_lines_frame_coordinate_[1][i], 2, cv::Scalar(0, 255, 0), CV_FILLED);
     }
+
+  if (!debug_points_.empty())
+  {
+    cv::transform(debug_points_, debug_points_, world2topview_.rowRange(0, 2));
+    for (int i = 0; i < debug_points_.size(); i += 2)
+    {
+      cv::line(homography_frame_, debug_points_[i], debug_points_[i + 1], cv::Scalar(0, 255, 255), 2);
+			cv::circle(homography_frame_, debug_points_[i], 5, cv::Scalar(255, 255, 0), CV_FILLED, cv::LINE_AA);
+			cv::circle(homography_frame_, debug_points_[i + 1], 5, cv::Scalar(255, 255, 0), CV_FILLED, cv::LINE_AA);
+    }
+  }
 }
 
 void LaneDetector::homography(cv::Mat input_frame, cv::Mat &homography_frame)
@@ -594,7 +627,7 @@ void LaneDetector::ROILaneRight(cv::Mat &input_frame, cv::Mat &output_frame)
   output_frame = input_frame.clone();
   float offset_center = -0.07;
   float offset_right = 0.05;
-  if (starting_line_)
+  if (starting_line_timeout_ > 0)
   {
     offset_right = 0.02;
     offset_center = -0.03;
@@ -642,10 +675,11 @@ void LaneDetector::ROILaneLeft(cv::Mat &input_frame, cv::Mat &output_frame)
   output_frame = input_frame.clone();
   float offset_center = 0.05;
   float offset_left = -0.07;
-  if (starting_line_)
+  if (starting_line_timeout_ > 0)
   {
     offset_center = 0.02;
     offset_left = -0.03;
+    --starting_line_timeout_;
   }
   else
   {
@@ -1430,6 +1464,7 @@ void LaneDetector::adjust(RoadLine &good_road_line,
 
 void LaneDetector::calcRoadWidth()
 {
+  debug_points_.clear();
   cv::Point2f p;
   cv::Point2f p_ahead;
   p_ahead.x = 0.6;
@@ -1447,61 +1482,107 @@ void LaneDetector::calcRoadWidth()
   double b_param_orthg = p_ahead.y - a_param_orthg * p_ahead.x;
 
   // right lane
+  float r_lane_width = 0;
   if (right_line_.index != -1)
   {
     p.y = p_ahead.y - 0.3;
     float step = -0.01;
     float last_dist = 9999999;  // init huge value
 
-    while (true || std::fabs(p.y) > 1)
+    while (true)
     {
       p.x = (p.y - b_param_orthg) / a_param_orthg;
       cv::Point2f p_aprox;
       p_aprox.x = p.x;
       p_aprox.y = getAproxY(right_line_.coeff, p_aprox.x);
-      float dist = getDistance(p, p_aprox);
-      if (dist - last_dist > 0)
+      r_lane_width = getDistance(p, p_aprox);
+      if (r_lane_width - last_dist > 0)
       {
+        if (debug_mode_)
+        {
+          debug_points_.clear();
+          debug_points_.push_back(p_ahead);
+          debug_points_.push_back(p_aprox);
+        }
+        r_lane_width = getDistance(p_ahead, p_aprox);
         break;
       }
       else
       {
-        last_dist = dist;
+        if (r_lane_width > 0.6)
+        {
+          r_lane_width = 99;
+          break;
+        }
+        last_dist = r_lane_width;
         p.y += step;
       }
     }
-    float lane_width = getDistance(p_ahead, p);
-    if (lane_width > 0.3 && lane_width < 0.5)
-      right_lane_width_ = lane_width;
+    if (r_lane_width > 0.3 && r_lane_width < 0.5)
+      right_lane_width_ = r_lane_width;
+    else if (r_lane_width > 0.6)
+    {
+      ROS_INFO("Right line too far. Delete index");
+      right_line_.index = -1;
+      right_line_.length = 0;
+      right_line_.is_short = true;
+    }
   }
 
   // left lane
+  float l_lane_width = 0;
   if (left_line_.index != -1)
   {
     p.y = p_ahead.y + 0.3;
     float step = 0.01;
     float last_dist = 9999999;  // init huge value
 
-    while (true || std::fabs(p.y) > 1)
+    while (true)
     {
       p.x = (p.y - b_param_orthg) / a_param_orthg;
       cv::Point2f p_aprox;
       p_aprox.x = p.x;
       p_aprox.y = getAproxY(left_line_.coeff, p_aprox.x);
-      float dist = getDistance(p, p_aprox);
-      if (dist - last_dist > 0)
+      l_lane_width = getDistance(p, p_aprox);
+      if (l_lane_width - last_dist > 0)
       {
+        if (debug_mode_)
+        {
+          debug_points_.push_back(p_ahead);
+          debug_points_.push_back(p_aprox);
+        }
+        l_lane_width = getDistance(p_ahead, p_aprox);
         break;
       }
       else
       {
-        last_dist = dist;
+        if (l_lane_width > 0.6)
+        {
+          l_lane_width = 99;
+          break;
+        }
+        last_dist = l_lane_width;
         p.y += step;
       }
     }
-    float lane_width = getDistance(p_ahead, p);
-    if (lane_width > 0.3 && lane_width < 0.5)
-      left_lane_width_ = lane_width;
+    if (l_lane_width > 0.3 && l_lane_width < 0.5)
+      left_lane_width_ = l_lane_width;
+    else if (l_lane_width > 0.6)
+    {
+      ROS_INFO("Left line too far. Delete index");
+      left_line_.index = -1;
+      left_line_.length = 0;
+      left_line_.is_short = true;
+    }
+  }
+
+  if (debug_mode_)
+  {
+    std::cout << std::endl;
+    std::cout << "right width now: " << r_lane_width << std::endl;
+    std::cout << "right_lane_width: " << right_lane_width_ << std::endl;
+    std::cout << "left width now: " << l_lane_width << std::endl;
+    std::cout << "left_lane_width: " << left_lane_width_ << std::endl;
   }
 }
 
@@ -1644,7 +1725,6 @@ std::vector<cv::Point2f> LaneDetector::createOffsetLine(RoadLine &road_line, flo
 
 void LaneDetector::detectStartAndIntersectionLine()
 {
-  starting_line_ = false;
   float detect_slope = 1.0;
   float detect_lenght = 0.15;
   // morphology variables
@@ -1812,7 +1892,7 @@ void LaneDetector::detectStartAndIntersectionLine()
     std_msgs::Float32 msg;
     msg.data = right_distance;
     starting_line_pub_.publish(msg);
-    starting_line_ = true;
+    starting_line_timeout_ = 50;
   }
   else if (right_distance > 0)
   {
@@ -1865,4 +1945,353 @@ void LaneDetector::calcRoadLinesParams()
     center_line_.length = 0;
     center_line_.is_short = true;
   }
+}
+
+void LaneDetector::particleFilter()
+{
+
+  cv::Mat pf_mat;
+  pf_mat = cv::Mat::zeros(homography_frame_.size(), CV_8UC3);
+
+
+  if (!center_line_.is_short)
+  {
+  if (!pf_c.initialized())
+  {
+    std::vector<cv::Point2f> init_points;
+    for (int i = 0; i < pf_num_points_; ++i)
+    {
+      cv::Point2f p;
+      p.y = getAproxY(center_line_.coeff, x_filter_points_[i]);
+      p.x = x_filter_points_[i];
+      init_points.push_back(p);
+    }
+    pf_c.init(init_points, pf_std_);
+    return;
+  }
+
+  pf_c.prediction(pf_std_);
+  pf_c.updateWeights(lines_vector_converted_[center_line_.index]);
+  pf_c.resample();
+
+  std::vector<float> pf_coeff = pf_c.getCoeff(0);
+  std::vector<cv::Point2f> pf_line;
+
+  cv::Point2f p;
+  float increment = 0.04;
+  for (float x = TOPVIEW_MIN_X; x < TOPVIEW_MAX_X; x += increment)
+  {
+    p.x = x;
+
+    p.y = getAproxY(pf_coeff, x);
+    pf_line.push_back(p);
+  }
+  cv::transform(pf_line, pf_line, world2topview_.rowRange(0, 2));
+
+  for (int i = 0; i < pf_line.size(); ++i)
+  {
+    cv::circle(pf_mat, pf_line[i], 2, cv::Scalar(255, 0, 0), CV_FILLED);
+  }
+
+  // -----------------------------------------------------------------------------
+
+  pf_coeff = pf_c.getCoeff(1);
+  pf_line.clear();
+
+  for (float x = TOPVIEW_MIN_X; x < TOPVIEW_MAX_X; x += increment)
+  {
+    p.x = x;
+
+    p.y = getAproxY(pf_coeff, x);
+    pf_line.push_back(p);
+  }
+  cv::transform(pf_line, pf_line, world2topview_.rowRange(0, 2));
+
+  for (int i = 0; i < pf_line.size(); ++i)
+  {
+    cv::circle(pf_mat, pf_line[i], 2, cv::Scalar(0, 255, 0), CV_FILLED);
+  }
+
+  // -----------------------------------------------------------------------------
+
+  pf_coeff = pf_c.getCoeff(2);
+  pf_line.clear();
+
+  for (float x = TOPVIEW_MIN_X; x < TOPVIEW_MAX_X; x += increment)
+  {
+    p.x = x;
+
+    p.y = getAproxY(pf_coeff, x);
+    pf_line.push_back(p);
+  }
+  cv::transform(pf_line, pf_line, world2topview_.rowRange(0, 2));
+
+  for (int i = 0; i < pf_line.size(); ++i)
+  {
+    cv::circle(pf_mat, pf_line[i], 2, cv::Scalar(0, 0, 255), CV_FILLED);
+  }
+
+    // -----------------------------------------------------------------------------
+
+  pf_coeff = pf_c.getCoeff(3);
+  pf_line.clear();
+
+  for (float x = TOPVIEW_MIN_X; x < TOPVIEW_MAX_X; x += increment)
+  {
+    p.x = x;
+
+    p.y = getAproxY(pf_coeff, x);
+    pf_line.push_back(p);
+  }
+  cv::transform(pf_line, pf_line, world2topview_.rowRange(0, 2));
+
+  for (int i = 0; i < pf_line.size(); ++i)
+  {
+    cv::circle(pf_mat, pf_line[i], 2, cv::Scalar(0, 255, 255), CV_FILLED);
+  }
+
+    // -----------------------------------------------------------------------------
+
+  pf_coeff = pf_c.getCoeff(4);
+  pf_line.clear();
+
+  for (float x = TOPVIEW_MIN_X; x < TOPVIEW_MAX_X; x += increment)
+  {
+    p.x = x;
+
+    p.y = getAproxY(pf_coeff, x);
+    pf_line.push_back(p);
+  }
+  cv::transform(pf_line, pf_line, world2topview_.rowRange(0, 2));
+
+  for (int i = 0; i < pf_line.size(); ++i)
+  {
+    cv::circle(pf_mat, pf_line[i], 2, cv::Scalar(255, 0, 255), CV_FILLED);
+  }
+
+    // -----------------------------------------------------------------------------
+
+  pf_coeff = pf_c.getCoeff(5);
+  pf_line.clear();
+
+  for (float x = TOPVIEW_MIN_X; x < TOPVIEW_MAX_X; x += increment)
+  {
+    p.x = x;
+
+    p.y = getAproxY(pf_coeff, x);
+    pf_line.push_back(p);
+  }
+  cv::transform(pf_line, pf_line, world2topview_.rowRange(0, 2));
+
+  for (int i = 0; i < pf_line.size(); ++i)
+  {
+    cv::circle(pf_mat, pf_line[i], 2, cv::Scalar(255, 255, 255), CV_FILLED);
+  }
+
+
+
+
+    // ------------------------------BEST-----------------------------------------
+
+  pf_coeff = pf_c.getBestCoeff();
+  pf_line.clear();
+
+  for (float x = TOPVIEW_MIN_X; x < TOPVIEW_MAX_X; x += increment)
+  {
+    p.x = x;
+
+    p.y = getAproxY(pf_coeff, x);
+    pf_line.push_back(p);
+  }
+  cv::transform(pf_line, pf_line, world2topview_.rowRange(0, 2));
+
+  for (int i = 0; i < pf_line.size(); ++i)
+  {
+    cv::circle(homography_frame_, pf_line[i], 2, cv::Scalar(255, 255, 255), CV_FILLED);
+  }
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  if (!right_line_.is_short)
+  {
+  if (!pf_r.initialized())
+  {
+    std::vector<cv::Point2f> init_points;
+    for (int i = 0; i < pf_num_points_; ++i)
+    {
+      cv::Point2f p;
+      p.y = getAproxY(right_line_.coeff, x_filter_points_[i]);
+      p.x = x_filter_points_[i];
+      init_points.push_back(p);
+    }
+    pf_r.init(init_points, pf_std_);
+    return;
+  }
+
+  pf_r.prediction(pf_std_);
+  pf_r.updateWeights(lines_vector_converted_[right_line_.index]);
+  pf_r.resample();
+
+  std::vector<float> pf_coeff = pf_r.getCoeff(0);
+  std::vector<cv::Point2f> pf_line;
+
+  cv::Point2f p;
+  float increment = 0.04;
+  for (float x = TOPVIEW_MIN_X; x < TOPVIEW_MAX_X; x += increment)
+  {
+    p.x = x;
+
+    p.y = getAproxY(pf_coeff, x);
+    pf_line.push_back(p);
+  }
+  cv::transform(pf_line, pf_line, world2topview_.rowRange(0, 2));
+
+  for (int i = 0; i < pf_line.size(); ++i)
+  {
+    cv::circle(pf_mat, pf_line[i], 2, cv::Scalar(255, 0, 0), CV_FILLED);
+  }
+
+  // -----------------------------------------------------------------------------
+
+  pf_coeff = pf_r.getCoeff(1);
+  pf_line.clear();
+
+  for (float x = TOPVIEW_MIN_X; x < TOPVIEW_MAX_X; x += increment)
+  {
+    p.x = x;
+
+    p.y = getAproxY(pf_coeff, x);
+    pf_line.push_back(p);
+  }
+  cv::transform(pf_line, pf_line, world2topview_.rowRange(0, 2));
+
+  for (int i = 0; i < pf_line.size(); ++i)
+  {
+    cv::circle(pf_mat, pf_line[i], 2, cv::Scalar(0, 255, 0), CV_FILLED);
+  }
+
+  // -----------------------------------------------------------------------------
+
+  pf_coeff = pf_r.getCoeff(2);
+  pf_line.clear();
+
+  for (float x = TOPVIEW_MIN_X; x < TOPVIEW_MAX_X; x += increment)
+  {
+    p.x = x;
+
+    p.y = getAproxY(pf_coeff, x);
+    pf_line.push_back(p);
+  }
+  cv::transform(pf_line, pf_line, world2topview_.rowRange(0, 2));
+
+  for (int i = 0; i < pf_line.size(); ++i)
+  {
+    cv::circle(pf_mat, pf_line[i], 2, cv::Scalar(0, 0, 255), CV_FILLED);
+  }
+
+    // -----------------------------------------------------------------------------
+
+  pf_coeff = pf_r.getCoeff(3);
+  pf_line.clear();
+
+  for (float x = TOPVIEW_MIN_X; x < TOPVIEW_MAX_X; x += increment)
+  {
+    p.x = x;
+
+    p.y = getAproxY(pf_coeff, x);
+    pf_line.push_back(p);
+  }
+  cv::transform(pf_line, pf_line, world2topview_.rowRange(0, 2));
+
+  for (int i = 0; i < pf_line.size(); ++i)
+  {
+    cv::circle(pf_mat, pf_line[i], 2, cv::Scalar(0, 255, 255), CV_FILLED);
+  }
+
+    // -----------------------------------------------------------------------------
+
+  pf_coeff = pf_r.getCoeff(4);
+  pf_line.clear();
+
+  for (float x = TOPVIEW_MIN_X; x < TOPVIEW_MAX_X; x += increment)
+  {
+    p.x = x;
+
+    p.y = getAproxY(pf_coeff, x);
+    pf_line.push_back(p);
+  }
+  cv::transform(pf_line, pf_line, world2topview_.rowRange(0, 2));
+
+  for (int i = 0; i < pf_line.size(); ++i)
+  {
+    cv::circle(pf_mat, pf_line[i], 2, cv::Scalar(255, 0, 255), CV_FILLED);
+  }
+
+    // -----------------------------------------------------------------------------
+
+  pf_coeff = pf_r.getCoeff(5);
+  pf_line.clear();
+
+  for (float x = TOPVIEW_MIN_X; x < TOPVIEW_MAX_X; x += increment)
+  {
+    p.x = x;
+
+    p.y = getAproxY(pf_coeff, x);
+    pf_line.push_back(p);
+  }
+  cv::transform(pf_line, pf_line, world2topview_.rowRange(0, 2));
+
+  for (int i = 0; i < pf_line.size(); ++i)
+  {
+    cv::circle(pf_mat, pf_line[i], 2, cv::Scalar(255, 255, 255), CV_FILLED);
+  }
+
+
+
+
+    // ------------------------------BEST-----------------------------------------
+
+  pf_coeff = pf_r.getBestCoeff();
+  pf_line.clear();
+
+  for (float x = TOPVIEW_MIN_X; x < TOPVIEW_MAX_X; x += increment)
+  {
+    p.x = x;
+
+    p.y = getAproxY(pf_coeff, x);
+    pf_line.push_back(p);
+  }
+  cv::transform(pf_line, pf_line, world2topview_.rowRange(0, 2));
+
+  for (int i = 0; i < pf_line.size(); ++i)
+  {
+    cv::circle(homography_frame_, pf_line[i], 2, cv::Scalar(255, 255, 255), CV_FILLED);
+  }
+
+  
+
+
+
+  
+  }
+
+  cv::namedWindow("pf_mat", cv::WINDOW_NORMAL);
+  cv::imshow("pf_mat", pf_mat);
 }

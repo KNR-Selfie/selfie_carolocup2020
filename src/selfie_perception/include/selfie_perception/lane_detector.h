@@ -30,6 +30,7 @@
 
 #include <visualization_msgs/Marker.h>
 #include <std_msgs/Float32.h>
+#include <selfie_perception/particle_filter.h>
 
 struct RoadLine
 {
@@ -88,6 +89,9 @@ class LaneDetector
   std::vector<std::vector<cv::Point> > lines_vector_;
   std::vector<std::vector<cv::Point2f> > lines_vector_converted_;
   std::vector<std::vector<cv::Point2f> > aprox_lines_frame_coordinate_;
+  std::vector<float> x_filter_points_;
+
+  std::vector<cv::Point2f> debug_points_;
 
   RoadLine left_line_;
   RoadLine center_line_;
@@ -127,6 +131,7 @@ class LaneDetector
   void removeHorizontalLines();
   std::vector<cv::Point2f> createOffsetLine(RoadLine &road_line, float offset);
   void detectStartAndIntersectionLine();
+  void particleFilter();
 
   // visualization
   sensor_msgs::PointCloud points_cloud_;
@@ -137,7 +142,7 @@ class LaneDetector
   void drawAproxOnHomography();
   void lanesVectorVisualization(cv::Mat &visualization_frame);
 
-  bool starting_line_           {false};
+  int starting_line_timeout_    {0};
   bool init_imageCallback_      {true};
   float min_length_search_line_ {0.10};
   float max_delta_y_lane_       {0.08};
@@ -149,17 +154,27 @@ class LaneDetector
   std::string config_file_      {""};
   bool debug_mode_              {false};
   bool hom_cut_tune_mode_       {false};
+
   float max_mid_line_distance_  {0.12};
-  float max_mid_line_gap_       {0.9};
+  float max_mid_line_gap_       {0.5};
   float nominal_center_line_Y_  {0.2};
   float points_density_         {15};
+
   int treshold_block_size_      {3};
   float real_window_size_       {0.1};
   int threshold_c_              {-40};
+
   int hom_cut_l_x_              {0};
   int hom_cut_l_y_              {0};
   int hom_cut_r_x_              {0};
   int hom_cut_r_y_              {0};
+
+  int pf_num_samples_           {50};
+  int pf_num_points_            {3};
+  double pf_std_                {0.015};
+
+  ParticleFilter pf_c;
+  ParticleFilter pf_r;
 };
 
 #endif  //  SELFIE_PERCEPTION_LANE_DETECTOR_H

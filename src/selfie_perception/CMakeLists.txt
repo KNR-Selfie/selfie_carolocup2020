@@ -219,7 +219,7 @@ install(DIRECTORY config/
     FILES_MATCHING PATTERN "*.yaml"
 )
 
-add_executable(detect_markings src/detect_markings.cpp src/lane_detector.cpp)
+add_executable(detect_markings src/detect_markings.cpp src/lane_detector.cpp src/particle_filter.cpp)
 target_link_libraries(detect_markings ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 add_dependencies(detect_markings ${catkin_EXPORTED_TARGETS})
 
