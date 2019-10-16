@@ -37,7 +37,7 @@ void ParticleFilter::init(std::vector<cv::Point2f> points, double std)
     }
     p.weight = 1;
 
-    if (!polyfitt(p.points, poly_degree_, p.coeff))
+    if (!polyfit(p.points, poly_degree_, p.coeff))
     {
       p.coeff.push_back(0.0);
     }
@@ -60,7 +60,7 @@ void ParticleFilter::prediction(double std)
       std::normal_distribution<float> dist(particles_[i].points[j].y, std);
       particles_[i].points[j].y = dist(gen);
     }
-    if (!polyfitt(particles_[i].points, poly_degree_, particles_[i].coeff))
+    if (!polyfit(particles_[i].points, poly_degree_, particles_[i].coeff))
     {
       particles_[i].coeff.clear();
       particles_[i].coeff.push_back(0.0);
@@ -76,7 +76,7 @@ void ParticleFilter::updateWeights(std::vector<cv::Point2f> &p_obs)
     float distance_sum = 0;
     for (int j = 0; j < p_obs.size(); ++j)
     {
-      distance_sum += std::fabs(p_obs[j].y - getY(particles_[i].coeff, p_obs[j].x));
+      distance_sum += std::fabs(p_obs[j].y - getPolyY(particles_[i].coeff, p_obs[j].x));
     }
     //std::cout << distance_sum << std::endl;
     particles_[i].weight = 1 / (1 + exp(9 * distance_sum));
@@ -86,7 +86,6 @@ void ParticleFilter::updateWeights(std::vector<cv::Point2f> &p_obs)
   for (int i = 0; i < num_particles_; ++i)
   {
     particles_[i].weight /= weights_sum;
-    std::cout << particles_[i].weight << std::endl;
     weights_[i] = particles_[i].weight;
   }
 }

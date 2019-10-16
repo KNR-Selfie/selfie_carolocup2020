@@ -6,48 +6,32 @@
 #ifndef SELFIE_PERCEPTION_LANE_DETECTOR_H
 #define SELFIE_PERCEPTION_LANE_DETECTOR_H
 #pragma once
-#define BOOST_UBLAS_TYPE_CHECK 0
 
 #include <ros/ros.h>
-#include <iostream>
-#include <string>
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/calib3d.hpp>
-#include <selfie_msgs/RoadMarkings.h>
 #include <geometry_msgs/Point.h>
 #include <sensor_msgs/PointCloud.h>
+#include <std_srvs/Empty.h>
+#include <selfie_msgs/RoadMarkings.h>
+#include <visualization_msgs/Marker.h>
+#include <std_msgs/Float32.h>
+
+#include <iostream>
+#include <string>
 #include <math.h>
-#include <boost/numeric/ublas/matrix.hpp>
-#include <boost/numeric/ublas/lu.hpp>
 #include <vector>
 #include <algorithm>
 #include <stdexcept>
-#include <std_srvs/Empty.h>
 
-#include <visualization_msgs/Marker.h>
-#include <std_msgs/Float32.h>
 #include <selfie_perception/particle_filter.h>
-
-struct RoadLine
-{
-  int index     {-1};
-  int degree    {2};
-  float length  {0};
-  bool is_short {false};
-  std::vector<float> coeff;
-
-  RoadLine()
-  {
-    float empty_coeff = 0;
-    coeff.push_back(empty_coeff);
-    coeff.push_back(empty_coeff);
-    coeff.push_back(empty_coeff);
-  }
-};
+#include <selfie_perception/road_line.h>
+#include <selfie_perception/polynomials.h>
+#include <selfie_perception/definitions.h>
 
 class LaneDetector
 {
@@ -89,7 +73,6 @@ class LaneDetector
   std::vector<std::vector<cv::Point> > lines_vector_;
   std::vector<std::vector<cv::Point2f> > lines_vector_converted_;
   std::vector<std::vector<cv::Point2f> > aprox_lines_frame_coordinate_;
-  std::vector<float> x_filter_points_;
 
   std::vector<cv::Point2f> debug_points_;
 
@@ -116,29 +99,23 @@ class LaneDetector
   void ROILaneRight(cv::Mat &input_frame, cv::Mat &output_frame);
   void filterSmallLines();
   void convertCoordinates();
-  float getAproxY(std::vector<float> coeff, float x);
   void convertApproxToFrameCoordinate();
   void initRecognizeLines();
   void linesApproximation();
   void calcRoadLinesParams();
   void removeCar(cv::Mat &frame);
   void addBottomPoint();
-  bool polyfit(std::vector<cv::Point2f> line, RoadLine &road_line);
-  bool polyfit(RoadLine &road_line);
   void adjust(RoadLine &good_road_line, RoadLine &short_road_line, bool left_offset);
   void calcRoadWidth();
   void generatePoints();
   void removeHorizontalLines();
-  std::vector<cv::Point2f> createOffsetLine(RoadLine &road_line, float offset);
+  std::vector<cv::Point2f> createOffsetLine(const std::vector<cv::Point2f> &coeff, const int &degree, float offset);
   void detectStartAndIntersectionLine();
-  void particleFilter();
 
   // visualization
   sensor_msgs::PointCloud points_cloud_;
   ros::Publisher points_cloud_pub_;
-  ros::Publisher aprox_visualization_pub_;
   void pointsRVIZVisualization();
-  void aproxRVIZVisualization();
   void drawAproxOnHomography();
   void lanesVectorVisualization(cv::Mat &visualization_frame);
 
@@ -171,10 +148,7 @@ class LaneDetector
 
   int pf_num_samples_           {50};
   int pf_num_points_            {3};
-  double pf_std_                {0.015};
-
-  ParticleFilter pf_c;
-  ParticleFilter pf_r;
+  float pf_std_                 {0.015};
 };
 
 #endif  //  SELFIE_PERCEPTION_LANE_DETECTOR_H
