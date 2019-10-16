@@ -122,7 +122,10 @@ void Search_server::filter_boxes(const selfie_msgs::PolygonArray &msg)
     if (box_ok)
     {
       Box temp_box(polygon);
-      boxes_on_the_right_side.insert(boxes_on_the_right_side.begin(), temp_box);
+      if (abs(temp_box.left_vertical_line.a) > 1.4 &&
+          abs((temp_box.top_right.x - temp_box.bottom_right.x) - (temp_box.top_right.y - temp_box.bottom_right.y)) >
+              1.4) // filters out boxes which are not parallel to car
+        boxes_on_the_right_side.insert(boxes_on_the_right_side.begin(), temp_box);
     }
   }
 }
@@ -145,15 +148,12 @@ bool Search_server::find_free_places()
     if (dist > min_space)
     {
 
-      Box tmp_box((*iter).top_left, (*iter).top_right,
-                  (*(iter + 1)).bottom_left, (*(iter + 1)).bottom_right);
+      Box tmp_box((*iter).top_left, (*iter).top_right, (*(iter + 1)).bottom_left, (*(iter + 1)).bottom_right);
       first_free_place = tmp_box;
       ROS_INFO("Found place \nTL: x=%lf y=%lf\nTR: x=%lf y=%lf\nBL x=%lf "
                "y=%lf\nBR x=%lf y=%lf\n",
-               tmp_box.top_left.x, tmp_box.top_left.y, tmp_box.top_right.x,
-               tmp_box.top_right.y, tmp_box.bottom_left.x,
-               tmp_box.bottom_left.y, tmp_box.bottom_right.x,
-               tmp_box.bottom_right.y);
+               tmp_box.top_left.x, tmp_box.top_left.y, tmp_box.top_right.x, tmp_box.top_right.y, tmp_box.bottom_left.x,
+               tmp_box.bottom_left.y, tmp_box.bottom_right.x, tmp_box.bottom_right.y);
       if (visualization)
         display_place(tmp_box, "first_free_place");
       return true;
@@ -238,8 +238,7 @@ void Search_server::display_place(Box &place, const std::string &name)
   visualize_free_place.publish(marker);
 }
 
-void Search_server::display_places(std::vector<Box> &boxes,
-                                   const std::string &name)
+void Search_server::display_places(std::vector<Box> &boxes, const std::string &name)
 {
   visualization_msgs::Marker marker;
 
