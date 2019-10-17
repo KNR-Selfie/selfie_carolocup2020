@@ -1299,9 +1299,9 @@ void LaneDetector::adjust(RoadLine &good_road_line,
     if (polyfit(createOffsetLine(good_road_line.getCoeff(), good_road_line.getDegree(), offset), short_road_line.getDegree(), tmp_coeff))
     {
       float current_cost = 0;
-      for (int i = 0; i < short_road_line.pointsSize(); ++i)
+      for (int i = 0; i <= short_road_line.pointsSize(); ++i)
       {
-        float aprox = getPolyY(short_road_line.getCoeff(), short_road_line.getPoints()[i].x);
+        float aprox = getPolyY(tmp_coeff, short_road_line.getPoints()[i].x);
         current_cost += std::fabs(aprox - short_road_line.getPoints()[i].y);
       }
       if (current_cost > last_cost)
