@@ -20,6 +20,7 @@ public:
   void pfSetup(int num_particles, int num_control_points, float std);
   void pfInit();
   bool pfExecute();
+  void pfReset();
 
 
   // getters
@@ -61,6 +62,7 @@ public:
     if (!exist)
     {
       points_.clear();
+      pf_.reset();
       is_short_ = true;
       length_ = 0;
     }

@@ -23,7 +23,22 @@ void RoadLine::pfInit()
 {
   if (!pf_.initialized() && exist_)
   {
-    float increment = (TOPVIEW_MAX_X - TOPVIEW_MIN_X) / (pf_num_points_ - 1);
+    float poly_topview_x = TOPVIEW_MAX_X;
+    float p_top_y = getPolyY(coeff_, TOPVIEW_MAX_X);
+    if (p_top_y < TOPVIEW_MIN_Y || p_top_y > TOPVIEW_MAX_Y)
+    {
+      for (int i = 1; i < 20; ++i)
+      {
+        p_top_y = getPolyY(coeff_, TOPVIEW_MAX_X - 0.05 * i);
+        if (p_top_y > TOPVIEW_MIN_Y && p_top_y < TOPVIEW_MAX_Y)
+        {
+          poly_topview_x = TOPVIEW_MAX_X - 0.05 * i;
+          break;
+        }
+      }
+    }
+
+    float increment = (poly_topview_x - TOPVIEW_MIN_X) / (pf_num_points_ - 1);
     std::vector<cv::Point2f> init_points;
     for (int i = 0; i < pf_num_points_; ++i)
     {
@@ -38,21 +53,31 @@ void RoadLine::pfInit()
 
 bool RoadLine::pfExecute()
 {
-  if(!pf_.initialized())
-  {
-    pfInit();
-    return false;
-  }
-  
   if (!exist_)
     return false;
-
-  pf_.prediction(pf_std_);
+  
+  float p_top_y = getPolyY(coeff_, TOPVIEW_MAX_X);
+  if (p_top_y < TOPVIEW_MIN_Y || p_top_y > TOPVIEW_MAX_Y || !pf_.initialized())
+  {
+    pf_.reset();
+    pfInit();
+  }
+  else
+  {
+    pf_.prediction(pf_std_);
+  }
+  
   pf_.updateWeights(points_);
   pf_.resample();
   coeff_ = pf_.getBestCoeff();
+  degree_ = 3;
 
   return true;
+}
+
+void RoadLine::pfReset()
+{
+  pf_.reset();
 }
 
 void RoadLine::aprox()

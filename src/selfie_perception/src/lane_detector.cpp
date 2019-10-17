@@ -7,7 +7,7 @@
 
 #include <selfie_perception/lane_detector.h>
 
-static int Acc_value = 10;
+static int Acc_value = 1;
 
 LaneDetector::LaneDetector(const ros::NodeHandle &nh, const ros::NodeHandle &pnh) :
   nh_(nh),
@@ -159,14 +159,13 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
   {
     recognizeLines();
     //generatePoints();
-    //addBottomPoint();
 
     right_line_.addBottomPoint();
     center_line_.addBottomPoint();
     left_line_.addBottomPoint();
 
-    //if (center_line_.isExist())
-    //  calcRoadWidth();
+    if (center_line_.isExist())
+      calcRoadWidth();
 
     right_line_.calcParams();
     center_line_.calcParams();
@@ -188,7 +187,7 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
     debug_frame_.rows = homography_frame_.rows;
     debug_frame_.cols = homography_frame_.cols;
     lanesVectorVisualization(debug_frame_);
-    drawParticles(10);
+    drawParticles(4);
 
     convertApproxToFrameCoordinate();
     drawAproxOnHomography();
@@ -576,8 +575,8 @@ void LaneDetector::printInfoParams()
 void LaneDetector::dynamicMask(cv::Mat &input_frame, cv::Mat &output_frame)
 {
   dynamic_mask_ = cv::Mat::zeros(cv::Size(input_frame.cols, input_frame.rows), CV_8UC1);
-  float offset_right = -0.05;
-  float offset_left = 0.03;
+  float offset_right = -0.06;
+  float offset_left = 0.04;
   output_frame = input_frame.clone();
   if (!right_line_.isExist())
     offset_right = -0.14;
