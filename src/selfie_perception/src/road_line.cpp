@@ -2,25 +2,26 @@
 
 RoadLine::RoadLine()
 {
+  coeff_.clear();
   float empty_coeff = 0;
-    coeff_.push_back(empty_coeff);
-    coeff_.push_back(empty_coeff);
-    coeff_.push_back(empty_coeff);
+  coeff_.push_back(empty_coeff);
+  coeff_.push_back(empty_coeff);
+  coeff_.push_back(empty_coeff);
 }
 
-RoadLine::pfSetup(int num_particles, int num_control_points, float std)
+void RoadLine::pfSetup(int num_particles, int num_control_points, float std)
 {
   pf_num_particles_ = num_particles;
   pf_num_points_ = num_control_points;
   pf_std_ = std;
 
-  pf.setNumParticles(num_particles);
-  pf.setNumPoints(num_control_points);
+  pf_.setNumParticles(num_particles);
+  pf_.setNumPoints(num_control_points);
 }
 
-RoadLine::pfInit();
+void RoadLine::pfInit()
 {
-  if (!pf.initialized())
+  if (!pf_.initialized())
   {
     float increment = (TOPVIEW_MAX_X - TOPVIEW_MIN_X) / (pf_num_points_ - 1);
     std::vector<cv::Point2f> init_points;
@@ -28,14 +29,38 @@ RoadLine::pfInit();
     {
       cv::Point2f p;
       p.x = i * increment + TOPVIEW_MIN_X;
-      p.y = getPolyY(center_line_.coeff, p.x);
+      p.y = getPolyY(coeff_, p.x);
       init_points.push_back(p);
     }
-    pf.init(init_points, pf_std_);
+    pf_.init(init_points, pf_std_);
   }
 }
 
-RoadLine::aprox()
+void RoadLine::aprox()
 {
   polyfit(points_, degree_, coeff_);
+}
+
+int RoadLine::pointsSize()
+{
+  if (points_.empty())
+    return 0;
+
+  return points_.size() - 1;
+}
+
+void RoadLine::calcParams()
+{
+  if (!exist_)
+  {
+    is_short_ = true;
+    length_ = 0;
+    return;
+  }
+
+  length_ = cv::arcLength(points_, false);
+  if (length_ > length_not_short_)
+    is_short_ = false;
+  else
+    is_short_ = true;
 }
