@@ -20,35 +20,47 @@ public:
   void addBottomPoint();
 
 
-  // getters and setters
-  void setShortParam(float param) { length_not_short_ = param; };
+  // getters
+  bool isExist()                        { return exist_; }
+  int getDegree()                       { return degree_; }
+  float getLength()                     { return length_; }
+  bool isShort()                        { return is_short_; }
+  std::vector<float> getCoeff()         { return coeff_; }
+  std::vector<cv::Point2f> getPoints()  { return points_; }
 
-  bool isExist() { return exist_; }
-  void setExist(bool exist) { exist_ = exist; }
+  // setters
+  void setShortParam(float param)
+  {
+    length_not_short_ = param;
+  }
 
-  int getDegree() { return degree_; }
-  void setDegree(int degree) {degree_ = degree; }
+  void setDegree(int degree)
+  {
+    degree_ = degree;
+  }
 
-  float getLength() { return length_; }
-
-  bool isShort() { return is_short_; }
-
-  std::vector<cv::Point2f> getPoints() { return points_; }
   void setPoints(std::vector<cv::Point2f> points)
   {
-    points_.clear();
     points_ = points;
   }
 
-  std::vector<float> getCoeff() { return coeff_; }
   void setCoeff(std::vector<float> coeff)
   {
-    coeff_.clear();
     coeff_ = coeff;
   }
 
+  void setExist(bool exist)
+  {
+    if (!exist)
+    {
+      points_.clear();
+      is_short_ = true;
+      length_ = 0;
+    }
+    exist_ = exist;
+  }
+
 private:
-  //int index_     {-1};
   bool exist_    {false};
   int degree_    {2};
   float length_  {0};
