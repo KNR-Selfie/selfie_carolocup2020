@@ -101,15 +101,7 @@ void ParticleFilter::resample()
     resampled_particles.push_back(particles_[dist(gen)]);
   }
   particles_ = resampled_particles;
-}
 
-std::vector<float> ParticleFilter::getCoeff(int particle_id)
-{
-  return particles_[particle_id].coeff;
-}
-
-std::vector<float> ParticleFilter::getBestCoeff()
-{
   int max_index = 0;
   float max = 0;
   for (int i = 0; i < particles_.size(); ++i)
@@ -120,7 +112,27 @@ std::vector<float> ParticleFilter::getBestCoeff()
       max_index = i;
     }
   }
-  return particles_[max_index].coeff;
+  best_coeff_ = particles_[max_index].coeff;;
+}
+
+std::vector<float> ParticleFilter::getCoeff(int particle_id)
+{
+  if (particle_id < num_particles_)
+  {
+    return particles_[particle_id].coeff;
+  }
+  else
+  {
+    std::vector<float> empty;
+    empty.push_back(0.0);
+    return empty;
+  }
+  
+}
+
+std::vector<float> ParticleFilter::getBestCoeff()
+{
+  return best_coeff_;
 }
 
 void ParticleFilter::reset()

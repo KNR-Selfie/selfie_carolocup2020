@@ -27,8 +27,13 @@ public:
   int getDegree()                       { return degree_; }
   float getLength()                     { return length_; }
   bool isShort()                        { return is_short_; }
+  bool isPFInitialized()                { return pf_.initialized(); }
   std::vector<float> getCoeff()         { return coeff_; }
   std::vector<cv::Point2f> getPoints()  { return points_; }
+  std::vector<float> getParticleCoeff(int particle_id)
+  {
+    return pf_.getCoeff(particle_id);
+  }
 
   // setters
   void setShortParam(float param)

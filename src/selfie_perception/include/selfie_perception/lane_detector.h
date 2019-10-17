@@ -116,6 +116,7 @@ class LaneDetector
   void pointsRVIZVisualization();
   void drawAproxOnHomography();
   void lanesVectorVisualization(cv::Mat &visualization_frame);
+  void drawParticles(int num);
 
   int starting_line_timeout_    {0};
   bool init_imageCallback_      {true};
@@ -147,6 +148,30 @@ class LaneDetector
   int pf_num_samples_           {50};
   int pf_num_points_            {3};
   float pf_std_                 {0.015};
+
+  int color_set[20][3] =
+  {
+    {0 , 0 , 255},
+    {255 , 0, 0},
+    {0 , 255, 0},
+    {255 , 255, 0},
+    {0 , 255, 255},
+    {255 , 0, 255},
+    {255 , 255, 255},
+    {0 , 0, 128},
+    {128 , 0, 0},
+    {0 , 128, 0},
+    {128 , 128, 0},
+    {0 , 128, 128},
+    {128 , 0, 128},
+    {128 , 128, 128},
+    {196 , 228, 255},
+    {30 , 105, 210},
+    {143 , 143, 188},
+    {222 , 196, 176},
+    {75 , 0, 130},
+    {5 , 128, 255}
+  };
 };
 
 #endif  //  SELFIE_PERCEPTION_LANE_DETECTOR_H

@@ -7,7 +7,7 @@
 
 #include <selfie_perception/lane_detector.h>
 
-static int Acc_value = 0.1;
+static int Acc_value = 10;
 
 LaneDetector::LaneDetector(const ros::NodeHandle &nh, const ros::NodeHandle &pnh) :
   nh_(nh),
@@ -188,6 +188,7 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
     debug_frame_.rows = homography_frame_.rows;
     debug_frame_.cols = homography_frame_.cols;
     lanesVectorVisualization(debug_frame_);
+    drawParticles(10);
 
     convertApproxToFrameCoordinate();
     drawAproxOnHomography();
@@ -1226,21 +1227,10 @@ void LaneDetector::lanesVectorVisualization(cv::Mat &visualization_frame)
   int green_value = 0;
   for (int i = 0; i < lines_vector_.size(); ++i)
   {
-    if (i % 4 == 0)
-      red_value = 0;
-    else if (i % 4 == 1)
-      green_value = 255;
-    else if (i % 4 == 2)
-        red_value = 255;
-    else
-    {
-        green_value = 125;
-        red_value = 125;
-    }
-    
     for (int j = 1; j < lines_vector_[i].size(); ++j)
     {
-      cv::line(visualization_frame, lines_vector_[i][j], lines_vector_[i][j - 1], cv::Scalar(red_value, green_value, 255), 1);
+      cv::line(visualization_frame, lines_vector_[i][j], lines_vector_[i][j - 1],
+               cv::Scalar(color_set[i % 19][0], color_set[i % 19][1], color_set[i % 19][2]), 1);
     }
   }
 }
@@ -1738,352 +1728,70 @@ void LaneDetector::detectStartAndIntersectionLine()
   }
 }
 
-/*
-void LaneDetector::particleFilter()
+void LaneDetector::drawParticles(int num)
 {
-
+  if(num > 19)
+    num = 19;
   cv::Mat pf_mat;
   pf_mat = cv::Mat::zeros(homography_frame_.size(), CV_8UC3);
 
-
-  if (!center_line_.is_short)
-  {
-  if (!pf_c.initialized())
-  {
-    std::vector<cv::Point2f> init_points;
-    for (int i = 0; i < pf_num_points_; ++i)
-    {
-      cv::Point2f p;
-      p.y = getPolyY(center_line_.coeff, x_filter_points_[i]);
-      p.x = x_filter_points_[i];
-      init_points.push_back(p);
-    }
-    pf_c.init(init_points, pf_std_);
-    return;
-  }
-
-  pf_c.prediction(pf_std_);
-  pf_c.updateWeights(lines_vector_converted_[center_line_.index]);
-  pf_c.resample();
-
-  std::vector<float> pf_coeff = pf_c.getCoeff(0);
+  std::vector<float> pf_coeff;
   std::vector<cv::Point2f> pf_line;
-
   cv::Point2f p;
-  float increment = 0.04;
-  for (float x = TOPVIEW_MIN_X; x < TOPVIEW_MAX_X; x += increment)
+  for (int i = 0; i < num; ++i)
   {
-    p.x = x;
-
-    p.y = getPolyY(pf_coeff, x);
-    pf_line.push_back(p);
-  }
-  cv::transform(pf_line, pf_line, world2topview_.rowRange(0, 2));
-
-  for (int i = 0; i < pf_line.size(); ++i)
-  {
-    cv::circle(pf_mat, pf_line[i], 2, cv::Scalar(255, 0, 0), CV_FILLED);
-  }
-
-  // -----------------------------------------------------------------------------
-
-  pf_coeff = pf_c.getCoeff(1);
-  pf_line.clear();
-
-  for (float x = TOPVIEW_MIN_X; x < TOPVIEW_MAX_X; x += increment)
-  {
-    p.x = x;
-
-    p.y = getPolyY(pf_coeff, x);
-    pf_line.push_back(p);
-  }
-  cv::transform(pf_line, pf_line, world2topview_.rowRange(0, 2));
-
-  for (int i = 0; i < pf_line.size(); ++i)
-  {
-    cv::circle(pf_mat, pf_line[i], 2, cv::Scalar(0, 255, 0), CV_FILLED);
-  }
-
-  // -----------------------------------------------------------------------------
-
-  pf_coeff = pf_c.getCoeff(2);
-  pf_line.clear();
-
-  for (float x = TOPVIEW_MIN_X; x < TOPVIEW_MAX_X; x += increment)
-  {
-    p.x = x;
-
-    p.y = getPolyY(pf_coeff, x);
-    pf_line.push_back(p);
-  }
-  cv::transform(pf_line, pf_line, world2topview_.rowRange(0, 2));
-
-  for (int i = 0; i < pf_line.size(); ++i)
-  {
-    cv::circle(pf_mat, pf_line[i], 2, cv::Scalar(0, 0, 255), CV_FILLED);
-  }
-
-    // -----------------------------------------------------------------------------
-
-  pf_coeff = pf_c.getCoeff(3);
-  pf_line.clear();
-
-  for (float x = TOPVIEW_MIN_X; x < TOPVIEW_MAX_X; x += increment)
-  {
-    p.x = x;
-
-    p.y = getPolyY(pf_coeff, x);
-    pf_line.push_back(p);
-  }
-  cv::transform(pf_line, pf_line, world2topview_.rowRange(0, 2));
-
-  for (int i = 0; i < pf_line.size(); ++i)
-  {
-    cv::circle(pf_mat, pf_line[i], 2, cv::Scalar(0, 255, 255), CV_FILLED);
-  }
-
-    // -----------------------------------------------------------------------------
-
-  pf_coeff = pf_c.getCoeff(4);
-  pf_line.clear();
-
-  for (float x = TOPVIEW_MIN_X; x < TOPVIEW_MAX_X; x += increment)
-  {
-    p.x = x;
-
-    p.y = getPolyY(pf_coeff, x);
-    pf_line.push_back(p);
-  }
-  cv::transform(pf_line, pf_line, world2topview_.rowRange(0, 2));
-
-  for (int i = 0; i < pf_line.size(); ++i)
-  {
-    cv::circle(pf_mat, pf_line[i], 2, cv::Scalar(255, 0, 255), CV_FILLED);
-  }
-
-    // -----------------------------------------------------------------------------
-
-  pf_coeff = pf_c.getCoeff(5);
-  pf_line.clear();
-
-  for (float x = TOPVIEW_MIN_X; x < TOPVIEW_MAX_X; x += increment)
-  {
-    p.x = x;
-
-    p.y = getPolyY(pf_coeff, x);
-    pf_line.push_back(p);
-  }
-  cv::transform(pf_line, pf_line, world2topview_.rowRange(0, 2));
-
-  for (int i = 0; i < pf_line.size(); ++i)
-  {
-    cv::circle(pf_mat, pf_line[i], 2, cv::Scalar(255, 255, 255), CV_FILLED);
-  }
-
-
-
-
-    // ------------------------------BEST-----------------------------------------
-
-  pf_coeff = pf_c.getBestCoeff();
-  pf_line.clear();
-
-  for (float x = TOPVIEW_MIN_X; x < TOPVIEW_MAX_X; x += increment)
-  {
-    p.x = x;
-
-    p.y = getPolyY(pf_coeff, x);
-    pf_line.push_back(p);
-  }
-  cv::transform(pf_line, pf_line, world2topview_.rowRange(0, 2));
-
-  for (int i = 0; i < pf_line.size(); ++i)
-  {
-    cv::circle(homography_frame_, pf_line[i], 2, cv::Scalar(255, 255, 255), CV_FILLED);
-  }
-  }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  if (!right_line_.is_short)
-  {
-  if (!pf_r.initialized())
-  {
-    std::vector<cv::Point2f> init_points;
-    for (int i = 0; i < pf_num_points_; ++i)
+    if (center_line_.isPFInitialized())
     {
-      cv::Point2f p;
-      p.y = getPolyY(right_line_.coeff, x_filter_points_[i]);
-      p.x = x_filter_points_[i];
-      init_points.push_back(p);
+      pf_line.clear();
+      pf_coeff = center_line_.getParticleCoeff(i);
+      for (float x = TOPVIEW_MIN_X; x < TOPVIEW_MAX_X; x += 0.03)
+      {
+        p.x = x;
+        p.y = getPolyY(pf_coeff, x);
+        pf_line.push_back(p);
+      }
+      cv::transform(pf_line, pf_line, world2topview_.rowRange(0, 2));
+      for (int j = 0; j < pf_line.size(); ++j)
+      {
+        cv::circle(pf_mat, pf_line[j], 1, cv::Scalar(color_set[i][0], color_set[i][1], color_set[i][2]), CV_FILLED);
+      }
     }
-    pf_r.init(init_points, pf_std_);
-    return;
+
+    if (left_line_.isPFInitialized())
+    {
+      pf_line.clear();
+      pf_coeff = left_line_.getParticleCoeff(i);
+      for (float x = TOPVIEW_MIN_X; x < TOPVIEW_MAX_X; x += 0.03)
+      {
+        p.x = x;
+        p.y = getPolyY(pf_coeff, x);
+        pf_line.push_back(p);
+      }
+      cv::transform(pf_line, pf_line, world2topview_.rowRange(0, 2));
+      for (int j = 0; j < pf_line.size(); ++j)
+      {
+        cv::circle(pf_mat, pf_line[j], 1, cv::Scalar(color_set[i][0], color_set[i][1], color_set[i][2]), CV_FILLED);
+      }
+    }
+
+    if (right_line_.isPFInitialized())
+    {
+      pf_line.clear();
+      pf_coeff = right_line_.getParticleCoeff(i);
+      for (float x = TOPVIEW_MIN_X; x < TOPVIEW_MAX_X; x += 0.03)
+      {
+        p.x = x;
+        p.y = getPolyY(pf_coeff, x);
+        pf_line.push_back(p);
+      }
+      cv::transform(pf_line, pf_line, world2topview_.rowRange(0, 2));
+      for (int j = 0; j < pf_line.size(); ++j)
+      {
+        cv::circle(pf_mat, pf_line[j], 1, cv::Scalar(color_set[i][0], color_set[i][1], color_set[i][2]), CV_FILLED);
+      }
+    }
   }
 
-  pf_r.prediction(pf_std_);
-  pf_r.updateWeights(lines_vector_converted_[right_line_.index]);
-  pf_r.resample();
-
-  std::vector<float> pf_coeff = pf_r.getCoeff(0);
-  std::vector<cv::Point2f> pf_line;
-
-  cv::Point2f p;
-  float increment = 0.04;
-  for (float x = TOPVIEW_MIN_X; x < TOPVIEW_MAX_X; x += increment)
-  {
-    p.x = x;
-
-    p.y = getPolyY(pf_coeff, x);
-    pf_line.push_back(p);
-  }
-  cv::transform(pf_line, pf_line, world2topview_.rowRange(0, 2));
-
-  for (int i = 0; i < pf_line.size(); ++i)
-  {
-    cv::circle(pf_mat, pf_line[i], 2, cv::Scalar(255, 0, 0), CV_FILLED);
-  }
-
-  // -----------------------------------------------------------------------------
-
-  pf_coeff = pf_r.getCoeff(1);
-  pf_line.clear();
-
-  for (float x = TOPVIEW_MIN_X; x < TOPVIEW_MAX_X; x += increment)
-  {
-    p.x = x;
-
-    p.y = getPolyY(pf_coeff, x);
-    pf_line.push_back(p);
-  }
-  cv::transform(pf_line, pf_line, world2topview_.rowRange(0, 2));
-
-  for (int i = 0; i < pf_line.size(); ++i)
-  {
-    cv::circle(pf_mat, pf_line[i], 2, cv::Scalar(0, 255, 0), CV_FILLED);
-  }
-
-  // -----------------------------------------------------------------------------
-
-  pf_coeff = pf_r.getCoeff(2);
-  pf_line.clear();
-
-  for (float x = TOPVIEW_MIN_X; x < TOPVIEW_MAX_X; x += increment)
-  {
-    p.x = x;
-
-    p.y = getPolyY(pf_coeff, x);
-    pf_line.push_back(p);
-  }
-  cv::transform(pf_line, pf_line, world2topview_.rowRange(0, 2));
-
-  for (int i = 0; i < pf_line.size(); ++i)
-  {
-    cv::circle(pf_mat, pf_line[i], 2, cv::Scalar(0, 0, 255), CV_FILLED);
-  }
-
-    // -----------------------------------------------------------------------------
-
-  pf_coeff = pf_r.getCoeff(3);
-  pf_line.clear();
-
-  for (float x = TOPVIEW_MIN_X; x < TOPVIEW_MAX_X; x += increment)
-  {
-    p.x = x;
-
-    p.y = getPolyY(pf_coeff, x);
-    pf_line.push_back(p);
-  }
-  cv::transform(pf_line, pf_line, world2topview_.rowRange(0, 2));
-
-  for (int i = 0; i < pf_line.size(); ++i)
-  {
-    cv::circle(pf_mat, pf_line[i], 2, cv::Scalar(0, 255, 255), CV_FILLED);
-  }
-
-    // -----------------------------------------------------------------------------
-
-  pf_coeff = pf_r.getCoeff(4);
-  pf_line.clear();
-
-  for (float x = TOPVIEW_MIN_X; x < TOPVIEW_MAX_X; x += increment)
-  {
-    p.x = x;
-
-    p.y = getPolyY(pf_coeff, x);
-    pf_line.push_back(p);
-  }
-  cv::transform(pf_line, pf_line, world2topview_.rowRange(0, 2));
-
-  for (int i = 0; i < pf_line.size(); ++i)
-  {
-    cv::circle(pf_mat, pf_line[i], 2, cv::Scalar(255, 0, 255), CV_FILLED);
-  }
-
-    // -----------------------------------------------------------------------------
-
-  pf_coeff = pf_r.getCoeff(5);
-  pf_line.clear();
-
-  for (float x = TOPVIEW_MIN_X; x < TOPVIEW_MAX_X; x += increment)
-  {
-    p.x = x;
-
-    p.y = getPolyY(pf_coeff, x);
-    pf_line.push_back(p);
-  }
-  cv::transform(pf_line, pf_line, world2topview_.rowRange(0, 2));
-
-  for (int i = 0; i < pf_line.size(); ++i)
-  {
-    cv::circle(pf_mat, pf_line[i], 2, cv::Scalar(255, 255, 255), CV_FILLED);
-  }
-
-
-
-
-    // ------------------------------BEST-----------------------------------------
-
-  pf_coeff = pf_r.getBestCoeff();
-  pf_line.clear();
-
-  for (float x = TOPVIEW_MIN_X; x < TOPVIEW_MAX_X; x += increment)
-  {
-    p.x = x;
-
-    p.y = getPolyY(pf_coeff, x);
-    pf_line.push_back(p);
-  }
-  cv::transform(pf_line, pf_line, world2topview_.rowRange(0, 2));
-
-  for (int i = 0; i < pf_line.size(); ++i)
-  {
-    cv::circle(homography_frame_, pf_line[i], 2, cv::Scalar(255, 255, 255), CV_FILLED);
-  }
-
-  
-
-
-
-  
-  }
-
-  cv::namedWindow("pf_mat", cv::WINDOW_NORMAL);
-  cv::imshow("pf_mat", pf_mat);
-}*/
+  cv::namedWindow("Particle Filter", cv::WINDOW_NORMAL);
+  cv::imshow("Particle Filter", pf_mat);
+}

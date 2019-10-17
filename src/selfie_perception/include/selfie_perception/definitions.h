@@ -1,3 +1,7 @@
+#pragma once
+#ifndef SELFIE_DEFINITIONS_H
+#define SELFIE_DEFINITIONS_H
+
 #define TOPVIEW_ROWS 197
 #define TOPVIEW_COLS 640
 
@@ -5,3 +9,5 @@
 #define TOPVIEW_MAX_X 1.1
 #define TOPVIEW_MIN_Y -1.3
 #define TOPVIEW_MAX_Y 1.3
+
+#endif  //  SELFIE_DEFINITIONS_H
