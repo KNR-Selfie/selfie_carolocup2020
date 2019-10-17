@@ -21,7 +21,7 @@ void RoadLine::pfSetup(int num_particles, int num_control_points, float std)
 
 void RoadLine::pfInit()
 {
-  if (!pf_.initialized())
+  if (!pf_.initialized() && exist_)
   {
     float increment = (TOPVIEW_MAX_X - TOPVIEW_MIN_X) / (pf_num_points_ - 1);
     std::vector<cv::Point2f> init_points;
@@ -34,6 +34,25 @@ void RoadLine::pfInit()
     }
     pf_.init(init_points, pf_std_);
   }
+}
+
+bool RoadLine::pfExecute()
+{
+  if(!pf_.initialized())
+  {
+    pfInit();
+    return false;
+  }
+  
+  if (!exist_)
+    return false;
+
+  pf_.prediction(pf_std_);
+  pf_.updateWeights(points_);
+  pf_.resample();
+  coeff_ = pf_.getBestCoeff();
+
+  return true;
 }
 
 void RoadLine::aprox()

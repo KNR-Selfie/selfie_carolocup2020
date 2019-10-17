@@ -71,6 +71,10 @@ bool LaneDetector::init()
   center_line_.setShortParam(min_length_to_2aprox_);
   right_line_.setShortParam(min_length_to_2aprox_);
 
+  left_line_.pfSetup(pf_num_samples_, pf_num_points_, pf_std_);
+  center_line_.pfSetup(pf_num_samples_, pf_num_points_, pf_std_);
+  right_line_.pfSetup(pf_num_samples_, pf_num_points_, pf_std_);
+
   computeTopView();
   printInfoParams();
   return true;
@@ -161,14 +165,18 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
     center_line_.addBottomPoint();
     left_line_.addBottomPoint();
 
-    if (center_line_.isExist())
-      calcRoadWidth();
+    //if (center_line_.isExist())
+    //  calcRoadWidth();
 
     right_line_.calcParams();
     center_line_.calcParams();
     left_line_.calcParams();
 
-    linesApproximation();
+    right_line_.pfExecute();
+    center_line_.pfExecute();
+    left_line_.pfExecute();
+
+    //linesApproximation();
 
     
 
@@ -1729,51 +1737,7 @@ void LaneDetector::detectStartAndIntersectionLine()
     intersection_pub_.publish(msg);
   }
 }
-/*
-void LaneDetector::calcRoadLinesParams()
-{
-  if (left_line_.index != -1)
-  {
-    left_line_.length = cv::arcLength(lines_vector_converted_[left_line_.index], false);
-    if (left_line_.length > min_length_to_2aprox_)
-      left_line_.is_short = false;
-    else
-      left_line_.is_short = true;
-  }
-  else
-  {
-    left_line_.length = 0;
-    left_line_.is_short = true;
-  }
 
-  if (right_line_.index != -1)
-  {
-    right_line_.length = cv::arcLength(lines_vector_converted_[right_line_.index], false);
-    if (right_line_.length > min_length_to_2aprox_)
-      right_line_.is_short = false;
-    else
-      right_line_.is_short = true;
-  }
-  else
-  {
-    right_line_.length = 0;
-    right_line_.is_short = true;
-  }
-
-  if (center_line_.index != -1)
-  {
-    center_line_.length = cv::arcLength(lines_vector_converted_[center_line_.index], false);
-    if (center_line_.length > min_length_to_2aprox_)
-      center_line_.is_short = false;
-    else
-      center_line_.is_short = true;
-  }
-  else
-  {
-    center_line_.length = 0;
-    center_line_.is_short = true;
-  }
-}*/
 /*
 void LaneDetector::particleFilter()
 {

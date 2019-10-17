@@ -12,12 +12,14 @@ class RoadLine
 public:
   RoadLine();
 
-  void pfSetup(int num_particles, int num_control_points, float std);
-  void pfInit();
   void aprox();
   int pointsSize();
   void calcParams();
   void addBottomPoint();
+
+  void pfSetup(int num_particles, int num_control_points, float std);
+  void pfInit();
+  bool pfExecute();
 
 
   // getters
