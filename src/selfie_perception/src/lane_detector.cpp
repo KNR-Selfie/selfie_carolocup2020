@@ -156,12 +156,18 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
     recognizeLines();
     //generatePoints();
     //addBottomPoint();
+
+    right_line_.addBottomPoint();
+    center_line_.addBottomPoint();
+    left_line_.addBottomPoint();
+
+    if (center_line_.isExist())
+      calcRoadWidth();
+
     right_line_.calcParams();
     center_line_.calcParams();
     left_line_.calcParams();
 
-    //if (center_line_.isExist())
-    //  calcRoadWidth();
     linesApproximation();
 
     
@@ -1244,40 +1250,6 @@ void LaneDetector::removeCar(cv::Mat &frame)
   cv::bitwise_not(car_mask, car_mask);
   cv::bitwise_and(frame, car_mask, frame);
 }
-/*
-void LaneDetector::addBottomPoint()
-{
-  cv::Point2f temp;
-  if (left_line_.index > -1)
-  {
-    if (lines_vector_converted_[left_line_.index][0].x > ((TOPVIEW_MIN_X + TOPVIEW_MAX_X) / 4))
-    {
-      temp.x = TOPVIEW_MIN_X;
-      temp.y = getPolyY(left_line_.coeff, TOPVIEW_MIN_X);
-      lines_vector_converted_[left_line_.index].insert(lines_vector_converted_[left_line_.index].begin(), temp);
-    }
-  }
-
-  if (right_line_.index > -1)
-  {
-    if (lines_vector_converted_[right_line_.index][0].x > ((TOPVIEW_MIN_X + TOPVIEW_MAX_X) / 4))
-    {
-      temp.x = TOPVIEW_MIN_X;
-      temp.y = getPolyY(right_line_.coeff, TOPVIEW_MIN_X);
-      lines_vector_converted_[right_line_.index].insert(lines_vector_converted_[right_line_.index].begin(), temp);
-    }
-  }
-
-  if (center_line_.index > -1)
-  {
-    if (lines_vector_converted_[center_line_.index][0].x > ((TOPVIEW_MIN_X + TOPVIEW_MAX_X) / 4))
-    {
-      temp.x = TOPVIEW_MIN_X;
-      temp.y = getPolyY(center_line_.coeff, TOPVIEW_MIN_X);
-      lines_vector_converted_[center_line_.index].insert(lines_vector_converted_[center_line_.index].begin(), temp);
-    }
-  }
-}*/
 
 void LaneDetector::adjust(RoadLine &good_road_line,
                           RoadLine &short_road_line, bool left_offset)
@@ -1328,29 +1300,29 @@ void LaneDetector::adjust(RoadLine &good_road_line,
   }
   
 }
-/*
+
 void LaneDetector::calcRoadWidth()
 {
   debug_points_.clear();
   cv::Point2f p;
   cv::Point2f p_ahead;
   p_ahead.x = 0.6;
-  p_ahead.y = getPolyY(center_line_.coeff, p_ahead.x);
+  p_ahead.y = getPolyY(center_line_.getCoeff(), p_ahead.x);
   double deriative;
-  if (center_line_.degree == 3)
-    deriative = 3 * center_line_.coeff[3] * pow(p_ahead.x, 2)
-              + 2 * center_line_.coeff[2] * p_ahead.x
-              + center_line_.coeff[1];
+  if (center_line_.getDegree() == 3)
+    deriative = 3 * center_line_.getCoeff()[3] * pow(p_ahead.x, 2)
+              + 2 * center_line_.getCoeff()[2] * p_ahead.x
+              + center_line_.getCoeff()[1];
   else
-    deriative = 2 * center_line_.coeff[2] * p_ahead.x
-              + center_line_.coeff[1];
+    deriative = 2 * center_line_.getCoeff()[2] * p_ahead.x
+              + center_line_.getCoeff()[1];
 
   double a_param_orthg = -1 / deriative;
   double b_param_orthg = p_ahead.y - a_param_orthg * p_ahead.x;
 
   // right lane
   float r_lane_width = 0;
-  if (right_line_.index != -1)
+  if (right_line_.isExist())
   {
     p.y = p_ahead.y - 0.3;
     float step = -0.01;
@@ -1361,7 +1333,7 @@ void LaneDetector::calcRoadWidth()
       p.x = (p.y - b_param_orthg) / a_param_orthg;
       cv::Point2f p_aprox;
       p_aprox.x = p.x;
-      p_aprox.y = getPolyY(right_line_.coeff, p_aprox.x);
+      p_aprox.y = getPolyY(right_line_.getCoeff(), p_aprox.x);
       r_lane_width = getDistance(p, p_aprox);
       if (r_lane_width - last_dist > 0)
       {
@@ -1390,15 +1362,14 @@ void LaneDetector::calcRoadWidth()
     else if (r_lane_width > 0.6)
     {
       ROS_INFO("Right line too far. Delete index");
-      right_line_.index = -1;
-      right_line_.length = 0;
-      right_line_.is_short = true;
+      right_lane_width_ = 0.4;
+      right_line_.setExist(false);
     }
   }
 
   // left lane
   float l_lane_width = 0;
-  if (left_line_.index != -1)
+  if (left_line_.isExist())
   {
     p.y = p_ahead.y + 0.3;
     float step = 0.01;
@@ -1409,7 +1380,7 @@ void LaneDetector::calcRoadWidth()
       p.x = (p.y - b_param_orthg) / a_param_orthg;
       cv::Point2f p_aprox;
       p_aprox.x = p.x;
-      p_aprox.y = getPolyY(left_line_.coeff, p_aprox.x);
+      p_aprox.y = getPolyY(left_line_.getCoeff(), p_aprox.x);
       l_lane_width = getDistance(p, p_aprox);
       if (l_lane_width - last_dist > 0)
       {
@@ -1437,9 +1408,8 @@ void LaneDetector::calcRoadWidth()
     else if (l_lane_width > 0.6)
     {
       ROS_INFO("Left line too far. Delete index");
-      left_line_.index = -1;
-      left_line_.length = 0;
-      left_line_.is_short = true;
+      left_lane_width_ = 0.4;
+      left_line_.setExist(false);
     }
   }
 
@@ -1452,7 +1422,7 @@ void LaneDetector::calcRoadWidth()
     std::cout << "left_lane_width: " << left_lane_width_ << std::endl;
   }
 }
-
+/*
 void LaneDetector::generatePoints()
 {
   if (left_line_.index != -1)

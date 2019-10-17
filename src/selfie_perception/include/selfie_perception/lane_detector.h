@@ -104,7 +104,6 @@ class LaneDetector
   void linesApproximation();
   void calcRoadLinesParams();
   void removeCar(cv::Mat &frame);
-  void addBottomPoint();
   void adjust(RoadLine &good_road_line, RoadLine &short_road_line, bool left_offset);
   void calcRoadWidth();
   void generatePoints();

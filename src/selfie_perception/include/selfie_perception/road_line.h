@@ -17,6 +17,7 @@ public:
   void aprox();
   int pointsSize();
   void calcParams();
+  void addBottomPoint();
 
 
   // getters and setters

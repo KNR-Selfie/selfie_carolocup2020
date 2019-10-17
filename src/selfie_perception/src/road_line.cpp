@@ -53,6 +53,7 @@ void RoadLine::calcParams()
 {
   if (!exist_)
   {
+    points_.clear();
     is_short_ = true;
     length_ = 0;
     return;
@@ -63,4 +64,18 @@ void RoadLine::calcParams()
     is_short_ = false;
   else
     is_short_ = true;
+}
+
+void RoadLine::addBottomPoint()
+{
+  if (!exist_)
+    return;
+
+  if (points_[0].x > ((TOPVIEW_MIN_X + TOPVIEW_MAX_X) / 4))
+  {
+    cv::Point2f p;
+    p.x = TOPVIEW_MIN_X;
+    p.y = getPolyY(coeff_, p.x);
+    points_.insert(points_.begin(), p);
+  }
 }
