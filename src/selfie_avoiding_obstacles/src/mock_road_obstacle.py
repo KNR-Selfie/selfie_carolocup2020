@@ -5,6 +5,7 @@ import rospy
 
 
 from selfie_msgs.msg import PolygonArray
+from selfie_msgs.msg import RoadMarkings
 from geometry_msgs.msg import Polygon
 from geometry_msgs.msg import Point32
 from std_msgs.msg import Float32
@@ -17,8 +18,14 @@ def callback(data):
 
 def mock_road_obstacle():
     pub = rospy.Publisher('/obstacles', PolygonArray, queue_size=10)
+    pub_r =rospy.Publisher('/road_markings', RoadMarkings, queue_size=10)
     sub = rospy.Subscriber('/setpoint', Float32, callback)
     rospy.init_node('mock_road_obstacle', anonymous=True)
+    marking=RoadMarkings
+    marking.left_line=[2,0,0]
+    marking.center_line=[0.59,0,0]
+    marking.right_line=[-1.5,0,0]
+    pub_r.publish(marking)
     point = Point32(x=0.4, y=-0.15, z=0)
     polygon = Polygon()
     polygon.points.append(point)
