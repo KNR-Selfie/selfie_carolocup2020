@@ -30,7 +30,6 @@ Road_obstacle_detector::~Road_obstacle_detector() {}
 
 void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &msg)
 {
-  ROS_INFO("ObstacleCB");
   switch (status_)
   {
   case CLEAR:
@@ -88,7 +87,6 @@ void Road_obstacle_detector::filter_boxes(const selfie_msgs::PolygonArray &msg)
 
 void Road_obstacle_detector::road_markings_callback(const selfie_msgs::RoadMarkings &msg)
 {
-  ROS_INFO("RMCB");
   int size = msg.left_line.size();
   if (size != 3 && size != 4)
     ROS_ERROR("Invalid number of args in RoadMarkings");
@@ -131,7 +129,7 @@ void Road_obstacle_detector::calculate_overtake_time(const std_msgs::Float32 &ms
 
 void Road_obstacle_detector::change_lane(float lane)
 {
-  // setpoint_value_.data = lane;
+  setpoint_value_.data = lane;
   setpoint_pub_.publish(setpoint_value_);
   if (lane == LEFT)
     ROS_INFO("Lane changed to left");
@@ -140,5 +138,3 @@ void Road_obstacle_detector::change_lane(float lane)
 }
 
 void Road_obstacle_detector::calculate_time(const ros::TimerEvent &time) { time_left_ -= timer_duration_; }
-
-// TODO visualization
