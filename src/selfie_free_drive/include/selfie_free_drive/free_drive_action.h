@@ -48,6 +48,7 @@ public:
 
   void maxSpeedPub();
   void executeCB(const selfie_msgs::drivingGoalConstPtr &goal);
+  void preemptCB();
   void startingLineCB(const std_msgs::Float32ConstPtr &msg);
 };
 #endif // FREE_DRIVE_ACTION_H

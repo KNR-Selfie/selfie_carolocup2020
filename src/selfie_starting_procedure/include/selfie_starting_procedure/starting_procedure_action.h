@@ -46,6 +46,7 @@ public:
 
   void driveBoxOut(float speed);
   void executeCB(const selfie_msgs::startingGoalConstPtr &goal);
+  void preemptCB();
   void buttonCB(const std_msgs::BoolConstPtr &msg);
   void distanceCB(const std_msgs::Float32ConstPtr &msg);
 };

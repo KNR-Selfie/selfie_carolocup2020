@@ -4,6 +4,7 @@
 #include <selfie_scheduler/scheduler_enums.h>
 #include <selfie_scheduler/client_interface.h>
 #include <boost/any.hpp>
+#include <std_msgs/UInt8.h>
 
 /*
 
@@ -36,6 +37,10 @@ class Scheduler
     ros::ServiceClient cmdCreatorStartPub_;
     ros::ServiceClient cmdCreatorStopPub_;
 
+    ros::Subscriber switchState_;
+    rc_state previousRcState_;
+    void switchStateCallback(const std_msgs::UInt8ConstPtr &msg);
+
     template <typename T> bool checkCurrentClientType();
     void stateMachine();
     void startAction(action action_to_set);
@@ -61,7 +66,7 @@ public:
     void shiftAction();
 
     void actionStateMachine();
-    bool checkIfActionFinished();
+    int checkIfActionFinished();
 
 };
 

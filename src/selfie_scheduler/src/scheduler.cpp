@@ -20,6 +20,7 @@ Scheduler::Scheduler() :
     visionReset_ = nh_.serviceClient<std_srvs::Empty>("resetVision");
     cmdCreatorStartPub_ = nh_.serviceClient<std_srvs::Empty>("cmd_start_pub");
     cmdCreatorStopPub_ = nh_.serviceClient<std_srvs::Empty>("cmd_stop_pub");
+    switchState_ = nh_.subscribe("switch_state", 10, &Scheduler::switchStateCallback, this);
 
     clients_[STARTING] = new StartingProcedureClient("starting_procedure");
     action_args_[STARTING] = start_distance_;
@@ -33,6 +34,9 @@ Scheduler::Scheduler() :
     clients_[PARK] = new ParkClient("park");
     action_args_[PARK] = [](geometry_msgs::Polygon x){return x;};
 
+    previousRcState_ = RC_MANUAL;
+    previous_car_state_= SELFIE_IDLE;
+    current_car_state_ = SELFIE_READY;
 
     ROS_INFO("Clients created successfully");
 }
@@ -61,17 +65,22 @@ void Scheduler::startAction(action action_to_set)
     current_client_ptr_->waitForServer(200);
     current_client_ptr_->setGoal(action_args_[action_to_set]);
 }
-bool Scheduler::checkIfActionFinished()
+int Scheduler::checkIfActionFinished()
 {
     return current_client_ptr_->isActionFinished();
 }
 void Scheduler::loop()
 {
-    if (checkIfActionFinished())
+    if (checkIfActionFinished() == 1)
     {
         current_client_ptr_->getActionResult(action_args_[current_client_ptr_->getNextAction()]);
         shiftAction();
     }
+    else if(checkIfActionFinished() == 2)
+    {
+        // empty state
+    }
+    stateMachine();
 }
 void Scheduler::resetVision()
 {
@@ -104,6 +113,7 @@ void Scheduler::shiftAction()
 {
     if (checkCurrentClientType<StartingProcedureClient*>())
     {
+        resetVision();
         startAction(DRIVING);
         startCmdCreator();
     }
@@ -159,3 +169,37 @@ void Scheduler::stateMachine()
             break;
     }
 }
+void Scheduler::stopAction()
+{
+    current_client_ptr_->cancelAction();
+    ROS_INFO("STOP current action");
+}
+void Scheduler::switchStateCallback(const std_msgs::UInt8ConstPtr &msg)
+{
+    // prevent from execution on the beginning
+    if (current_car_state_ > SELFIE_READY)
+    {
+        if (previousRcState_ != msg->data)
+        {
+            if ((rc_state)msg->data == RC_MANUAL)
+            {
+                stopAction();
+            }
+            else if((rc_state)msg->data == RC_AUTONOMOUS && previousRcState_ == RC_MANUAL)
+            {
+                resetVision();
+                startAction(DRIVING);
+                startCmdCreator();
+
+            }
+            else if((rc_state)msg->data == RC_HALF_AUTONOMOUS && previousRcState_ == RC_MANUAL)
+            {
+                resetVision();
+                startAction(DRIVING);
+                startCmdCreator();
+            }
+        }
+    }
+    previousRcState_ = (rc_state)msg->data;
+}
+
