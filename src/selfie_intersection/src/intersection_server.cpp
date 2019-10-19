@@ -19,6 +19,7 @@ IntersectionServer::IntersectionServer(const ros::NodeHandle &nh, const ros::Nod
   pnh_.param<float>("road_width", road_width_, 0.95);
   pnh_.param<float>("point_min_y", point_min_y_, -3);
   pnh_.param<float>("point_max_y", point_max_y_, 3);
+  pnh_.param<float>("stop_time", stop_time_, 3);
   pnh_.param<bool>("visualization", visualization_, true);
   point_min_x_ = max_distance_to_intersection_;
   ROS_INFO("Intersection server: active");
@@ -36,6 +37,7 @@ void IntersectionServer::init()
   speed_publisher_ = nh_.advertise<std_msgs::Float64>("/max_speed", 2);
   speed_publisher_.publish(speed_);
   publishFeedback(STOPPED_ON_INTERSECTION);
+  time_started_ = false;
   ROS_INFO("Initialized");
 }
 
@@ -47,27 +49,42 @@ void IntersectionServer::manager(const selfie_msgs::PolygonArray &boxes)
     return;
   }
   filter_boxes(boxes);
-  if (filtered_boxes_.size() != 0)
+  if (max_distance_to_intersection_ < point_min_x_)
   {
-    ROS_INFO_THROTTLE(1.5, "Another car on the road");
-    if (visualization_)
-      Box().visualizeList(filtered_boxes_, visualize_intersection_, "obstacles_on_road", 0.9, 0.9, 0.9);
-    if (action_status_.action_status != FOUND_OBSTACLES)
+    publishFeedback(APPROACHING_TO_INTERSECTION_WITH_OBSTACLES);
+  } else
+  {
+    if (!time_started_)
     {
-      if (max_distance_to_intersection_ > point_min_x_)
+      beginning_time_ = ros::Time::now().toSec();
+      time_started_ = true;
+    }
+
+    if (filtered_boxes_.size() != 0)
+    {
+      ROS_INFO_THROTTLE(1.5, "Another car on the road");
+      if (visualization_)
+        Box().visualizeList(filtered_boxes_, visualize_intersection_, "obstacles_on_road", 0.9, 0.9, 0.9);
+      if (action_status_.action_status != FOUND_OBSTACLES)
       {
         speed_publisher_.publish(speed_);
         publishFeedback(FOUND_OBSTACLES);
+      }
+    } else
+    {
+      current_time_ = ros::Time::now().toSec();
+      difftime_ = current_time_ - beginning_time_;
+      if (difftime_ >= stop_time_)
+      {
+        publishFeedback(ROAD_CLEAR);
+        ROS_INFO("Road clear, intersection action finished");
+        send_goal();
       } else
       {
-        publishFeedback(APPROACHING_TO_INTERSECTION_WITH_OBSTACLES);
+        publishFeedback(WAITING_ON_INTERSECTION);
+        ROS_INFO_THROTTLE(0.3, "Waiting (%lf s left) on intersection", stop_time_ - difftime_);
       }
     }
-  } else
-  {
-    publishFeedback(ROAD_CLEAR);
-    ROS_INFO("Road clear, intersection action finished");
-    send_goal();
   }
 }
 
