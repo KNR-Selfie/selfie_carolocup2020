@@ -12,6 +12,7 @@ IntersectionServer::IntersectionServer(const ros::NodeHandle &nh, const ros::Nod
     , point_max_x_(0.95)
 {
   intersectionServer_.registerGoalCallback(boost::bind(&IntersectionServer::init, this));
+  intersectionServer_.registerPreemptCallback(boost::bind(&IntersectionServer::preemptCb, this));
   intersectionServer_.start();
   speed_.data = 0;
   pnh_.param<float>("distance_to_intersection", max_distance_to_intersection_, 0.25);
@@ -42,7 +43,7 @@ void IntersectionServer::manager(const selfie_msgs::PolygonArray &boxes)
 {
   if (!intersectionServer_.isActive())
   {
-    ROS_INFO_ONCE("Search server not active");
+    ROS_INFO("Search server not active");
     return;
   }
   filter_boxes(boxes);
@@ -65,7 +66,7 @@ void IntersectionServer::manager(const selfie_msgs::PolygonArray &boxes)
   } else
   {
     publishFeedback(ROAD_CLEAR);
-    ROS_INFO("Road clear");
+    ROS_INFO("Road clear, intersection action finished");
     send_goal();
   }
 }
@@ -81,6 +82,9 @@ void IntersectionServer::send_goal()
 {
   selfie_msgs::intersectionResult result;
   result.done = true;
+
+  obstacles_sub_.shutdown();
+  intersection_subscriber_.shutdown();
   intersectionServer_.setSucceeded();
 }
 
@@ -120,4 +124,11 @@ void IntersectionServer::publishFeedback(program_state newStatus)
 {
   action_status_.action_status = newStatus;
   intersectionServer_.publishFeedback(action_status_);
+}
+
+void IntersectionServer::preemptCb()
+{
+  ROS_INFO("Intersection action preempted");
+  obstacles_sub_.shutdown();
+  intersection_subscriber_.shutdown();
 }

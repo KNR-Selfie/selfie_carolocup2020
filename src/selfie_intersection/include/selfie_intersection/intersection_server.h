@@ -40,6 +40,7 @@ private:
 
   actionlib::SimpleActionServer<selfie_msgs::intersectionAction> intersectionServer_;
   void init();
+  void preemptCb();
   void manager(const selfie_msgs::PolygonArray &);
   void intersection_callback(const std_msgs::Float32 &);
   void filter_boxes(const selfie_msgs::PolygonArray &);
