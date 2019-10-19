@@ -31,7 +31,7 @@ public:
     void activeCb();
     void feedbackCb(const selfie_msgs::searchFeedbackConstPtr& feedback);
     void getActionResult(boost::any &result);
-    bool isActionFinished();
+    int isActionFinished();
     action getNextAction();
 };
 

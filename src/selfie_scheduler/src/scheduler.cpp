@@ -35,6 +35,8 @@ Scheduler::Scheduler() :
     action_args_[PARK] = [](geometry_msgs::Polygon x){return x;};
 
     previousRcState_ = RC_MANUAL;
+    previous_car_state_= SELFIE_IDLE;
+    current_car_state_ = SELFIE_READY;
     ROS_INFO("Clients created successfully");
 }
 Scheduler::~Scheduler()
@@ -62,17 +64,22 @@ void Scheduler::startAction(action action_to_set)
     current_client_ptr_->waitForServer(200);
     current_client_ptr_->setGoal(action_args_[action_to_set]);
 }
-bool Scheduler::checkIfActionFinished()
+int Scheduler::checkIfActionFinished()
 {
     return current_client_ptr_->isActionFinished();
 }
 void Scheduler::loop()
 {
-    if (checkIfActionFinished())
+    if (checkIfActionFinished() == 1)
     {
         current_client_ptr_->getActionResult(action_args_[current_client_ptr_->getNextAction()]);
         shiftAction();
     }
+    else if(checkIfActionFinished() == 2)
+    {
+        // empty state
+    }
+    stateMachine();
 }
 void Scheduler::resetVision()
 {
@@ -160,29 +167,32 @@ void Scheduler::stateMachine()
             break;
     }
 }
+void Scheduler::stopAction()
+{
+    current_client_ptr_->cancelAction();
+    ROS_INFO("STOP current action");
+}
 void Scheduler::switchStateCallback(const std_msgs::UInt8ConstPtr &msg)
 {
-    // 0 manual
-    // 2 półautomat
-    // 1 automat
-
-    if (previousRcState_ != msg->data)
-    {   
-        if ((rc_state)msg->data == RC_MANUAL)
+    // prevent from execution on the beginning
+    if (current_car_state_ > SELFIE_READY)
+    {
+        if (previousRcState_ != msg->data)
         {
-            ROS_INFO("STOP ALL ACTIONS");
-        }
-        else if((rc_state)msg->data == RC_AUTONOMOUS && previousRcState_ == RC_MANUAL)
-        {
-            ROS_INFO("START DRIVE ACTION");
-        }   
-        else if((rc_state)msg->data == RC_HALF_AUTONOMOUS && previousRcState_ == RC_MANUAL)
-        {
-            ROS_INFO("START DRIVE ACTION");
+            if ((rc_state)msg->data == RC_MANUAL)
+            {
+                stopAction();
+            }
+            else if((rc_state)msg->data == RC_AUTONOMOUS && previousRcState_ == RC_MANUAL)
+            {
+                startAction(DRIVING);
+            }
+            else if((rc_state)msg->data == RC_HALF_AUTONOMOUS && previousRcState_ == RC_MANUAL)
+            {
+                startAction(DRIVING);
+            }
         }
     }
-
-
     previousRcState_ = (rc_state)msg->data;
 }
 

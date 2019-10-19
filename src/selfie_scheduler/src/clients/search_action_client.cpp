@@ -41,8 +41,17 @@ void SearchClient::doneCb(const actionlib::SimpleClientGoalState& state,
             const selfie_msgs::searchResultConstPtr& result)
 {
     ROS_INFO("Finished search in state [%s]", state.toString().c_str());
-    result_ = result->parking_spot;
-    result_flag_ = true;
+
+    if(state == actionlib::SimpleClientGoalState::StateEnum::ABORTED)
+    {
+        ROS_INFO("ABORTED!!");
+        result_flag_ = 2;
+    }
+    else
+    {
+        result_ = result->parking_spot;
+        result_flag_ = 1;
+    }
 }
 void SearchClient::activeCb()
 {
@@ -61,7 +70,7 @@ program_state SearchClient::getActionState()
 {
     return action_state_;
 }
-bool SearchClient::isActionFinished()
+int SearchClient::isActionFinished()
 {
     return result_flag_;
 }

@@ -66,7 +66,7 @@ public:
     void shiftAction();
 
     void actionStateMachine();
-    bool checkIfActionFinished();
+    int checkIfActionFinished();
 
 };
 

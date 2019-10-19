@@ -4,6 +4,7 @@ StartingProcedureAction::StartingProcedureAction(std::string name) :
     pnh_("~"), as_(nh_, name, boost::bind(&StartingProcedureAction::executeCB, this, _1), false),
   action_name_(name),starting_speed_(2.0)
 {
+    as_.registerPreemptCallback(boost::bind(&StartingProcedureAction::preemptCB, this));
     pnh_.getParam("starting_speed",starting_speed_);
 
     button_sub_ = nh_.subscribe("start_button", 1000, &StartingProcedureAction::buttonCB, this);
@@ -68,7 +69,10 @@ void StartingProcedureAction::buttonCB(const std_msgs::BoolConstPtr &msg)
     else if (msg->data == true)
         button_status_ = BUTTON_OBSTACLE_DRIVE_PRESSED;
 }
-
+void StartingProcedureAction::preemptCB()
+{
+    as_.setAborted();
+}
 void StartingProcedureAction::distanceCB(const std_msgs::Float32ConstPtr &msg)
 {   
     if(distance_base_ == 0.0)

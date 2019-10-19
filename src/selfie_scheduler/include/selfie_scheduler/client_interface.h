@@ -15,7 +15,7 @@ public:
     virtual void setGoal(boost::any goal) = 0;
     virtual bool waitForResult(float timeout) = 0;
     virtual void cancelAction() = 0;
-    virtual bool isActionFinished() = 0;
+    virtual int isActionFinished() = 0;
     virtual void getActionResult(boost::any &result) = 0;
     virtual program_state getActionState() = 0;
     virtual action getNextAction() = 0;

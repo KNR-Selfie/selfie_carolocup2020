@@ -3,7 +3,7 @@
 DriveClient::DriveClient(std::string name):
     ac_(name, true)
 {
-    result_flag_ = false;
+    result_flag_ = 0;
     next_action_ = PARKING_SEARCH;
 }
 DriveClient::~DriveClient()
@@ -33,7 +33,7 @@ bool DriveClient::waitForResult(float timeout)
 }
 bool DriveClient::waitForServer(float timeout)
 {
-    result_flag_ = false;
+    result_flag_ = 0;
     ROS_INFO("Wait for driving action server");
     return ac_.waitForServer(ros::Duration(timeout));
 }
@@ -42,8 +42,16 @@ void DriveClient::doneCb(const actionlib::SimpleClientGoalState& state,
 {
     ROS_INFO("Finished drive in state [%s]", state.toString().c_str());
     ROS_INFO("drive result: %d", result->parking_area);
-    result_ = result->parking_area;
-    result_flag_ = true;
+    if(state == actionlib::SimpleClientGoalState::StateEnum::ABORTED)
+    {
+        ROS_INFO("ABORTED!!");
+        result_flag_ = 2;
+    }
+    else
+    {
+        result_ = result->parking_area;
+        result_flag_ = 1;
+    }
 }
 void DriveClient::activeCb()
 {
@@ -62,7 +70,7 @@ program_state DriveClient::getActionState()
 {
     return action_state_;
 }
-bool DriveClient::isActionFinished()
+int DriveClient::isActionFinished()
 {
     return result_flag_;
 }

@@ -42,8 +42,17 @@ void ParkClient::doneCb(const actionlib::SimpleClientGoalState& state,
             const selfie_msgs::parkResultConstPtr& result)
 {
     ROS_INFO("Finished park in state [%s]", state.toString().c_str());
-    result_ = result->done;
-    result_flag_ = true;
+    if(state == actionlib::SimpleClientGoalState::StateEnum::ABORTED)
+    {
+        ROS_INFO("ABORTED!!");
+        result_flag_ = 2;
+    }
+    else
+    {
+        result_ = result->done;
+        result_flag_ = 1;
+    }
+
 }
 void ParkClient::activeCb()
 {
@@ -62,7 +71,7 @@ program_state ParkClient::getActionState()
 {
     return action_state_;
 }
-bool ParkClient::isActionFinished()
+int ParkClient::isActionFinished()
 {
     return result_flag_;
 }

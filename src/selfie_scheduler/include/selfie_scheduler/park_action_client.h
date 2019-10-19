@@ -31,7 +31,7 @@ public:
     void activeCb();
     void feedbackCb(const selfie_msgs::parkFeedbackConstPtr& feedback);
     bool getResult();
-    bool isActionFinished();
+    int isActionFinished();
     void getActionResult(boost::any &result);
     action getNextAction();
 
