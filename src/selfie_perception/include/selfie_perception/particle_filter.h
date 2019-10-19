@@ -59,6 +59,11 @@ public:
     num_control_points_ = num;
   }
 
+  void setPolyDegree_(int degree)
+  {
+    poly_degree_ = degree;
+  }
+
 private:
   int poly_degree_{3};
   int num_particles_{0};

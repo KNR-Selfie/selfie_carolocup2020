@@ -16,6 +16,7 @@ public:
   int pointsSize();
   void calcParams();
   void addBottomPoint();
+  void reset();
 
   void pfSetup(int num_particles, int num_control_points, float std);
   void pfInit();

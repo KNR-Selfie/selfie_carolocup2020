@@ -28,7 +28,6 @@
 #include <algorithm>
 #include <stdexcept>
 
-#include <selfie_perception/particle_filter.h>
 #include <selfie_perception/road_line.h>
 #include <selfie_perception/polynomials.h>
 #include <selfie_perception/definitions.h>

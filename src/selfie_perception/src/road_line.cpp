@@ -27,6 +27,7 @@ void RoadLine::pfInit()
     float p_top_y = getPolyY(coeff_, TOPVIEW_MAX_X);
     if (p_top_y < TOPVIEW_MIN_Y || p_top_y > TOPVIEW_MAX_Y)
     {
+      pf_.setPolyDegree_(2);
       for (int i = 1; i < 20; ++i)
       {
         p_top_y = getPolyY(coeff_, TOPVIEW_MAX_X - 0.05 * i);
@@ -64,6 +65,7 @@ bool RoadLine::pfExecute()
   }
   else
   {
+    pf_.setPolyDegree_(3);
     pf_.prediction(pf_std_);
   }
   
@@ -122,4 +124,15 @@ void RoadLine::addBottomPoint()
     p.y = getPolyY(coeff_, p.x);
     points_.insert(points_.begin(), p);
   }
+}
+
+void RoadLine::reset()
+{
+  exist_ = false;
+  degree_ = 2;
+  length_ = 0;
+  is_short_ = true;
+  points_.clear();
+  coeff_.clear();
+  pf_.reset();
 }
