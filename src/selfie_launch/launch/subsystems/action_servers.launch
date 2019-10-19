@@ -1,6 +1,9 @@
 <launch>
+  <!-- PASSED PARAMS-->
+  <arg name="i_max_speed" /> 
+
   <node name="free_drive" type="free_drive" pkg="selfie_free_drive">
-    <param name="max_speed" value="2.5" />
+    <param name="max_speed" value="$(arg i_max_speed)" />
     <param name="starting_line_distance_to_end" value="0.45" />
   </node>
 
