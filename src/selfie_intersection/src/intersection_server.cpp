@@ -116,7 +116,7 @@ void IntersectionServer::filter_boxes(const selfie_msgs::PolygonArray &msg)
   }
 }
 
-void IntersectionServer::publishFeedback(program_states newStatus)
+void IntersectionServer::publishFeedback(program_state newStatus)
 {
   action_status_.action_status = newStatus;
   intersectionServer_.publishFeedback(action_status_);
