@@ -146,8 +146,8 @@ class LaneDetector
 
   int pf_num_samples_           {50};
   int pf_num_points_            {3};
-  float pf_std_                 {0.015};
-  int pf_num_samples_vis_       {4};
+  float pf_std_                 {0.01};
+  int pf_num_samples_vis_       {20};
 
   int color_set[20][3] =
   {

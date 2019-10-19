@@ -57,8 +57,15 @@ void ParticleFilter::prediction(double std)
   {
     for(int j = 0; j < num_control_points_; ++j)
     {
-      std::normal_distribution<float> dist(particles_[i].points[j].y, std);
-      particles_[i].points[j].y = dist(gen);
+      float deriative = 3 * particles_[i].coeff[3] * pow(particles_[i].points[j].x, 2) +
+                        2 * particles_[i].coeff[2] * particles_[i].points[j].x + particles_[i].coeff[1];
+      float angle = atan(deriative);
+
+      std::normal_distribution<float> dist_x(0, std * sin(angle));
+      std::normal_distribution<float> dist_y(0, std * cos(angle));
+      
+      particles_[i].points[j].x += dist_x(gen);
+      particles_[i].points[j].y += dist_y(gen);
     }
     if (!polyfit(particles_[i].points, poly_degree_, particles_[i].coeff))
     {
@@ -127,12 +134,28 @@ std::vector<float> ParticleFilter::getCoeff(int particle_id)
     empty.push_back(0.0);
     return empty;
   }
-  
 }
 
 std::vector<float> ParticleFilter::getBestCoeff()
 {
   return best_coeff_;
+}
+
+std::vector<cv::Point2f> ParticleFilter::getControlPoints(int particle_id)
+{
+  if (particle_id < num_particles_)
+  {
+    return particles_[particle_id].points;
+  }
+  else
+  {
+    std::vector<cv::Point2f> empty;
+    cv::Point2f p;
+    p.x = 0;
+    p.y = 0;
+    empty.push_back(p);
+    return empty;
+  }
 }
 
 void ParticleFilter::reset()

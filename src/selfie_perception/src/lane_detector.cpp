@@ -71,6 +71,10 @@ bool LaneDetector::init()
   center_line_.setShortParam(min_length_to_2aprox_);
   right_line_.setShortParam(min_length_to_2aprox_);
 
+  left_line_.setPointsDensity(points_density_);
+  center_line_.setPointsDensity(points_density_);
+  right_line_.setPointsDensity(points_density_);
+
   left_line_.pfSetup(pf_num_samples_, pf_num_points_, pf_std_);
   center_line_.pfSetup(pf_num_samples_, pf_num_points_, pf_std_);
   right_line_.pfSetup(pf_num_samples_, pf_num_points_, pf_std_);
@@ -170,6 +174,10 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
     right_line_.calcParams();
     center_line_.calcParams();
     left_line_.calcParams();
+
+    right_line_.generateForDensity();
+    center_line_.generateForDensity();
+    left_line_.generateForDensity();
 
     linesApproximation();
     publishMarkings();
@@ -1830,6 +1838,7 @@ void LaneDetector::drawParticles(int num)
   pf_mat = cv::Mat::zeros(homography_frame_.size(), CV_8UC3);
 
   std::vector<float> pf_coeff;
+  std::vector<cv::Point2f> pf_cp;
   std::vector<cv::Point2f> pf_line;
   cv::Point2f p;
   for (int i = 0; i < num; ++i)
@@ -1837,6 +1846,8 @@ void LaneDetector::drawParticles(int num)
     if (center_line_.isPFInitialized())
     {
       pf_line.clear();
+      pf_cp.clear();
+      pf_cp = center_line_.getParticleControlPoints(i);
       pf_coeff = center_line_.getParticleCoeff(i);
       for (float x = TOPVIEW_MIN_X; x < TOPVIEW_MAX_X; x += 0.03)
       {
@@ -1845,15 +1856,22 @@ void LaneDetector::drawParticles(int num)
         pf_line.push_back(p);
       }
       cv::transform(pf_line, pf_line, world2topview_.rowRange(0, 2));
+      cv::transform(pf_cp, pf_cp, world2topview_.rowRange(0, 2));
       for (int j = 0; j < pf_line.size(); ++j)
       {
         cv::circle(pf_mat, pf_line[j], 1, cv::Scalar(color_set[i][0], color_set[i][1], color_set[i][2]), CV_FILLED);
+      }
+      for (int j = 0; j < pf_cp.size(); ++j)
+      {
+        cv::circle(pf_mat, pf_cp[j], 3, cv::Scalar(color_set[i][0], color_set[i][1], color_set[i][2]), CV_FILLED);
       }
     }
 
     if (left_line_.isPFInitialized())
     {
       pf_line.clear();
+      pf_cp.clear();
+      pf_cp = left_line_.getParticleControlPoints(i);
       pf_coeff = left_line_.getParticleCoeff(i);
       for (float x = TOPVIEW_MIN_X; x < TOPVIEW_MAX_X; x += 0.03)
       {
@@ -1862,15 +1880,22 @@ void LaneDetector::drawParticles(int num)
         pf_line.push_back(p);
       }
       cv::transform(pf_line, pf_line, world2topview_.rowRange(0, 2));
+      cv::transform(pf_cp, pf_cp, world2topview_.rowRange(0, 2));
       for (int j = 0; j < pf_line.size(); ++j)
       {
         cv::circle(pf_mat, pf_line[j], 1, cv::Scalar(color_set[i][0], color_set[i][1], color_set[i][2]), CV_FILLED);
+      }
+      for (int j = 0; j < pf_cp.size(); ++j)
+      {
+        cv::circle(pf_mat, pf_cp[j], 3, cv::Scalar(color_set[i][0], color_set[i][1], color_set[i][2]), CV_FILLED);
       }
     }
 
     if (right_line_.isPFInitialized())
     {
       pf_line.clear();
+      pf_cp.clear();
+      pf_cp = right_line_.getParticleControlPoints(i);
       pf_coeff = right_line_.getParticleCoeff(i);
       for (float x = TOPVIEW_MIN_X; x < TOPVIEW_MAX_X; x += 0.03)
       {
@@ -1879,9 +1904,14 @@ void LaneDetector::drawParticles(int num)
         pf_line.push_back(p);
       }
       cv::transform(pf_line, pf_line, world2topview_.rowRange(0, 2));
+      cv::transform(pf_cp, pf_cp, world2topview_.rowRange(0, 2));
       for (int j = 0; j < pf_line.size(); ++j)
       {
         cv::circle(pf_mat, pf_line[j], 1, cv::Scalar(color_set[i][0], color_set[i][1], color_set[i][2]), CV_FILLED);
+      }
+      for (int j = 0; j < pf_cp.size(); ++j)
+      {
+        cv::circle(pf_mat, pf_cp[j], 3, cv::Scalar(color_set[i][0], color_set[i][1], color_set[i][2]), CV_FILLED);
       }
     }
   }

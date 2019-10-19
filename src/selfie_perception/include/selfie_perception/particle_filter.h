@@ -42,6 +42,8 @@ public:
 
   std::vector<float> getBestCoeff();
 
+  std::vector<cv::Point2f> getControlPoints(int particle_id);
+
   void reset();
 
   const bool initialized() const

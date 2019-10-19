@@ -57,8 +57,7 @@ bool RoadLine::pfExecute()
   if (!exist_)
     return false;
   
-  float p_top_y = getPolyY(coeff_, TOPVIEW_MAX_X);
-  if (p_top_y < TOPVIEW_MIN_Y || p_top_y > TOPVIEW_MAX_Y || !pf_.initialized())
+  if (!pf_.initialized())
   {
     pf_.reset();
     pfInit();
@@ -124,6 +123,47 @@ void RoadLine::addBottomPoint()
     p.y = getPolyY(coeff_, p.x);
     points_.insert(points_.begin(), p);
   }
+}
+
+void RoadLine::generateForDensity()
+{
+  if (!exist_)
+  {
+    return;
+  }
+
+  if (pointsSize() / length_ < points_density_ * 2)
+  {
+    return;
+  }
+
+  for (int i = 0; i < pointsSize(); ++i)
+  {
+    float distance = getDistance(points_[i], points_[i + 1]);
+    if (distance > 1 / points_density_)
+    {
+      int add = distance * points_density_;
+      cv::Point2f p;
+      float x1 = points_[i].x;
+      float y1 = points_[i].y;
+      float x_dif = (points_[i + 1].x - points_[i].x) / (add + 1);
+      float y_dif = (points_[i + 1].y - points_[i].y) / (add + 1);
+      for (int j = 0; j < add; ++j)
+      {
+        p.x = x1 + x_dif * (j + 1);
+        p.y = y1 + y_dif * (j + 1);
+        points_.insert(points_.begin() + i + 1, p);
+        ++i;
+      }
+    }
+  }
+}
+
+float RoadLine::getDistance(cv::Point2f p1, cv::Point2f p2)
+{
+  float dx = (p1.x - p2.x);
+  float dy = (p1.y - p2.y);
+  return sqrtf(dx * dx + dy * dy);
 }
 
 void RoadLine::reset()

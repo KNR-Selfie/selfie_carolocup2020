@@ -16,6 +16,7 @@ public:
   int pointsSize();
   void calcParams();
   void addBottomPoint();
+  void generateForDensity();
   void reset();
 
   void pfSetup(int num_particles, int num_control_points, float std);
@@ -37,10 +38,20 @@ public:
     return pf_.getCoeff(particle_id);
   }
 
+  std::vector<cv::Point2f> getParticleControlPoints(int particle_id)
+  {
+    return pf_.getControlPoints(particle_id);
+  }
+
   // setters
   void setShortParam(float param)
   {
     length_not_short_ = param;
+  }
+
+  void setPointsDensity(float param)
+  {
+    points_density_ = param;
   }
 
   void setDegree(int degree)
@@ -84,6 +95,9 @@ private:
   int pf_num_points_;
 
   float length_not_short_ {0.5};
+  float points_density_   {15};
+
+  float getDistance(cv::Point2f p1, cv::Point2f p2);
 };
 
 #endif  //  SELFIE_PERCEPTION_ROAD_LINE_H
