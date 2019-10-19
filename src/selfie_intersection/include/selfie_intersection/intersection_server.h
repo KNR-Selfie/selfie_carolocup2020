@@ -29,6 +29,7 @@ private:
   double difftime_;
   bool time_started_;
   float stop_time_;  //How long car should stop when approached intersection
+  float speed_default_;
 
   float point_min_x_; // Area of interest
   float point_max_x_;
