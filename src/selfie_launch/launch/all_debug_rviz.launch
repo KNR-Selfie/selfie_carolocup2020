@@ -30,7 +30,9 @@
 
 
   <!-- NODE LAUNCH -->
-  <node pkg="urg_node" type="urg_node" name="lidar" respawn="true" output="screen"/>
+  <node pkg="urg_node" type="urg_node" name="lidar" respawn="true" output="screen">
+    <param name="serial_port" value="/dev/ttyACM1" />
+  </node>
 
   <node name="stm32_bridge" type="selfie_stm32_bridge" pkg="selfie_stm32_bridge" respawn="true" output="screen">
     <remap from="/speed" to="/stm32/speed" />
