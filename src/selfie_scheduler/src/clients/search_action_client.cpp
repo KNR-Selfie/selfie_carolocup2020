@@ -5,6 +5,7 @@ SearchClient::SearchClient(std::string name):
 {
     next_action_ = PARK;
     result_flag_ = false;
+    action_state_ = SELFIE_IDLE;
 }
 SearchClient::~SearchClient()
 {
@@ -44,7 +45,7 @@ void SearchClient::doneCb(const actionlib::SimpleClientGoalState& state,
 
     if(state == actionlib::SimpleClientGoalState::StateEnum::ABORTED)
     {
-        ROS_INFO("ABORTED!!");
+        ROS_INFO("SEARCH ABORTED!!");
         result_flag_ = 2;
     }
     else
@@ -68,7 +69,8 @@ void SearchClient::cancelAction()
 }
 program_state SearchClient::getActionState()
 {
-    return action_state_;
+    if(action_state_ != SELFIE_IDLE)
+        return action_state_;
 }
 int SearchClient::isActionFinished()
 {

@@ -5,6 +5,7 @@ ParkClient::ParkClient(std::string name):
 {
     next_action_ = DRIVING;
     result_flag_ = false;
+    action_state_ = SELFIE_IDLE;
 }
 
 ParkClient::~ParkClient()
@@ -69,7 +70,8 @@ void ParkClient::cancelAction()
 }
 program_state ParkClient::getActionState()
 {
-    return action_state_;
+    if(action_state_ != SELFIE_IDLE)
+        return action_state_;
 }
 int ParkClient::isActionFinished()
 {

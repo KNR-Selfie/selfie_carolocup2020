@@ -5,6 +5,7 @@ DriveClient::DriveClient(std::string name):
 {
     result_flag_ = 0;
     next_action_ = PARKING_SEARCH;
+    action_state_ = SELFIE_IDLE;
 }
 DriveClient::~DriveClient()
 {
@@ -64,11 +65,13 @@ void DriveClient::feedbackCb(const selfie_msgs::drivingFeedbackConstPtr& feedbac
 }
 void DriveClient::cancelAction()
 {
+  ROS_INFO("Drive cancel action");
   ac_.cancelAllGoals();
 }
 program_state DriveClient::getActionState()
 {
-    return action_state_;
+    if(action_state_ != SELFIE_IDLE)
+        return action_state_;
 }
 int DriveClient::isActionFinished()
 {

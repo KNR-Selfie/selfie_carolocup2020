@@ -5,6 +5,7 @@ StartingProcedureClient::StartingProcedureClient(std::string name):
 {
     result_flag_ = 0;
     next_action_ = DRIVING;
+    action_state_ = SELFIE_IDLE;
 }
 StartingProcedureClient::~StartingProcedureClient()
 {
@@ -70,7 +71,8 @@ void StartingProcedureClient::cancelAction()
 }
 program_state StartingProcedureClient::getActionState()
 {
-    return action_state_;
+    if(action_state_ != SELFIE_IDLE)
+        return action_state_;
 }
 
 void StartingProcedureClient::getActionResult(boost::any &result)

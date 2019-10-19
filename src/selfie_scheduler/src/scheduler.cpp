@@ -20,7 +20,7 @@ Scheduler::Scheduler() :
     visionReset_ = nh_.serviceClient<std_srvs::Empty>("resetVision");
     cmdCreatorStartPub_ = nh_.serviceClient<std_srvs::Empty>("cmd_start_pub");
     cmdCreatorStopPub_ = nh_.serviceClient<std_srvs::Empty>("cmd_stop_pub");
-    switchState_ = nh_.subscribe("switch_state", 1, &Scheduler::switchStateCallback, this);
+    switchState_ = nh_.subscribe("switch_state", 10, &Scheduler::switchStateCallback, this);
 
     clients_[STARTING] = new StartingProcedureClient("starting_procedure");
     action_args_[STARTING] = start_distance_;
@@ -37,6 +37,7 @@ Scheduler::Scheduler() :
     previousRcState_ = RC_MANUAL;
     previous_car_state_= SELFIE_IDLE;
     current_car_state_ = SELFIE_READY;
+
     ROS_INFO("Clients created successfully");
 }
 Scheduler::~Scheduler()
@@ -112,6 +113,7 @@ void Scheduler::shiftAction()
 {
     if (checkCurrentClientType<StartingProcedureClient*>())
     {
+        resetVision();
         startAction(DRIVING);
         startCmdCreator();
     }
@@ -185,11 +187,16 @@ void Scheduler::switchStateCallback(const std_msgs::UInt8ConstPtr &msg)
             }
             else if((rc_state)msg->data == RC_AUTONOMOUS && previousRcState_ == RC_MANUAL)
             {
+                resetVision();
                 startAction(DRIVING);
+                startCmdCreator();
+
             }
             else if((rc_state)msg->data == RC_HALF_AUTONOMOUS && previousRcState_ == RC_MANUAL)
             {
+                resetVision();
                 startAction(DRIVING);
+                startCmdCreator();
             }
         }
     }
