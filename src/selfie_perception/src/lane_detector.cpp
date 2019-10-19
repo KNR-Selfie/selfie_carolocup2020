@@ -180,7 +180,7 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
     debug_frame_.rows = homography_frame_.rows;
     debug_frame_.cols = homography_frame_.cols;
     lanesVectorVisualization(debug_frame_);
-    drawParticles(4);
+    drawParticles(pf_num_samples_vis_);
 
     convertApproxToFrameCoordinate();
     drawAproxOnHomography();
@@ -300,6 +300,11 @@ void LaneDetector::getParams()
   pnh_.getParam("hom_cut_l_y", hom_cut_l_y_);
   pnh_.getParam("hom_cut_r_x", hom_cut_r_x_);
   pnh_.getParam("hom_cut_r_y", hom_cut_r_y_);
+
+  pnh_.getParam("pf_num_samples", pf_num_samples_);
+  pnh_.getParam("pf_num_points_", pf_num_points_);
+  pnh_.getParam("pf_std", pf_std_);
+  pnh_.getParam("pf_num_samples_vis", pf_num_samples_vis_);
 }
 
 void LaneDetector::openCVVisualization()
@@ -566,6 +571,10 @@ void LaneDetector::printInfoParams()
   ROS_INFO("max_mid_line_gap: %.3f", max_mid_line_gap_);
 
   ROS_INFO("debug_mode: %d\n", debug_mode_);
+
+  ROS_INFO("pf_num_samples: %d", pf_num_samples_);
+  ROS_INFO("pf_num_points: %d\n", pf_num_points_);
+  ROS_INFO("pf_std: %.3f", pf_std_);
 }
 
 void LaneDetector::dynamicMask(cv::Mat &input_frame, cv::Mat &output_frame)

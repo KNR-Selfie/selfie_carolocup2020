@@ -26,6 +26,11 @@
     <param name="hom_cut_l_y" value="0"/>
     <param name="hom_cut_r_x" value="0"/>
     <param name="hom_cut_r_y" value="0"/>
+
+    <param name="pf_num_samples" value="50"/>
+    <param name="pf_num_points" value="3"/>
+    <param name="pf_std" value="0.015"/>
+    <param name="pf_num_samples_vis" value="4"/>
   </node>
 
   <node name="extract_road_features" type="extract_road_features" pkg="selfie_path_planner">
