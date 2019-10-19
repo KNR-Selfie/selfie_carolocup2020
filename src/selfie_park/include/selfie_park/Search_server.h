@@ -48,6 +48,7 @@ private:
   float min_spot_lenght;
   bool visualization;
 
+  float tangens_of_box_angle_; //describes max deviation
   float max_distance_to_free_place_;
   float default_speed_in_parking_zone;
   float speed_when_found_place;
