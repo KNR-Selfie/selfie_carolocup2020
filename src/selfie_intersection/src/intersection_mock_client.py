@@ -16,9 +16,9 @@ def intersection_client():
     print("Sending goal")
     client.send_goal(goal)
     distance_pub=rospy.Publisher('/intersection_distance', Float32, queue_size=10)
-    distance=Float32(data=0.05)
+    distance=Float32(data=5)
     time.sleep(0.5)
-    print("Sending mock distance to intersection.")
+    print("Sending mock (far) distance to intersection.")
     distance_pub.publish(distance)
     polygons = PolygonArray()
     pub = rospy.Publisher('/obstacles', PolygonArray, queue_size=10)
@@ -28,7 +28,12 @@ def intersection_client():
     time.sleep(0.8)
     print("."),
     pub.publish(polygons)
+    distance.data=0.05
+    distance_pub.publish(distance)
     time.sleep(0.8)
+    print("."),
+    pub.publish(polygons)
+    time.sleep(1)
     print("."),
     pub.publish(polygons)
     time.sleep(1)
