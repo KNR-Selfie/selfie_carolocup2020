@@ -24,6 +24,13 @@ private:
   ros::Publisher speed_publisher_;
   ros::Publisher visualize_intersection_;
 
+  double beginning_time_;
+  double current_time_;
+  double difftime_;
+  bool time_started_;
+  float stop_time_;  //How long car should stop when approached intersection
+  float speed_default_;
+
   float point_min_x_; // Area of interest
   float point_max_x_;
   float point_min_y_;
@@ -40,6 +47,7 @@ private:
 
   actionlib::SimpleActionServer<selfie_msgs::intersectionAction> intersectionServer_;
   void init();
+  void preemptCb();
   void manager(const selfie_msgs::PolygonArray &);
   void intersection_callback(const std_msgs::Float32 &);
   void filter_boxes(const selfie_msgs::PolygonArray &);
