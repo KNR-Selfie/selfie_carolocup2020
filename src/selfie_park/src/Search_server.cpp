@@ -21,6 +21,8 @@ Search_server::Search_server(const ros::NodeHandle &nh, const ros::NodeHandle &p
   pnh_.param<float>("speed_when_found_place", speed_when_found_place, 0.3);
   pnh_.param<bool>("visualization_in_searching", visualization, true);
   pnh_.param<float>("max_distance_to_free_place", max_distance_to_free_place_, 0.8);
+  pnh_.param<float>("box_angle_deg", tangens_of_box_angle_, 55); // maximum angle between car and found place
+  tangens_of_box_angle_ = tan(tangens_of_box_angle_ * M_PI / 180);
 
   speed_current.data = default_speed_in_parking_zone;
   if (visualization)
@@ -122,9 +124,9 @@ void Search_server::filter_boxes(const selfie_msgs::PolygonArray &msg)
     if (box_ok)
     {
       Box temp_box(polygon);
-      if (abs(temp_box.left_vertical_line.a) > 1.4 &&
-          abs((temp_box.top_right.x - temp_box.bottom_right.x) - (temp_box.top_right.y - temp_box.bottom_right.y)) >
-              1.4) // filters out boxes which are not parallel to car
+      if (abs(temp_box.left_vertical_line.a) < tangens_of_box_angle_ &&
+          abs((temp_box.top_right.x - temp_box.bottom_right.x) - (temp_box.top_right.y - temp_box.bottom_right.y)) <
+              tangens_of_box_angle_) // filters out boxes which are not parallel to car
         boxes_on_the_right_side.insert(boxes_on_the_right_side.begin(), temp_box);
     }
   }
