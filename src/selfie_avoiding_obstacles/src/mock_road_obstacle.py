@@ -25,6 +25,7 @@ def mock_road_obstacle():
     marking.left_line=[2,0,0]
     marking.center_line=[0.59,0,0]
     marking.right_line=[-1.5,0,0]
+    print('RoadMarkings sent')
     pub_r.publish(marking)
     point = Point32(x=0.4, y=-0.15, z=0)
     polygon = Polygon()

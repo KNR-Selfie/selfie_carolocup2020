@@ -23,13 +23,14 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
     visualizer_ = nh_.advertise<visualization_msgs::Marker>("/avoiding_obstacles", 1);
   }
   status_ = CLEAR;
-  ROS_INFO("Initialized");
+  ROS_INFO("road_obstacle_detector initialized ");
 }
 
 Road_obstacle_detector::~Road_obstacle_detector() {}
 
 void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &msg)
 {
+  ROS_INFO("ObstacleCB");
   switch (status_)
   {
   case CLEAR:
@@ -87,6 +88,7 @@ void Road_obstacle_detector::filter_boxes(const selfie_msgs::PolygonArray &msg)
 
 void Road_obstacle_detector::road_markings_callback(const selfie_msgs::RoadMarkings &msg)
 {
+  ROS_INFO("RMCB");
   int size = msg.left_line.size();
   if (size != 3 && size != 4)
     ROS_ERROR("Invalid number of args in RoadMarkings");
