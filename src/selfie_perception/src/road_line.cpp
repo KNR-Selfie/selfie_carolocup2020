@@ -71,7 +71,7 @@ bool RoadLine::pfExecute()
   pf_.updateWeights(points_);
   pf_.resample();
   coeff_ = pf_.getBestCoeff();
-  degree_ = 3;
+  degree_ = pf_.getBestDegree();
 
   return true;
 }

@@ -115,7 +115,8 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
     detectStartAndIntersectionLine();
   }
   else
-    cv::filter2D(binary_cut_frame_, masked_frame_, -1, kernel_v_, cv::Point(-1, -1), 0, cv::BORDER_DEFAULT);
+    masked_frame_=  binary_cut_frame_.clone();
+    cv::filter2D(masked_frame_, masked_frame_, -1, kernel_v_, cv::Point(-1, -1), 0, cv::BORDER_DEFAULT);
   
   detectLines(masked_frame_, lines_vector_);
   if (lines_vector_.empty())
@@ -403,9 +404,28 @@ void LaneDetector::mergeMiddleLines()
 {
   for (int i = 0; i < lines_vector_converted_.size(); ++i)
   {
+    if (!init_imageCallback_)
+    {
+        if (lines_vector_converted_[i][0].y < getPolyY(right_line_.getCoeff(), lines_vector_converted_[i][0].x) ||
+            lines_vector_converted_[i][0].y > getPolyY(left_line_.getCoeff(), lines_vector_converted_[i][0].x))
+            {
+              //std::cout << "getPolyY(right_line_.getCoeff(), lines_vector_converted_[i][0].x): " << getPolyY(right_line_.getCoeff(), lines_vector_converted_[i][0].x) << std::endl;
+              //std::cout << "lines_vector_converted_[i][0].y" << lines_vector_converted_[i][0].y << std::endl;
+              continue;
+            }
+    }
     float a, b;
     for (int j = i + 1; j < lines_vector_converted_.size(); ++j)
     {
+      if (!init_imageCallback_)
+      {
+        if (lines_vector_converted_[j][0].y < getPolyY(right_line_.getCoeff(), lines_vector_converted_[j][0].x) ||
+            lines_vector_converted_[j][0].y > getPolyY(left_line_.getCoeff(), lines_vector_converted_[j][0].x))
+            {
+              continue;
+            }
+          
+      }
       if (lines_vector_converted_[i][lines_vector_converted_[i].size() - 1].x - lines_vector_converted_[i][0].x != 0)
         a = (lines_vector_converted_[i][0].y - lines_vector_converted_[i][lines_vector_converted_[i].size() - 1].y)
             / (lines_vector_converted_[i][0].x - lines_vector_converted_[i][lines_vector_converted_[i].size() - 1].x);
@@ -588,8 +608,8 @@ void LaneDetector::printInfoParams()
 void LaneDetector::dynamicMask(cv::Mat &input_frame, cv::Mat &output_frame)
 {
   dynamic_mask_ = cv::Mat::zeros(cv::Size(input_frame.cols, input_frame.rows), CV_8UC1);
-  float offset_right = -0.06;
-  float offset_left = 0.04;
+  float offset_right = -0.08;
+  float offset_left = 0.06;
   output_frame = input_frame.clone();
   if (!right_line_.isExist())
     offset_right = -0.14;
@@ -625,8 +645,8 @@ void LaneDetector::ROILaneRight(cv::Mat &input_frame, cv::Mat &output_frame)
 {
   right_lane_ROI_ = cv::Mat::zeros(cv::Size(input_frame.cols, input_frame.rows), CV_8UC1);
   output_frame = input_frame.clone();
-  float offset_center = -0.07;
-  float offset_right = 0.05;
+  float offset_center = -0.08;
+  float offset_right = 0.06;
   if (starting_line_timeout_ > 0)
   {
     offset_right = 0.02;
@@ -673,8 +693,8 @@ void LaneDetector::ROILaneLeft(cv::Mat &input_frame, cv::Mat &output_frame)
 {
   left_lane_ROI_ = cv::Mat::zeros(cv::Size(input_frame.cols, input_frame.rows), CV_8UC1);
   output_frame = input_frame.clone();
-  float offset_center = 0.05;
-  float offset_left = -0.07;
+  float offset_center = 0.06;
+  float offset_left = -0.08;
   if (starting_line_timeout_ > 0)
   {
     offset_center = 0.02;
@@ -1522,106 +1542,6 @@ void LaneDetector::calcRoadWidth()
     std::cout << "left_lane_width: " << left_lane_width_ << std::endl;
   }
 }
-/*
-void LaneDetector::generatePoints()
-{
-  if (left_line_.index != -1)
-  {
-    if (lines_vector_converted_[left_line_.index].size()
-        / cv::arcLength(lines_vector_converted_[left_line_.index], false) < points_density_ * 2)
-    {
-      for (int i = 0; i < lines_vector_converted_[left_line_.index].size() - 1; ++i)
-      {
-        float distance = getDistance(lines_vector_converted_[left_line_.index][i],
-                                     lines_vector_converted_[left_line_.index][i + 1]);
-        if (distance > 1 / points_density_)
-        {
-          int add = distance * points_density_;
-          cv::Point2f p;
-          float x1 = lines_vector_converted_[left_line_.index][i].x;
-          float y1 = lines_vector_converted_[left_line_.index][i].y;
-          float x_dif = (lines_vector_converted_[left_line_.index][i + 1].x
-                        - lines_vector_converted_[left_line_.index][i].x) / (add + 1);
-          float y_dif = (lines_vector_converted_[left_line_.index][i + 1].y
-                        - lines_vector_converted_[left_line_.index][i].y) / (add + 1);
-          for (int j = 0; j < add; ++j)
-          {
-            p.x = x1 + x_dif * (j + 1);
-            p.y = y1 + y_dif * (j + 1);
-            lines_vector_converted_[left_line_.index].insert(lines_vector_converted_[left_line_.index].begin()
-                                                            + i + 1, p);
-            ++i;
-          }
-        }
-      }
-    }
-  }
-
-  if (center_line_.index != -1)
-  {
-    if (lines_vector_converted_[center_line_.index].size()
-        / cv::arcLength(lines_vector_converted_[center_line_.index], false) < points_density_ * 2)
-    {
-      for (int i = 0; i < lines_vector_converted_[center_line_.index].size() - 1; ++i)
-      {
-        float distance = getDistance(lines_vector_converted_[center_line_.index][i],
-                                     lines_vector_converted_[center_line_.index][i + 1]);
-        if (distance > 1 / points_density_)
-        {
-          int add = distance * points_density_;
-          cv::Point2f p;
-          float x1 = lines_vector_converted_[center_line_.index][i].x;
-          float y1 = lines_vector_converted_[center_line_.index][i].y;
-          float x_dif = (lines_vector_converted_[center_line_.index][i + 1].x
-                        - lines_vector_converted_[center_line_.index][i].x) / (add + 1);
-          float y_dif = (lines_vector_converted_[center_line_.index][i + 1].y
-                        - lines_vector_converted_[center_line_.index][i].y) / (add + 1);
-          for (int j = 0; j < add; ++j)
-          {
-            p.x = x1 + x_dif * (j + 1);
-            p.y = y1 + y_dif * (j + 1);
-            lines_vector_converted_[center_line_.index].insert(lines_vector_converted_[center_line_.index].begin()
-                                                              + i + 1, p);
-            ++i;
-          }
-        }
-      }
-    }
-  }
-
-  if (right_line_.index != -1)
-  {
-    if (lines_vector_converted_[right_line_.index].size()
-        / cv::arcLength(lines_vector_converted_[right_line_.index], false) < points_density_ * 2)
-    {
-      for (int i = 0; i < lines_vector_converted_[right_line_.index].size() - 1; ++i)
-      {
-        float distance = getDistance(lines_vector_converted_[right_line_.index][i],
-                                     lines_vector_converted_[right_line_.index][i + 1]);
-        if (distance > 1 / points_density_)
-        {
-          int add = distance * points_density_;
-          cv::Point2f p;
-          float x1 = lines_vector_converted_[right_line_.index][i].x;
-          float y1 = lines_vector_converted_[right_line_.index][i].y;
-          float x_dif = (lines_vector_converted_[right_line_.index][i + 1].x
-                        - lines_vector_converted_[right_line_.index][i].x) / (add + 1);
-          float y_dif = (lines_vector_converted_[right_line_.index][i + 1].y
-                        - lines_vector_converted_[right_line_.index][i].y) / (add + 1);
-          for (int j = 0; j < add; ++j)
-          {
-            p.x = x1 + x_dif * (j + 1);
-            p.y = y1 + y_dif * (j + 1);
-            lines_vector_converted_[right_line_.index].insert(lines_vector_converted_[right_line_.index].begin()
-                                                              + i + 1, p);
-            ++i;
-          }
-        }
-      }
-    }
-  }
-}
-*/
 
 std::vector<cv::Point2f> LaneDetector::createOffsetLine(const std::vector<float> &coeff, const int &degree, float offset)
 {

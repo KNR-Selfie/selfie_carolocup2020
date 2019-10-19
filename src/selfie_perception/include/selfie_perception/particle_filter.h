@@ -13,6 +13,7 @@
 //#include <algorithm>
 //#include <numeric>
 #include <selfie_perception/polynomials.h>
+#include <selfie_perception/definitions.h>
 
 struct Particle
 {
@@ -20,6 +21,7 @@ struct Particle
   std::vector<cv::Point2f> points;
   std::vector<float> coeff;
   float weight;
+  int poly_degree;
 };
 
 class ParticleFilter
@@ -41,6 +43,8 @@ public:
   std::vector<float> getCoeff(int particle_id);
 
   std::vector<float> getBestCoeff();
+
+  int getBestDegree();
 
   std::vector<cv::Point2f> getControlPoints(int particle_id);
 
@@ -73,7 +77,7 @@ private:
   bool is_initialized_{false};
   std::vector<float> weights_;
   std::vector<Particle> particles_;
-  std::vector<float> best_coeff_;
+  Particle best_particle_;
 };
 
 #endif  //  SELFIE_PARTICLE_FILTER_H
