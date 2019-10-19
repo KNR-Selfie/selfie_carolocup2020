@@ -20,7 +20,7 @@ IntersectionServer::IntersectionServer(const ros::NodeHandle &nh, const ros::Nod
   pnh_.param<float>("point_min_y", point_min_y_, -3);
   pnh_.param<float>("point_max_y", point_max_y_, 3);
   pnh_.param<float>("stop_time", stop_time_, 3);
-  pnh_.param<float>("speed_default", speed_default_, 2);
+  pnh_.param<float>("speed_default", speed_default_, 0.3);
   pnh_.param<bool>("visualization", visualization_, true);
   point_min_x_ = max_distance_to_intersection_;
   ROS_INFO("Intersection server: active");
@@ -86,6 +86,8 @@ void IntersectionServer::manager(const selfie_msgs::PolygonArray &boxes)
         send_goal();
       } else
       {
+        speed_.data = 0;
+        speed_publisher_.publish(speed_);
         publishFeedback(WAITING_ON_INTERSECTION);
         ROS_INFO_THROTTLE(0.3, "Waiting (%lf s left) on intersection", stop_time_ - difftime_);
       }
