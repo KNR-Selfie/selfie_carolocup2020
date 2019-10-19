@@ -5,7 +5,7 @@
   <arg name="i_Ki" />
   <arg name="i_L" />
 
-  <node name="pid_controller" pkg="pid" type="controller" respawn="true" >
+  <node name="pid_controller" pkg="pid" type="controller" respawn="true" output="screen">
     <param name="upper_limit" value="0.785" />
     <param name="lower_limit" value="-0.785" />
     <param name="windup_limit" value="10" />
@@ -18,12 +18,12 @@
     <remap from="control_effort" to="steering_angle" />
   </node>
 
-  <node name="const_setpoint" pkg="selfie_control" type="const_float64.py" respawn="true" >
+  <node name="const_setpoint" pkg="selfie_control" type="const_float64.py" respawn="true" output="screen">
     <param name="topic" value="setpoint" />
     <param name="value" value="-0.2" />
   </node>
 
-  <node name="offset_combiner" pkg="selfie_control" type="offset_combiner.py" respawn="true" >
+  <node name="offset_combiner" pkg="selfie_control" type="offset_combiner.py" respawn="true" output="screen">
     <param name="L" value="$(arg i_L)" />
   </node>
 

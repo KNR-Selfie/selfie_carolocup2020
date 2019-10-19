@@ -40,7 +40,7 @@
     <param name="config_file" value="$(arg homography_file)" />
     <param name="threshold_c" value="$(arg threshold_c)" />
 
-    <param name="debug_mode" value="true"/>
+    <param name="debug_mode" value="false"/>
     <param name="hom_cut_tune_mode" value="false"/>
 
     <param name="hom_cut_l_x" value="0"/>
