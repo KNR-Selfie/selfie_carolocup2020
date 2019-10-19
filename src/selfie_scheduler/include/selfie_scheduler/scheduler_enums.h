@@ -29,6 +29,13 @@ typedef enum program_state
     OUT_PLACE, // car drives out of parking place
     READY_TO_DRIVE, // car ready to further ride
 
+    //intersection
+    STOPPED_ON_INTERSECTION,  //car stopped before intersection
+    FOUND_OBSTACLES, //Found obstacles on priority road
+    APPROACHING_TO_INTERSECTION_WITH_OBSTACLES, //Found obstacles on priority road, and approaching to it in meantime
+    ROAD_CLEAR  //none obstacles on priority road
+
+
 }feedback_variable;
 
 //std::map<program_state,std::string> program_state_string

@@ -1,17 +1,13 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(selfie_msgs)
+project(selfie_intersection)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+ add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS
-  geometry_msgs
-  message_generation
-  actionlib_msgs
-)
+find_package(catkin REQUIRED COMPONENTS roscpp selfie_msgs actionlib selfie_scheduler selfie_park)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -38,7 +34,7 @@ find_package(catkin REQUIRED COMPONENTS
 ##     * add a exec_depend tag for "message_runtime"
 ## * In this file (CMakeLists.txt):
 ##   * add "message_generation" and every package in MSG_DEP_SET to
-##     find_package(catkin REQUIRED COMPONENTS ...)
+
 ##   * add "message_runtime" and every package in MSG_DEP_SET to
 ##     catkin_package(CATKIN_DEPENDS ...)
 ##   * uncomment the add_*_files sections below as needed
@@ -47,12 +43,11 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-add_message_files(
-  FILES
-  ParkingInfo.msg
-  PolygonArray.msg
-  RoadMarkings.msg
-)
+# add_message_files(
+#   FILES
+#   Message1.msg
+#   Message2.msg
+# )
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -62,26 +57,17 @@ add_message_files(
 # )
 
 ## Generate actions in the 'action' folder
- add_action_files(
-   DIRECTORY
-   action
-   
-   FILES
-   search.action
-   driving.action
-   starting.action
-   intersection.action
-   park.action
- )
+# add_action_files(
+#   FILES
+#   Action1.action
+#   Action2.action
+# )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES
-  geometry_msgs
-
-  actionlib_msgs
-  std_msgs
-)
+# generate_messages(
+#   DEPENDENCIES
+#   std_msgs  # Or other packages containing msgs
+# )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -113,7 +99,10 @@ generate_messages(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  CATKIN_DEPENDS geometry_msgs message_runtime actionlib_msgs
+#  INCLUDE_DIRS include
+#  LIBRARIES selfie_intersection
+#  CATKIN_DEPENDS other_catkin_pkg
+#  DEPENDS system_lib
 )
 
 ###########
@@ -123,13 +112,15 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
+  include ${catkin_INCLUDE_DIRS}
+  ${selfie_park_INCLUDE_DIRS}
 # include
-  ${catkin_INCLUDE_DIRS}
+# ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/selfie_msgs.cpp
+#   src/${PROJECT_NAME}/selfie_intersection.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -140,7 +131,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/selfie_msgs_node.cpp)
+# add_executable(${PROJECT_NAME}_node src/selfie_intersection_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -197,10 +188,21 @@ include_directories(
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_selfie_msgs.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_selfie_intersection.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+
+add_executable(intersection_server_node
+  src/intersection_server.cpp
+  include/selfie_intersection/intersection_server.h
+  src/intersection_server_node.cpp
+)
+add_dependencies(intersection_server_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(intersection_server_node
+  ${catkin_LIBRARIES}
+)
