@@ -39,6 +39,7 @@
   <node name="detect_markings" type="detect_markings" pkg="selfie_perception" respawn="true" output="screen">
     <param name="config_file" value="$(arg homography_file)" />
     <param name="threshold_c" value="$(arg threshold_c)" />
+    <param name="real_window_size" value="0.15" />
 
     <param name="debug_mode" value="false"/>
     <param name="hom_cut_tune_mode" value="false"/>
