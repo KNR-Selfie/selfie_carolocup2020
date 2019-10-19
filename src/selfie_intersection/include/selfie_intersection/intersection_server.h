@@ -43,7 +43,7 @@ private:
   void manager(const selfie_msgs::PolygonArray &);
   void intersection_callback(const std_msgs::Float32 &);
   void filter_boxes(const selfie_msgs::PolygonArray &);
-  void publishFeedback(program_states newStatus);
+  void publishFeedback(program_state newStatus);
   void send_goal();
   void visualizeBoxes(std::list<Box> boxes, float r, float g, float b);
 };
