@@ -24,7 +24,7 @@ IntersectionServer::IntersectionServer(const ros::NodeHandle &nh, const ros::Nod
   ROS_INFO("Intersection server: active");
   if (visualization_)
   {
-    visualize_intersection_ = nh_.advertise<visualization_msgs::Marker>("/intersection", 10);
+    visualize_intersection_ = nh_.advertise<visualization_msgs::Marker>("/intersection_visualization", 10);
   }
 }
 
