@@ -48,6 +48,7 @@ private:
   float min_spot_lenght;
   bool visualization;
 
+  float max_distance_to_free_place_;
   float default_speed_in_parking_zone;
   float speed_when_found_place;
   std_msgs::Float64 speed_current;

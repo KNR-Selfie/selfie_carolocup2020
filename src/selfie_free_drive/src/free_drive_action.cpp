@@ -36,16 +36,29 @@ void FreeDriveAction::executeCB(const selfie_msgs::drivingGoalConstPtr &goal)
   ROS_INFO("received goal: mode %d", goal->mode);
   publishFeedback(AUTONOMOUS_DRIVE);
 
+  d_to_starting_line_ = 100;
+
   ros::Rate loop_rate(50);
   while (!(d_to_starting_line_ < starting_line_distance_to_end))
   {
     if (starting_line_detected_)
     {
-      publishFeedback(DETECT_START_LINE);
+      if (last_feedback_ != DETECT_START_LINE)
+      {
+        publishFeedback(DETECT_START_LINE);
+        last_feedback_ = DETECT_START_LINE;
+      }
       starting_line_detected_ = false;
     }
     else
-      publishFeedback(AUTONOMOUS_DRIVE);
+    {
+      if (last_feedback_ != AUTONOMOUS_DRIVE)
+      {
+        publishFeedback(AUTONOMOUS_DRIVE);
+        last_feedback_ = AUTONOMOUS_DRIVE;
+      }
+    }
+
     maxSpeedPub();
     loop_rate.sleep();
   }

@@ -38,6 +38,7 @@ protected:
   float starting_line_distance_to_end;
   bool starting_line_detected_;
   float max_speed_;
+  int last_feedback_ {AUTONOMOUS_DRIVE};
 
 public:
   FreeDriveAction(const ros::NodeHandle &nh, const ros::NodeHandle &pnh);

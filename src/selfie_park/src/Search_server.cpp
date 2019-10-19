@@ -5,26 +5,28 @@
 
 #include <selfie_park/Search_server.h>
 
-Search_server::Search_server(const ros::NodeHandle &nh,
-                             const ros::NodeHandle &pnh)
+Search_server::Search_server(const ros::NodeHandle &nh, const ros::NodeHandle &pnh)
     : nh_(nh)
     , pnh_(pnh)
     , search_server_(nh_, "search", false)
 {
   search_server_.registerGoalCallback(boost::bind(&Search_server::init, this));
-  search_server_.registerPreemptCallback(
-      boost::bind(&Search_server::preemptCB, this));
+  search_server_.registerPreemptCallback(boost::bind(&Search_server::preemptCB, this));
   search_server_.start();
   pnh_.param<float>("point_min_x", point_min_x, 0.01);
   pnh_.param<float>("point_max_x", point_max_x, 2);
   pnh_.param<float>("point_min_y", point_min_y, -1);
   pnh_.param<float>("point_max_y", point_max_y, 0.2);
-  pnh_.param<float>("default_speed_in_parking_zone",
-                    default_speed_in_parking_zone, 0.8);
+  pnh_.param<float>("default_speed_in_parking_zone", default_speed_in_parking_zone, 0.8);
   pnh_.param<float>("speed_when_found_place", speed_when_found_place, 0.3);
-  pnh_.param<bool>("visualization_in_searching", visualization, false);
+  pnh_.param<bool>("visualization_in_searching", visualization, true);
+  pnh_.param<float>("max_distance_to_free_place", max_distance_to_free_place_, 0.8);
 
   speed_current.data = default_speed_in_parking_zone;
+  if (visualization)
+  {
+    visualize_free_place = nh_.advertise<visualization_msgs::Marker>("/free_place", 1);
+  }
 }
 
 Search_server::~Search_server() {}
@@ -32,10 +34,6 @@ Search_server::~Search_server() {}
 bool Search_server::init()
 {
   obstacles_sub = nh_.subscribe("/obstacles", 1, &Search_server::manager, this);
-  if (visualization)
-  {
-    visualize_free_place = nh_.advertise<visualization_msgs::Marker>("/free_place", 1);
-  }
   speed_publisher = nh_.advertise<std_msgs::Float64>("/max_speed", 0.5);
 
   speed_publisher.publish(speed_current);
@@ -71,7 +69,7 @@ void Search_server::manager(const selfie_msgs::PolygonArray &msg)
   case FOUND_PLACE_MEASURING:
     if (find_free_places())
     {
-      if (first_free_place.bottom_left.x <= 0.3)
+      if (first_free_place.bottom_left.x <= max_distance_to_free_place_)
       {
         publishFeedback(FIND_PROPER_PLACE);
         speed_current.data = 0; // when we found proper place we should stop
@@ -111,13 +109,13 @@ void Search_server::filter_boxes(const selfie_msgs::PolygonArray &msg)
   for (int box_nr = msg.polygons.size() - 1; box_nr >= 0; box_nr--)
   {
     geometry_msgs::Polygon polygon = msg.polygons[box_nr];
-    bool box_ok = true;
+    bool box_ok = false;
     for (int a = 0; a < 4; ++a)
     {
       Point p(polygon.points[a]);
-      if (!p.check_position(point_min_x, point_max_x, point_min_y, point_max_y))
+      if (p.check_position(point_min_x, point_max_x, point_min_y, point_max_y))
       {
-        box_ok = false;
+        box_ok = true;
         break;
       }
     }
