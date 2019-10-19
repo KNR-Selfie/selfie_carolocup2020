@@ -23,14 +23,19 @@ def intersection_client():
     polygons = PolygonArray()
     pub = rospy.Publisher('/obstacles', PolygonArray, queue_size=10)
     time.sleep(0.5)
+    print("."),
     pub.publish(polygons)
-    time.sleep(0.5)
+    time.sleep(0.8)
+    print("."),
     pub.publish(polygons)
-    time.sleep(0.5)
+    time.sleep(0.8)
+    print("."),
     pub.publish(polygons)
     time.sleep(1)
+    print("."),
     pub.publish(polygons)
     time.sleep(1)
+    print("."),
     pub.publish(polygons)
     print('mock obstacles sent')
     client.wait_for_result()
