@@ -303,5 +303,5 @@ void Search_server::publishFeedback(unsigned int newActionStatus)
 void Search_server::preemptCB()
 {
   ROS_INFO("Action preempted");
-  search_server_.setPreempted();
+  search_server_.setAborted();
 }

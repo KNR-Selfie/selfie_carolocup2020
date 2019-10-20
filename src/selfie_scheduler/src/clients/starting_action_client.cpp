@@ -3,8 +3,9 @@
 StartingProcedureClient::StartingProcedureClient(std::string name):
     ac_(name, true)
 {
-    result_flag_ = false;
+    result_flag_ = 0;
     next_action_ = DRIVING;
+    action_state_ = SELFIE_IDLE;
 }
 StartingProcedureClient::~StartingProcedureClient()
 {
@@ -34,7 +35,7 @@ bool StartingProcedureClient::waitForResult(float timeout)
 }
 bool StartingProcedureClient::waitForServer(float timeout)
 {
-    result_flag_ = false;
+    result_flag_ = 0;
     ROS_INFO("Wait for starting procedure action server");
     return ac_.waitForServer(ros::Duration(timeout));
 }
@@ -42,9 +43,17 @@ void StartingProcedureClient::doneCb(const actionlib::SimpleClientGoalState& sta
             const selfie_msgs::startingResultConstPtr& result)
 {
   ROS_INFO("Finished starting in state [%s]", state.toString().c_str());
-  ROS_INFO("starting result: %i", result->drive_mode);
-  result_ = result->drive_mode;
-  result_flag_ = true;
+  if(state == actionlib::SimpleClientGoalState::StateEnum::ABORTED)
+  {
+      ROS_INFO("ABORTED!!");
+      result_flag_ = 2;
+  }
+  else
+  {
+      ROS_INFO("starting result: %i", result->drive_mode);
+      result_ = result->drive_mode;
+      result_flag_ = 1;
+  }
 }
 
 void StartingProcedureClient::activeCb()
@@ -62,14 +71,15 @@ void StartingProcedureClient::cancelAction()
 }
 program_state StartingProcedureClient::getActionState()
 {
-    return action_state_;
+    if(action_state_ != SELFIE_IDLE)
+        return action_state_;
 }
 
 void StartingProcedureClient::getActionResult(boost::any &result)
 {
     result = result_;
 }
-bool StartingProcedureClient::isActionFinished()
+int StartingProcedureClient::isActionFinished()
 {
     return result_flag_;
 }

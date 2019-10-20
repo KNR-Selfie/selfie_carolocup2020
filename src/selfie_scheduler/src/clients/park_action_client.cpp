@@ -5,6 +5,7 @@ ParkClient::ParkClient(std::string name):
 {
     next_action_ = DRIVING;
     result_flag_ = false;
+    action_state_ = SELFIE_IDLE;
 }
 
 ParkClient::~ParkClient()
@@ -42,8 +43,17 @@ void ParkClient::doneCb(const actionlib::SimpleClientGoalState& state,
             const selfie_msgs::parkResultConstPtr& result)
 {
     ROS_INFO("Finished park in state [%s]", state.toString().c_str());
-    result_ = result->done;
-    result_flag_ = true;
+    if(state == actionlib::SimpleClientGoalState::StateEnum::ABORTED)
+    {
+        ROS_INFO("ABORTED!!");
+        result_flag_ = 2;
+    }
+    else
+    {
+        result_ = result->done;
+        result_flag_ = 1;
+    }
+
 }
 void ParkClient::activeCb()
 {
@@ -60,9 +70,10 @@ void ParkClient::cancelAction()
 }
 program_state ParkClient::getActionState()
 {
-    return action_state_;
+    if(action_state_ != SELFIE_IDLE)
+        return action_state_;
 }
-bool ParkClient::isActionFinished()
+int ParkClient::isActionFinished()
 {
     return result_flag_;
 }

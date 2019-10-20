@@ -207,3 +207,8 @@ add_executable(scheduler src/scheduler_node.cpp src/scheduler.cpp ${CLIENTS})
 roslint_cpp(src/scheduler_node.cpp src/scheduler.cpp ${CLIENTS})
 target_link_libraries(scheduler ${catkin_LIBRARIES})
 add_dependencies(scheduler ${catkin_EXPORTED_TARGETS})
+
+
+add_executable(action_mock test/action_mock.cpp)
+target_link_libraries(action_mock ${catkin_LIBRARIES})
+add_dependencies(action_mock ${catkin_EXPORTED_TARGETS})

@@ -4,9 +4,12 @@
 //#include <map>
 typedef enum program_state
 {
-    //starting_procedure
+    //generic states
     SELFIE_IDLE = 0,
     SELFIE_READY, // car ready, waiting for button press
+    SELFIE_NO_ACTION,
+
+    //starting_procedure
     BUTTON_FREE_DRIVE_PRESSED, // button starting Free Drive and Parking
     BUTTON_OBSTACLE_DRIVE_PRESSED, // button starting Obstacle Evasion Course
     START_DRIVE, // car started to move
@@ -33,6 +36,7 @@ typedef enum program_state
     STOPPED_ON_INTERSECTION,  //car stopped before intersection
     FOUND_OBSTACLES, //Found obstacles on priority road
     APPROACHING_TO_INTERSECTION_WITH_OBSTACLES, //Found obstacles on priority road, and approaching to it in meantime
+    WAITING_ON_INTERSECTION, //car stops on intersection even if there aren't any obstacles
     ROAD_CLEAR  //none obstacles on priority road
 
 
@@ -54,4 +58,14 @@ typedef enum action
     ERROR,
 
 }action_variable;
+
+typedef enum rc_state
+{
+    RC_MANUAL = 0,
+    RC_HALF_AUTONOMOUS,
+    RC_AUTONOMOUS,
+
+}rc_state_variable;
+
+
 #endif // SCHEDULER_ENUMS_H

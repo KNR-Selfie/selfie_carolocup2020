@@ -14,6 +14,7 @@ FreeDriveAction::FreeDriveAction(const ros::NodeHandle &nh, const ros::NodeHandl
   starting_line_detected_(false),
   max_speed_(2)
 {
+  as_.registerPreemptCallback(boost::bind(&FreeDriveAction::preemptCB, this));
   as_.start();
   starting_line_sub_ = nh_.subscribe("starting_line", 1000, &FreeDriveAction::startingLineCB, this);
   max_speed_pub_ = nh_.advertise<std_msgs::Float64>("max_speed", 1);
@@ -61,6 +62,9 @@ void FreeDriveAction::executeCB(const selfie_msgs::drivingGoalConstPtr &goal)
 
     maxSpeedPub();
     loop_rate.sleep();
+
+    if(!as_.isActive())
+        return;
   }
 
   //publish result
@@ -87,4 +91,9 @@ void FreeDriveAction::maxSpeedPub()
   std_msgs::Float64 msg;
   msg.data = max_speed_;
   max_speed_pub_.publish(msg);
+}
+void FreeDriveAction::preemptCB()
+{
+    ROS_INFO("Preempted");
+    as_.setAborted();
 }

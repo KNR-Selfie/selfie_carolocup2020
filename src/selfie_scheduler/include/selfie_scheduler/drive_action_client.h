@@ -13,7 +13,7 @@ protected:
     selfie_msgs::drivingGoal goal_;
     program_state action_state_;
     bool result_;
-    bool result_flag_;
+    int result_flag_;
     action next_action_;
 
 public:
@@ -31,7 +31,7 @@ public:
     void activeCb();
     void feedbackCb(const selfie_msgs::drivingFeedbackConstPtr& feedback);
     void getActionResult(boost::any &result);
-    bool isActionFinished();
+    int isActionFinished();
     action getNextAction();
 
 };

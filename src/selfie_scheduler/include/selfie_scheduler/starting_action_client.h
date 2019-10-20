@@ -12,7 +12,7 @@ protected:
     selfie_msgs::startingGoal goal_;
     bool result_;
     program_state action_state_;
-    bool result_flag_;
+    int result_flag_;
     action next_action_;
 
 public:
@@ -29,7 +29,7 @@ public:
                     const selfie_msgs::startingResultConstPtr& result);
     void activeCb();
     void feedbackCb(const selfie_msgs::startingFeedbackConstPtr& feedback);
-    bool isActionFinished();
+    int isActionFinished();
     void getActionResult(boost::any &result);
     action getNextAction();
 
