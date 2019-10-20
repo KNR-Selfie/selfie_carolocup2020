@@ -115,8 +115,8 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
     detectStartAndIntersectionLine();
   }
   else
-    masked_frame_=  binary_cut_frame_.clone();
-    cv::filter2D(masked_frame_, masked_frame_, -1, kernel_v_, cv::Point(-1, -1), 0, cv::BORDER_DEFAULT);
+    //masked_frame_=  binary_cut_frame_.clone();
+    cv::filter2D(binary_cut_frame_, masked_frame_, -1, kernel_v_, cv::Point(-1, -1), 0, cv::BORDER_DEFAULT);
   
   detectLines(masked_frame_, lines_vector_);
   if (lines_vector_.empty())
@@ -406,8 +406,8 @@ void LaneDetector::mergeMiddleLines()
   {
     if (!init_imageCallback_)
     {
-        if (lines_vector_converted_[i][0].y < getPolyY(right_line_.getCoeff(), lines_vector_converted_[i][0].x) ||
-            lines_vector_converted_[i][0].y > getPolyY(left_line_.getCoeff(), lines_vector_converted_[i][0].x))
+        if (lines_vector_converted_[i][0].y < getPolyY(right_line_.getCoeff(), lines_vector_converted_[i][0].x) - 0.02 ||
+            lines_vector_converted_[i][0].y > getPolyY(left_line_.getCoeff(), lines_vector_converted_[i][0].x) + 0.02)
             {
               //std::cout << "getPolyY(right_line_.getCoeff(), lines_vector_converted_[i][0].x): " << getPolyY(right_line_.getCoeff(), lines_vector_converted_[i][0].x) << std::endl;
               //std::cout << "lines_vector_converted_[i][0].y" << lines_vector_converted_[i][0].y << std::endl;
@@ -419,8 +419,8 @@ void LaneDetector::mergeMiddleLines()
     {
       if (!init_imageCallback_)
       {
-        if (lines_vector_converted_[j][0].y < getPolyY(right_line_.getCoeff(), lines_vector_converted_[j][0].x) ||
-            lines_vector_converted_[j][0].y > getPolyY(left_line_.getCoeff(), lines_vector_converted_[j][0].x))
+        if (lines_vector_converted_[j][0].y < getPolyY(right_line_.getCoeff(), lines_vector_converted_[j][0].x) - 0.02 ||
+            lines_vector_converted_[j][0].y > getPolyY(left_line_.getCoeff(), lines_vector_converted_[j][0].x) + 0.02) 
             {
               continue;
             }
@@ -608,8 +608,8 @@ void LaneDetector::printInfoParams()
 void LaneDetector::dynamicMask(cv::Mat &input_frame, cv::Mat &output_frame)
 {
   dynamic_mask_ = cv::Mat::zeros(cv::Size(input_frame.cols, input_frame.rows), CV_8UC1);
-  float offset_right = -0.08;
-  float offset_left = 0.06;
+  float offset_right = -0.07;
+  float offset_left = 0.05;
   output_frame = input_frame.clone();
   if (!right_line_.isExist())
     offset_right = -0.14;

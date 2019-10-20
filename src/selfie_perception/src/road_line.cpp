@@ -116,7 +116,7 @@ void RoadLine::addBottomPoint()
   if (!exist_)
     return;
 
-  if (points_[0].x > ((TOPVIEW_MIN_X + TOPVIEW_MAX_X) / 4))
+  if (points_[0].x < ((TOPVIEW_MIN_X + TOPVIEW_MAX_X) / 2))
   {
     cv::Point2f p;
     p.x = TOPVIEW_MIN_X;
@@ -132,7 +132,7 @@ void RoadLine::generateForDensity()
     return;
   }
 
-  if (pointsSize() / length_ < points_density_ * 2)
+  if (pointsSize() / length_ > points_density_ * 2)
   {
     return;
   }
