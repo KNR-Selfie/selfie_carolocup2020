@@ -15,6 +15,9 @@ rosrun selfie_intersection intersection_server_node
 ```
 
 ## Topics
+###Action name
+- `intersection`
+
 
 ### Subscribed topics
 
