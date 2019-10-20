@@ -70,6 +70,7 @@ add_message_files(
    search.action
    driving.action
    starting.action
+   intersection.action
    park.action
  )
 

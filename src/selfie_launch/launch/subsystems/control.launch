@@ -18,5 +18,5 @@
 
   <node name="offset_combiner" pkg="selfie_control" type="offset_combiner.py" />
 
-  <node name="cmd_creator" type="cmd_creator" pkg="selfie_control" respawn="true" />
+  <node name="cmd_creator" type="cmd_creator" pkg="selfie_control" respawn="true" output="screen" />
 </launch>

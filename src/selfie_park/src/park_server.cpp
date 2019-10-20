@@ -179,7 +179,7 @@ void ParkService::preemptCB()
   ROS_INFO("parkService preempted");
   parking_state_ = not_parking;
   move_state_ = first_phase;
-  as_.setPreempted();
+  as_.setAborted();
 }
 
 

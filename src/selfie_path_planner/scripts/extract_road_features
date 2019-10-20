@@ -1,9 +1,8 @@
+#!/usr/bin/env python
 '''
 *Copyright ( c ) 2019, KNR Selfie
 *This code is licensed under BSD license (see LICENSE for details)
 '''
-
-#!/usr/bin/env python
 
 import rospy
 
@@ -32,10 +31,10 @@ def road_markings_callback(msg):
     slope = c_poly.deriv()(c_x)
     theta = atan(slope)
     curvature = abs(c_poly.deriv().deriv()(c_x)) / (1+c_poly.deriv()(c_x)**2)**1.5
-    if curvature > 1:
+    if curvature > max_curvature:
         speed = min_speed
     else:
-        speed = (1 - curvature) * (max_speed - min_speed) + min_speed
+        speed = (max_curvature - curvature) * (max_speed - min_speed) + min_speed
 
     if atan2(c_y, x_shifted(c_x)) - theta > 0:
         c_dist = -c_dist
@@ -65,9 +64,12 @@ if __name__ == '__main__':
     lookahead = rospy.get_param('~lookahead', 0.0)
     global min_speed
     min_speed = rospy.get_param('~min_speed', 0.5)
+    global max_curvature
+    max_curvature = rospy.get_param('~max_curvature', 1)
 
     print("lookahead set to: " + str(lookahead))
     print("min_speed set to: " + str(min_speed))
+    print("max_curvature set to: " + str(max_curvature))
 
     global heading_offset_pub, position_offset_pub, curvature_pub
     heading_offset_pub = rospy.Publisher(

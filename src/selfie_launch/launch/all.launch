@@ -53,6 +53,6 @@
 
   <include file="$(find selfie_launch)/launch/subsystems/action_servers.launch"/>
 
-   <node name="scheduler" type="scheduler" pkg="selfie_scheduler" />
+   <node name="scheduler" type="scheduler" pkg="selfie_scheduler" output="screen" />
 
 </launch>

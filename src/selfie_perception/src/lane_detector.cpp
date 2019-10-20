@@ -15,7 +15,7 @@ LaneDetector::LaneDetector(const ros::NodeHandle &nh, const ros::NodeHandle &pnh
   it_(nh)
 {
   lanes_pub_ = nh_.advertise<selfie_msgs::RoadMarkings>("road_markings", 100);
-  intersection_pub_ = nh_.advertise<std_msgs::Float32>("intersection", 100);
+  intersection_pub_ = nh_.advertise<std_msgs::Float32>("intersection_distance", 100);
   starting_line_pub_ = nh_.advertise<std_msgs::Float32>("starting_line", 100);
 }
 

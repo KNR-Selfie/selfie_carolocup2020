@@ -221,49 +221,62 @@ public:
   }
   void print_lines() {}
 
-  void visualize(ros::Publisher &pub)
+  void visualize(const ros::Publisher &pub, const std::string &name, float red = 0.4, float green = 0.3, float blue = 0)
   {
-    Point to_draw_1 = bottom_left;
-    Point to_draw_2 = top_left;
     visualization_msgs::Marker marker;
 
     marker.header.frame_id = "laser";
     marker.header.stamp = ros::Time::now();
-    marker.ns = "box";
+    marker.ns = name;
     marker.type = visualization_msgs::Marker::LINE_LIST;
     marker.action = visualization_msgs::Marker::ADD;
-    marker.id = 4;
+    marker.id = 0;
     marker.lifetime = ros::Duration();
 
-    marker.color.r = 0.4f;
-    marker.color.g = 0.3f;
-    marker.color.b = 0.0f;
+    marker.color.r = red;
+    marker.color.g = green;
+    marker.color.b = blue;
     marker.color.a = 1.0f;
 
     marker.scale.x = 0.01;
     marker.scale.y = 0.01;
-    marker.scale.z = 0.1;
 
     geometry_msgs::Point marker_point;
-    marker_point.x = to_draw_1.x;
-    marker_point.y = to_draw_1.y;
     marker_point.z = 0;
-    marker.points.push_back(marker_point);
 
-    marker_point.x = to_draw_1.x;
-    marker_point.y = to_draw_1.y;
-    marker_point.z = 0.5;
-    marker.points.push_back(marker_point);
+    pushToMarker(marker_point, marker);
 
-    marker_point.x = to_draw_2.x;
-    marker_point.y = to_draw_2.y;
+    pub.publish(marker);
+  }
+
+  void visualizeList(const std::list<Box> boxes, const ros::Publisher &pub, const std::string &name, float red = 0.4,
+                     float green = 0.3, float blue = 0)
+  {
+    visualization_msgs::Marker marker;
+
+    marker.header.frame_id = "laser";
+    marker.header.stamp = ros::Time::now();
+    marker.ns = name;
+    marker.type = visualization_msgs::Marker::LINE_LIST;
+    marker.action = visualization_msgs::Marker::ADD;
+    marker.id = 0;
+    marker.lifetime = ros::Duration();
+
+    marker.color.r = red;
+    marker.color.g = green;
+    marker.color.b = blue;
+    marker.color.a = 1.0f;
+
+    marker.scale.x = 0.01;
+    marker.scale.y = 0.01;
+
+    geometry_msgs::Point marker_point;
     marker_point.z = 0;
-    marker.points.push_back(marker_point);
-
-    marker_point.x = to_draw_2.x;
-    marker_point.y = to_draw_2.y;
-    marker_point.z = 0.5;
-    marker.points.push_back(marker_point);
+    
+    for (list<Box>::const_iterator iter = boxes.begin(); iter != boxes.end(); iter++)
+    {
+      iter->pushToMarker(marker_point, marker);
+    }
 
     pub.publish(marker);
   }
@@ -291,4 +304,38 @@ public:
     ROS_INFO("right_edge:  %f", right_edge);
     ROS_INFO("left_edge: %f", left_edge);
   }
+
+  private:
+  void pushToMarker(geometry_msgs::Point &marker_point,visualization_msgs::Marker &marker) const
+  {
+    marker_point.x = this->bottom_left.x;
+    marker_point.y = this->bottom_left.y;
+    marker.points.push_back(marker_point);
+    marker_point.x = this->bottom_right.x;
+    marker_point.y = this->bottom_right.y;
+    marker.points.push_back(marker_point);
+
+    marker_point.x = this->bottom_right.x;
+    marker_point.y = this->bottom_right.y;
+    marker.points.push_back(marker_point);
+    marker_point.x = this->top_right.x;
+    marker_point.y = this->top_right.y;
+    marker.points.push_back(marker_point);
+
+    marker_point.x = this->top_right.x;
+    marker_point.y = this->top_right.y;
+    marker.points.push_back(marker_point);
+    marker_point.x = this->top_left.x;
+    marker_point.y = this->top_left.y;
+    marker.points.push_back(marker_point);
+
+    marker_point.x = this->top_left.x;
+    marker_point.y = this->top_left.y;
+    marker.points.push_back(marker_point);
+    marker_point.x = this->bottom_left.x;
+    marker_point.y = this->bottom_left.y;
+    marker.points.push_back(marker_point);
+  }
+
 };
+
