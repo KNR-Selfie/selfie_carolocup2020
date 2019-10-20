@@ -12,7 +12,7 @@ rosrun selfie_perception detect_markings
 ### Published topics
 - `/road_markings` (selfie_msgs/msgs/RoadMarkings.msg)
   - Polynomial coefficients for fitted lines, starting from the constant term
-- `/intersection` ([std_msgs/Float32](http://docs.ros.org/melodic/api/std_msgs/html/msg/Float32.html))
+- `/intersection_distance` ([std_msgs/Float32](http://docs.ros.org/melodic/api/std_msgs/html/msg/Float32.html))
   - Distance in meters to intersection
 - `/starting_line` ([std_msgs/Float32](http://docs.ros.org/melodic/api/std_msgs/html/msg/Float32.html))
   - Distance in meters to staring line

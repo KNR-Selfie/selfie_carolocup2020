@@ -89,6 +89,7 @@ public:
   bool read_from_STM();
   void send_to_STM(uint32_t timestamp_ms, Sub_messages to_send);
   void fill_publishers(Pub_messages& to_publish);
+  ~USB_STM();
 };
 
 #endif // USB_HPP
