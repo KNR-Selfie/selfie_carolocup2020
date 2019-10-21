@@ -3,51 +3,19 @@
  * This code is licensed under BSD license (see LICENSE for details)
  **/
 
+// TODO fun aprox - przesuwanie tym samym stopniem
+
 #include <selfie_perception/lane_detector.h>
-#include <vector>
-#include <algorithm>
 
-#define TOPVIEW_ROWS 480
-#define TOPVIEW_COLS 640
-
-#define TOPVIEW_MIN_X 0.3
-#define TOPVIEW_MAX_X 1.3
-#define TOPVIEW_MIN_Y -1.2
-#define TOPVIEW_MAX_Y 1.2
-
-static int Acc_slider = 1;
-static double Acc_value = 0.7;
-static int Acc_filt = 1;
-static int Acc_filt_slider = 40;
+static int Acc_value = 1;
 
 LaneDetector::LaneDetector(const ros::NodeHandle &nh, const ros::NodeHandle &pnh) :
   nh_(nh),
   pnh_(pnh),
-  it_(nh),
-  debug_mode_(false),
-  init_imageCallback_(true),
-  max_mid_line_gap_(0.8),
-  max_mid_line_distance_(0.12),
-  min_length_search_line_(0.10),
-  max_delta_y_lane_(0.08),
-  nominal_center_line_Y_(0.2),
-  min_length_to_aprox_(0.56),
-  poly_nDegree_(2),
-  left_lane_width_(0.4),
-  right_lane_width_(0.4),
-  points_density_(15),
-  left_line_index_(-1),
-  right_line_index_(-1),
-  center_line_index_(-1),
-  short_left_line_(false),
-  short_center_line_(false),
-  short_right_line_(false),
-  real_window_size_(0.1),
-  threshold_c_(-40)
-
+  it_(nh)
 {
   lanes_pub_ = nh_.advertise<selfie_msgs::RoadMarkings>("road_markings", 100);
-  intersection_pub_ = nh_.advertise<std_msgs::Float32>("intersection", 100);
+  intersection_pub_ = nh_.advertise<std_msgs::Float32>("intersection_distance", 100);
   starting_line_pub_ = nh_.advertise<std_msgs::Float32>("starting_line", 100);
 }
 
@@ -58,7 +26,7 @@ LaneDetector::~LaneDetector()
 
 bool LaneDetector::init()
 {
-  lanes_vector_.clear();
+  lines_vector_.clear();
   aprox_lines_frame_coordinate_.clear();
   std::vector<cv::Point2f> empty;
   empty.clear();
@@ -71,29 +39,47 @@ bool LaneDetector::init()
   kernel_v_.at<float>(0, 1) = 0;
   kernel_v_.at<float>(0, 2) = 1;
 
-  pnh_.getParam("config_file", config_file_);
-  pnh_.getParam("real_window_size", real_window_size_);
-  pnh_.getParam("threshold_c", threshold_c_);
-  pnh_.getParam("debug_mode", debug_mode_);
-  pnh_.getParam("max_mid_line_gap", max_mid_line_gap_);
+  getParams();
 
   treshold_block_size_ = static_cast<int>(TOPVIEW_COLS / (TOPVIEW_MAX_Y - TOPVIEW_MIN_Y) * real_window_size_);
   if (treshold_block_size_ % 2 == 0)
     treshold_block_size_++;
 
+  // calc hom_cut_mask
+  hom_cut_mask_ = cv::Mat::zeros(cv::Size(TOPVIEW_COLS, TOPVIEW_ROWS), CV_8UC1);
+  if (hom_cut_r_x_ != 0 && hom_cut_r_y_ != 0)
+  {
+    cv::Point points[3];
+    points[0] = cv::Point(hom_cut_r_x_, homography_frame_.rows);
+    points[1] = cv::Point(homography_frame_.cols, homography_frame_.rows);
+    points[2] = cv::Point(homography_frame_.cols, hom_cut_r_y_);
+    cv::fillConvexPoly(hom_cut_mask_, points, 3, cv::Scalar(255, 255, 255));
+    points[0] = cv::Point(hom_cut_l_x_, homography_frame_.rows);
+    points[1] = cv::Point(0, homography_frame_.rows);
+    points[2] = cv::Point(0 , hom_cut_l_y_);
+    cv::fillConvexPoly(hom_cut_mask_, points, 3, cv::Scalar(255, 255, 255));
+  }
+  cv::bitwise_not(hom_cut_mask_, hom_cut_mask_);
+
   image_sub_ = it_.subscribe("/image_rect", 10, &LaneDetector::imageCallback, this);
   if (debug_mode_)
   {
     points_cloud_pub_ = nh_.advertise<sensor_msgs::PointCloud>("new_coordinates", 10);
-    aprox_visualization_pub_ = nh_.advertise<visualization_msgs::Marker>("aprox", 10);
   }
 
-  cv::FileStorage fs(config_file_, cv::FileStorage::READ);
-  fs["world2cam"] >> world2cam_;
-  fs.release();
+  left_line_.setShortParam(min_length_to_2aprox_);
+  center_line_.setShortParam(min_length_to_2aprox_);
+  right_line_.setShortParam(min_length_to_2aprox_);
+
+  left_line_.setPointsDensity(points_density_);
+  center_line_.setPointsDensity(points_density_);
+  right_line_.setPointsDensity(points_density_);
+
+  left_line_.pfSetup(pf_num_samples_, pf_num_points_, pf_std_);
+  center_line_.pfSetup(pf_num_samples_, pf_num_points_, pf_std_);
+  right_line_.pfSetup(pf_num_samples_, pf_num_points_, pf_std_);
 
   computeTopView();
-
   printInfoParams();
   return true;
 }
@@ -110,14 +96,16 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
     return;
   }
   homography(current_frame_, homography_frame_);
-  // removeCar(homography_frame_);
 
   cv::adaptiveThreshold(homography_frame_, binary_frame_, 255, cv::ADAPTIVE_THRESH_MEAN_C,
                         CV_THRESH_BINARY, treshold_block_size_, threshold_c_);
 
+  cv::bitwise_and(binary_frame_, hom_cut_mask_, binary_cut_frame_);
+  cv::medianBlur(binary_cut_frame_, binary_cut_frame_, 3);
+
   if (!init_imageCallback_)
   {
-    dynamicMask(binary_frame_, masked_frame_);
+    dynamicMask(binary_cut_frame_, masked_frame_);
     if (debug_mode_)
       cv::bitwise_and(homography_frame_, dynamic_mask_, homography_frame_);
 
@@ -127,81 +115,85 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
     detectStartAndIntersectionLine();
   }
   else
-    masked_frame_ = binary_frame_.clone();
-
-  cv::medianBlur(masked_frame_, masked_frame_, 5);
-  cv::filter2D(masked_frame_, canny_frame_, -1, kernel_v_, cv::Point(-1, -1), 0, cv::BORDER_DEFAULT);
-
-  detectLines(canny_frame_, lanes_vector_);
-  if (lanes_vector_.empty())
+    //masked_frame_=  binary_cut_frame_.clone();
+    cv::filter2D(binary_cut_frame_, masked_frame_, -1, kernel_v_, cv::Point(-1, -1), 0, cv::BORDER_DEFAULT);
+  
+  detectLines(masked_frame_, lines_vector_);
+  if (lines_vector_.empty())
   {
-    left_line_index_ = -1;
-    center_line_index_ = -1;
-    right_line_index_ = -1;
+    left_line_.setExist(false);
+    center_line_.setExist(false);
+    right_line_.setExist(false);
     return;
   }
   convertCoordinates();
   filterSmallLines();
-  if (lanes_vector_converted_.empty())
+  if (lines_vector_converted_.empty())
   {
-    left_line_index_ = -1;
-    center_line_index_ = -1;
-    right_line_index_ = -1;
+    left_line_.setExist(false);
+    center_line_.setExist(false);
+    right_line_.setExist(false);
     return;
   }
 
-  mergeMiddleLane();
-
-  if (debug_mode_)
-  {
-    debug_frame_.rows = homography_frame_.rows;
-    debug_frame_.cols = homography_frame_.cols;
-    lanesVectorVisualization(debug_frame_);
-  }
+  mergeMiddleLines();
 
   if (init_imageCallback_)
   {
     initRecognizeLines();
+    right_line_.calcParams();
+    center_line_.calcParams();
+    left_line_.calcParams();
     int l = 0, c = 0, r = 0;
-    if (left_line_index_ != -1)
-      if (cv::arcLength(lanes_vector_converted_[left_line_index_], false) > min_length_to_aprox_)
-        l = 1;
+    if (!left_line_.isShort())
+      l = 1;
 
-    if (center_line_index_ != -1)
-      if (cv::arcLength(lanes_vector_converted_[center_line_index_], false) > min_length_to_aprox_)
-        c = 1;
+    if (!center_line_.isShort())
+      c = 1;
 
-    if (right_line_index_ != -1)
-      if (cv::arcLength(lanes_vector_converted_[right_line_index_], false) > min_length_to_aprox_)
-        r = 1;
+    if (!right_line_.isShort())
+      r = 1;
 
     if ((l + r + c) > 1)
     {
-      linesApproximation(lanes_vector_converted_);
+      linesApproximation();
       init_imageCallback_ = false;
     }
   }
   else
   {
     recognizeLines();
-    generatePoints();
+    //generatePoints();
 
-    calcRoadWidth();
-    addBottomPoint();
-    linesApproximation(lanes_vector_converted_);
+    right_line_.addBottomPoint();
+    center_line_.addBottomPoint();
+    left_line_.addBottomPoint();
+
+    if (center_line_.isExist())
+      calcRoadWidth();
+
+    right_line_.calcParams();
+    center_line_.calcParams();
+    left_line_.calcParams();
+
+    right_line_.generateForDensity();
+    center_line_.generateForDensity();
+    left_line_.generateForDensity();
+
+    linesApproximation();
     publishMarkings();
   }
 
   if (debug_mode_)
   {
-    visualization_frame_.rows = homography_frame_.rows;
-    visualization_frame_.cols = homography_frame_.cols;
+    debug_frame_.rows = homography_frame_.rows;
+    debug_frame_.cols = homography_frame_.cols;
+    lanesVectorVisualization(debug_frame_);
+    drawParticles(pf_num_samples_vis_);
 
     convertApproxToFrameCoordinate();
-    drawPoints(visualization_frame_);
-
+    drawAproxOnHomography();
     openCVVisualization();
-    aproxVisualization();
     pointsRVIZVisualization();
   }
 }
@@ -209,6 +201,9 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
 bool LaneDetector::resetVisionCallback(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response)
 {
   init_imageCallback_ = true;
+  left_line_.reset();
+  center_line_.reset();
+  right_line_.reset();
   ROS_INFO("RESET VISION");
   return true;
 }
@@ -242,37 +237,41 @@ void LaneDetector::detectLines(cv::Mat &input_frame, std::vector<std::vector<cv:
   output_lanes.clear();
   cv::findContours(input_frame, output_lanes, CV_RETR_LIST, CV_CHAIN_APPROX_TC89_L1, cv::Point(0, 0));
 
-  for (std::vector<std::vector<cv::Point>>::iterator filt = output_lanes.begin(); filt != output_lanes.end();)
-  {
-    if (filt->size() < Acc_filt)
-      filt = output_lanes.erase(filt);
-    else
-      ++filt;
-  }
-  for (int i = 0; i < output_lanes.size(); i++)
+  for (int i = 0; i < output_lanes.size(); ++i)
   {
     cv::approxPolyDP(cv::Mat(output_lanes[i]), output_lanes[i], Acc_value, false);
   }
 }
 
-void LaneDetector::drawPoints(cv::Mat &frame)
+void LaneDetector::drawAproxOnHomography()
 {
-  frame = cv::Mat::zeros(frame.size(), CV_8UC3);
+  cv::cvtColor(homography_frame_, homography_frame_, CV_GRAY2BGR);
   if (!aprox_lines_frame_coordinate_[2].empty())
-    for (int i = 0; i < aprox_lines_frame_coordinate_[2].size(); i++)
+    for (int i = 0; i < aprox_lines_frame_coordinate_[2].size(); ++i)
     {
-      cv::circle(frame, aprox_lines_frame_coordinate_[2][i], 3, cv::Scalar(255, 0, 0), CV_FILLED, cv::LINE_AA);
+      cv::circle(homography_frame_, aprox_lines_frame_coordinate_[2][i], 2, cv::Scalar(255, 0, 0), CV_FILLED);
     }
   if (!aprox_lines_frame_coordinate_[0].empty())
-    for (int i = 0; i < aprox_lines_frame_coordinate_[0].size(); i++)
+    for (int i = 0; i < aprox_lines_frame_coordinate_[0].size(); ++i)
     {
-      cv::circle(frame, aprox_lines_frame_coordinate_[0][i], 3, cv::Scalar(0, 0, 255), CV_FILLED, cv::LINE_AA);
+      cv::circle(homography_frame_, aprox_lines_frame_coordinate_[0][i], 2, cv::Scalar(0, 0, 255), CV_FILLED);
     }
   if (!aprox_lines_frame_coordinate_[1].empty())
-    for (int i = 0; i < aprox_lines_frame_coordinate_[1].size(); i++)
+    for (int i = 0; i < aprox_lines_frame_coordinate_[1].size(); ++i)
     {
-      cv::circle(frame, aprox_lines_frame_coordinate_[1][i], 3, cv::Scalar(0, 255, 0), CV_FILLED, cv::LINE_AA);
+      cv::circle(homography_frame_, aprox_lines_frame_coordinate_[1][i], 2, cv::Scalar(0, 255, 0), CV_FILLED);
     }
+
+  if (!debug_points_.empty())
+  {
+    cv::transform(debug_points_, debug_points_, world2topview_.rowRange(0, 2));
+    for (int i = 0; i < debug_points_.size(); i += 2)
+    {
+      cv::line(homography_frame_, debug_points_[i], debug_points_[i + 1], cv::Scalar(0, 255, 255), 2);
+			cv::circle(homography_frame_, debug_points_[i], 5, cv::Scalar(255, 255, 0), CV_FILLED, cv::LINE_AA);
+			cv::circle(homography_frame_, debug_points_[i + 1], 5, cv::Scalar(255, 255, 0), CV_FILLED, cv::LINE_AA);
+    }
+  }
 }
 
 void LaneDetector::homography(cv::Mat input_frame, cv::Mat &homography_frame)
@@ -281,23 +280,61 @@ void LaneDetector::homography(cv::Mat input_frame, cv::Mat &homography_frame)
                       topview_size_, cv::INTER_CUBIC | cv::WARP_INVERSE_MAP);
 }
 
+void LaneDetector::getParams()
+{
+  cv::FileStorage fs;
+  if (pnh_.getParam("config_file", config_file_) && fs.open(config_file_, cv::FileStorage::READ))
+  {
+    fs["world2cam"] >> world2cam_;
+    fs.release();
+  }
+  else
+  {
+    // default homography matrix
+    ROS_INFO("Default homography matrix");
+    world2cam_ = 
+    (cv::Mat_<double>(3,3) << 
+    -2866.861836770729,   1637.56986272477,     -421.4096359156129,
+    -2206.631043183711,   -117.8258687217328,   -738.93303219503,
+    -4.411887214969603,   -0.1088704319653951,  -0.5957339297068464);
+  }
+  
+  pnh_.getParam("real_window_size", real_window_size_);
+  pnh_.getParam("threshold_c", threshold_c_);
+  pnh_.getParam("debug_mode", debug_mode_);
+  pnh_.getParam("hom_cut_tune_mode", hom_cut_tune_mode_);
+  pnh_.getParam("max_mid_line_gap", max_mid_line_gap_);
+
+  pnh_.getParam("hom_cut_l_x", hom_cut_l_x_);
+  pnh_.getParam("hom_cut_l_y", hom_cut_l_y_);
+  pnh_.getParam("hom_cut_r_x", hom_cut_r_x_);
+  pnh_.getParam("hom_cut_r_y", hom_cut_r_y_);
+
+  pnh_.getParam("pf_num_samples", pf_num_samples_);
+  pnh_.getParam("pf_num_points_", pf_num_points_);
+  pnh_.getParam("pf_std", pf_std_);
+  pnh_.getParam("pf_num_samples_vis", pf_num_samples_vis_);
+}
+
 void LaneDetector::openCVVisualization()
 {
-  cv::namedWindow("Binarization", cv::WINDOW_NORMAL);
-  cv::imshow("Binarization", binary_frame_);
+  cv::namedWindow("STD_DEBUG", cv::WINDOW_NORMAL);
+  cv::Mat m_binary, m_std, m_four;
+  cv::hconcat(binary_cut_frame_, masked_frame_, m_binary);
+  cv::cvtColor(m_binary, m_binary, CV_GRAY2BGR);
+  cv::hconcat(debug_frame_, homography_frame_, m_std);
+  cv::vconcat(m_binary, m_std, m_four);
 
-  cv::namedWindow("masked", cv::WINDOW_NORMAL);
-  cv::imshow("masked", masked_frame_);
+  cv::imshow("STD_DEBUG", m_four);
 
-  cv::namedWindow("Output", cv::WINDOW_NORMAL);
-  cv::imshow("Output", visualization_frame_);
+  if (hom_cut_tune_mode_)
+  {
+    cv::namedWindow("binary_frame", cv::WINDOW_NORMAL);
+    cv::imshow("binary_frame", binary_frame_);
 
-  cv::namedWindow("Homography", cv::WINDOW_NORMAL);
-  cv::imshow("Homography", homography_frame_);
-
-  cv::namedWindow("Debug", cv::WINDOW_NORMAL);
-  cv::imshow("Debug", debug_frame_);
-
+    cv::namedWindow("binary_cut_frame", cv::WINDOW_NORMAL);
+    cv::imshow("binary_cut_frame", binary_cut_frame_);
+  }
   cv::waitKey(1);
 }
 
@@ -305,20 +342,20 @@ void LaneDetector::quickSortLinesY(int left, int right)
 {
   int i = left;
   int j = right;
-  int y = lanes_vector_[(left + right) / 2][0].y;
+  int y = lines_vector_[(left + right) / 2][0].y;
   do
   {
-    while (lanes_vector_[i][0].y > y)
-      i++;
+    while (lines_vector_[i][0].y > y)
+      ++i;
 
-    while (lanes_vector_[j][0].y < y)
+    while (lines_vector_[j][0].y < y)
       j--;
 
     if (i <= j)
     {
-      lanes_vector_[i].swap(lanes_vector_[j]);
+      lines_vector_[i].swap(lines_vector_[j]);
 
-      i++;
+      ++i;
       j--;
     }
   }
@@ -339,7 +376,7 @@ void LaneDetector::quickSortPointsY(std::vector<cv::Point> &vector_in, int left,
   do
   {
     while (vector_in[i].y > y)
-      i++;
+      ++i;
 
     while (vector_in[j].y < y)
       j--;
@@ -350,7 +387,7 @@ void LaneDetector::quickSortPointsY(std::vector<cv::Point> &vector_in, int left,
       vector_in[i] = vector_in[j];
       vector_in[j] = temp;
 
-      i++;
+      ++i;
       j--;
     }
   }
@@ -363,30 +400,49 @@ void LaneDetector::quickSortPointsY(std::vector<cv::Point> &vector_in, int left,
     LaneDetector::quickSortPointsY(vector_in, i, right);
 }
 
-void LaneDetector::mergeMiddleLane()
+void LaneDetector::mergeMiddleLines()
 {
-  for (int i = 0; i < lanes_vector_converted_.size(); i++)
+  for (int i = 0; i < lines_vector_converted_.size(); ++i)
   {
-    float a, b;
-    for (int j = i + 1; j < lanes_vector_converted_.size(); j++)
+    if (!init_imageCallback_)
     {
-      if (lanes_vector_converted_[i][lanes_vector_converted_[i].size() - 1].x - lanes_vector_converted_[i][0].x != 0)
-        a = (lanes_vector_converted_[i][0].y - lanes_vector_converted_[i][lanes_vector_converted_[i].size() - 1].y)
-            / (lanes_vector_converted_[i][0].x - lanes_vector_converted_[i][lanes_vector_converted_[i].size() - 1].x);
+        if (lines_vector_converted_[i][0].y < getPolyY(right_line_.getCoeff(), lines_vector_converted_[i][0].x) - 0.02 ||
+            lines_vector_converted_[i][0].y > getPolyY(left_line_.getCoeff(), lines_vector_converted_[i][0].x) + 0.02)
+            {
+              //std::cout << "getPolyY(right_line_.getCoeff(), lines_vector_converted_[i][0].x): " << getPolyY(right_line_.getCoeff(), lines_vector_converted_[i][0].x) << std::endl;
+              //std::cout << "lines_vector_converted_[i][0].y" << lines_vector_converted_[i][0].y << std::endl;
+              continue;
+            }
+    }
+    float a, b;
+    for (int j = i + 1; j < lines_vector_converted_.size(); ++j)
+    {
+      if (!init_imageCallback_)
+      {
+        if (lines_vector_converted_[j][0].y < getPolyY(right_line_.getCoeff(), lines_vector_converted_[j][0].x) - 0.02 ||
+            lines_vector_converted_[j][0].y > getPolyY(left_line_.getCoeff(), lines_vector_converted_[j][0].x) + 0.02) 
+            {
+              continue;
+            }
+          
+      }
+      if (lines_vector_converted_[i][lines_vector_converted_[i].size() - 1].x - lines_vector_converted_[i][0].x != 0)
+        a = (lines_vector_converted_[i][0].y - lines_vector_converted_[i][lines_vector_converted_[i].size() - 1].y)
+            / (lines_vector_converted_[i][0].x - lines_vector_converted_[i][lines_vector_converted_[i].size() - 1].x);
       else
         a = 999999;
-      b = lanes_vector_converted_[i][0].y - a * lanes_vector_converted_[i][0].x;
+      b = lines_vector_converted_[i][0].y - a * lines_vector_converted_[i][0].x;
 
-      float distance = std::abs(a * lanes_vector_converted_[j][0].x - lanes_vector_converted_[j][0].y + b)
+      float distance = std::abs(a * lines_vector_converted_[j][0].x - lines_vector_converted_[j][0].y + b)
                        / sqrtf(a * a + 1);
-      float distance2 = getDistance(lanes_vector_converted_[j][0],
-                                    lanes_vector_converted_[i][lanes_vector_converted_[i].size() - 1]);
+      float distance2 = getDistance(lines_vector_converted_[j][0],
+                                    lines_vector_converted_[i][lines_vector_converted_[i].size() - 1]);
 
       if (distance < max_mid_line_distance_ && distance2 < max_mid_line_gap_)
       {
-        lanes_vector_converted_[i].insert(lanes_vector_converted_[i].end(),
-                                          lanes_vector_converted_[j].begin(), lanes_vector_converted_[j].end());
-        lanes_vector_converted_.erase(lanes_vector_converted_.begin() + j);
+        lines_vector_converted_[i].insert(lines_vector_converted_[i].end(),
+                                          lines_vector_converted_[j].begin(), lines_vector_converted_[j].end());
+        lines_vector_converted_.erase(lines_vector_converted_.begin() + j);
         j--;
       }
     }
@@ -402,115 +458,122 @@ float LaneDetector::getDistance(cv::Point2f p1, cv::Point2f p2)
 
 void LaneDetector::recognizeLines()
 {
-  float min_left = current_frame_.cols;
-  int min_index = -1;
+  int left_index = -1;
+  int right_index = -1;
+  int center_index = -1;
   std::vector<std::vector<cv::Point2f>> closest_container;
   std::vector<int> closest_index;
-  for (int i = 0; i < lanes_vector_converted_.size(); i++)
+  for (int i = 0; i < lines_vector_converted_.size(); ++i)
   {
-    float aprox_y = getAproxY(last_left_coeff_, lanes_vector_converted_[i][0].x);
-    if (std::abs(aprox_y - lanes_vector_converted_[i][0].y) < max_delta_y_lane_)
+    float aprox_y = getPolyY(left_line_.getCoeff(), lines_vector_converted_[i][0].x);
+    if (std::abs(aprox_y - lines_vector_converted_[i][0].y) < max_delta_y_lane_)
     {
-      closest_container.push_back(lanes_vector_converted_[i]);
+      closest_container.push_back(lines_vector_converted_[i]);
       closest_index.push_back(i);
     }
   }
   if (closest_container.empty())
-    left_line_index_ = -1;
+    left_line_.setExist(false);
   else
   {
-    float aprox_y = getAproxY(last_left_coeff_, closest_container[0][0].x);
+    float aprox_y = getPolyY(left_line_.getCoeff(), closest_container[0][0].x);
     float min_sum_distance = std::abs(aprox_y - closest_container[0][0].y);
-    aprox_y = getAproxY(last_left_coeff_, closest_container[0][closest_container[0].size() / 2].x);
+    aprox_y = getPolyY(left_line_.getCoeff(), closest_container[0][closest_container[0].size() / 2].x);
     min_sum_distance += std::abs(aprox_y - closest_container[0][closest_container[0].size() / 2].y);
-    left_line_index_ = closest_index[0];
+    left_index = closest_index[0];
 
-    for (int i = 1; i < closest_container.size(); i++)
+    for (int i = 1; i < closest_container.size(); ++i)
     {
-      aprox_y = getAproxY(last_left_coeff_, closest_container[i][0].x);
+      aprox_y = getPolyY(left_line_.getCoeff(), closest_container[i][0].x);
       float sum_distance = std::abs(aprox_y - closest_container[i][0].y);
-      aprox_y = getAproxY(last_left_coeff_, closest_container[i][closest_container[i].size() / 2].x);
+      aprox_y = getPolyY(left_line_.getCoeff(), closest_container[i][closest_container[i].size() / 2].x);
       sum_distance += std::abs(aprox_y - closest_container[i][closest_container[i].size() / 2].y);
       if (sum_distance < min_sum_distance)
       {
-        left_line_index_ = closest_index[i];
+        left_index = closest_index[i];
         min_sum_distance = sum_distance;
       }
     }
+    left_line_.setPoints(lines_vector_converted_[left_index]);
+    left_line_.setExist(true);
   }
   closest_container.clear();
   closest_index.clear();
 
-  for (int i = 0; i < lanes_vector_converted_.size(); i++)
+  for (int i = 0; i < lines_vector_converted_.size(); ++i)
   {
-    if (i == left_line_index_)
+    if (i == left_index)
       continue;
-    float aprox_y = getAproxY(last_right_coeff_, lanes_vector_converted_[i][0].x);
-    if (std::abs(aprox_y - lanes_vector_converted_[i][0].y) < max_delta_y_lane_)
+    float aprox_y = getPolyY(right_line_.getCoeff(), lines_vector_converted_[i][0].x);
+    if (std::abs(aprox_y - lines_vector_converted_[i][0].y) < max_delta_y_lane_)
     {
-      closest_container.push_back(lanes_vector_converted_[i]);
+      closest_container.push_back(lines_vector_converted_[i]);
       closest_index.push_back(i);
     }
   }
   if (closest_container.empty())
-    right_line_index_ = -1;
+    right_line_.setExist(false);
   else
   {
-    float aprox_y = getAproxY(last_right_coeff_, closest_container[0][0].x);
+    float aprox_y = getPolyY(right_line_.getCoeff(), closest_container[0][0].x);
     float min_sum_distance = std::abs(aprox_y - closest_container[0][0].y);
-    aprox_y = getAproxY(last_right_coeff_, closest_container[0][closest_container[0].size() / 2].x);
+    aprox_y = getPolyY(right_line_.getCoeff(), closest_container[0][closest_container[0].size() / 2].x);
     min_sum_distance += std::abs(aprox_y - closest_container[0][closest_container[0].size() / 2].y);
-    right_line_index_ = closest_index[0];
+    right_index = closest_index[0];
 
-    for (int i = 1; i < closest_container.size(); i++)
+    for (int i = 1; i < closest_container.size(); ++i)
     {
-      aprox_y = getAproxY(last_right_coeff_, closest_container[i][0].x);
+      aprox_y = getPolyY(right_line_.getCoeff(), closest_container[i][0].x);
       float sum_distance = std::abs(aprox_y - closest_container[i][0].y);
-      aprox_y = getAproxY(last_right_coeff_, closest_container[i][closest_container[i].size() / 2].x);
+      aprox_y = getPolyY(right_line_.getCoeff(), closest_container[i][closest_container[i].size() / 2].x);
       sum_distance += std::abs(aprox_y - closest_container[i][closest_container[i].size() / 2].y);
       if (sum_distance < min_sum_distance)
       {
-        right_line_index_ = closest_index[i];
+        right_index = closest_index[i];
         min_sum_distance = sum_distance;
       }
     }
+    right_line_.setPoints(lines_vector_converted_[right_index]);
+    right_line_.setExist(true);
   }
   closest_container.clear();
   closest_index.clear();
 
-  for (int i = 0; i < lanes_vector_converted_.size(); i++)
+  for (int i = 0; i < lines_vector_converted_.size(); ++i)
   {
-    if (i == left_line_index_ || i == right_line_index_)
+    if (i == left_index || i == right_index)
       continue;
-    float aprox_y = getAproxY(last_middle_coeff_, lanes_vector_converted_[i][0].x);
-    if (std::abs(aprox_y - lanes_vector_converted_[i][0].y) < max_delta_y_lane_)
+    float aprox_y = getPolyY(center_line_.getCoeff(), lines_vector_converted_[i][0].x);
+    if (std::abs(aprox_y - lines_vector_converted_[i][0].y) < max_delta_y_lane_)
     {
-      closest_container.push_back(lanes_vector_converted_[i]);
+      closest_container.push_back(lines_vector_converted_[i]);
       closest_index.push_back(i);
     }
   }
   if (closest_container.empty())
-    center_line_index_ = -1;
+    center_line_.setExist(false);
   else
   {
-    float aprox_y = getAproxY(last_middle_coeff_, closest_container[0][0].x);
+    float aprox_y = getPolyY(center_line_.getCoeff(), closest_container[0][0].x);
     float min_sum_distance = std::abs(aprox_y - closest_container[0][0].y);
-    aprox_y = getAproxY(last_middle_coeff_, closest_container[0][closest_container[0].size() / 2].x);
+    aprox_y = getPolyY(center_line_.getCoeff(), closest_container[0][closest_container[0].size() / 2].x);
     min_sum_distance += std::abs(aprox_y - closest_container[0][closest_container[0].size() / 2].y);
-    center_line_index_ = closest_index[0];
+    center_index = closest_index[0];
 
-    for (int i = 1; i < closest_container.size(); i++)
+    for (int i = 1; i < closest_container.size(); ++i)
     {
-      aprox_y = getAproxY(last_middle_coeff_, closest_container[i][0].x);
+      aprox_y = getPolyY(center_line_.getCoeff(), closest_container[i][0].x);
       float sum_distance = std::abs(aprox_y - closest_container[i][0].y);
-      aprox_y = getAproxY(last_middle_coeff_, closest_container[i][closest_container[i].size() / 2].x);
+      aprox_y = getPolyY(center_line_.getCoeff(), closest_container[i][closest_container[i].size() / 2].x);
       sum_distance += std::abs(aprox_y - closest_container[i][closest_container[i].size() / 2].y);
       if (sum_distance < min_sum_distance)
       {
-        center_line_index_ = closest_index[i];
+        center_index = closest_index[i];
         min_sum_distance = sum_distance;
       }
     }
+    center_line_.setPoints(lines_vector_converted_[center_index]);
+    center_line_.setExist(true);
   }
 }
 
@@ -519,11 +582,11 @@ void LaneDetector::publishMarkings()
   selfie_msgs::RoadMarkings road_markings;
   road_markings.header.stamp = ros::Time::now();
   road_markings.header.frame_id = "road_markings";
-  for (int i = 0; i < left_coeff_.size(); i++)
+  for (int i = 0; i < left_line_.getCoeff().size(); ++i)
   {
-    road_markings.left_line.push_back(left_coeff_[i]);
-    road_markings.right_line.push_back(right_coeff_[i]);
-    road_markings.center_line.push_back(middle_coeff_[i]);
+    road_markings.left_line.push_back(left_line_.getCoeff()[i]);
+    road_markings.right_line.push_back(right_line_.getCoeff()[i]);
+    road_markings.center_line.push_back(center_line_.getCoeff()[i]);
   }
   lanes_pub_.publish(road_markings);
 }
@@ -536,41 +599,43 @@ void LaneDetector::printInfoParams()
   ROS_INFO("max_mid_line_gap: %.3f", max_mid_line_gap_);
 
   ROS_INFO("debug_mode: %d\n", debug_mode_);
+
+  ROS_INFO("pf_num_samples: %d", pf_num_samples_);
+  ROS_INFO("pf_num_points: %d\n", pf_num_points_);
+  ROS_INFO("pf_std: %.3f", pf_std_);
 }
 
 void LaneDetector::dynamicMask(cv::Mat &input_frame, cv::Mat &output_frame)
 {
   dynamic_mask_ = cv::Mat::zeros(cv::Size(input_frame.cols, input_frame.rows), CV_8UC1);
-  float offset_right = -0.05;
-  float offset_left = 0.03;
+  float offset_right = -0.07;
+  float offset_left = 0.05;
   output_frame = input_frame.clone();
-  if (right_line_index_ == -1)
+  if (!right_line_.isExist())
     offset_right = -0.14;
-  else if (lanes_vector_converted_[right_line_index_][lanes_vector_converted_[right_line_index_].size() - 1].x
-            < ((TOPVIEW_MIN_X + TOPVIEW_MAX_X) / 4))
+  else if (right_line_.getPoints()[right_line_.getPoints().size() - 1].x < ((TOPVIEW_MIN_X + TOPVIEW_MAX_X) / 4))
     offset_right = -0.14;
-  if (left_line_index_ == -1)
+  if (!left_line_.isExist())
     offset_left = 0.12;
-  else if (lanes_vector_converted_[left_line_index_][lanes_vector_converted_[left_line_index_].size() - 1].x
-            < ((TOPVIEW_MIN_X + TOPVIEW_MAX_X) / 4))
+  else if (left_line_.getPoints()[left_line_.getPoints().size() - 1].x < ((TOPVIEW_MIN_X + TOPVIEW_MAX_X) / 4))
     offset_left = 0.12;
 
-  std::vector<cv::Point2f> left_line = createOffsetLine(left_coeff_, offset_left);
-  std::vector<cv::Point2f> right_line = createOffsetLine(right_coeff_, offset_right);
-  cv::transform(left_line, left_line, world2topview_.rowRange(0, 2));
-  cv::transform(right_line, right_line, world2topview_.rowRange(0, 2));
+  std::vector<cv::Point2f> left_line_offset = createOffsetLine(left_line_.getCoeff(), left_line_.getDegree(), offset_left);
+  std::vector<cv::Point2f> right_line_offset = createOffsetLine(right_line_.getCoeff(), right_line_.getDegree(), offset_right);
+  cv::transform(left_line_offset, left_line_offset, world2topview_.rowRange(0, 2));
+  cv::transform(right_line_offset, right_line_offset, world2topview_.rowRange(0, 2));
 
   int l, r;
-  const int KLength = left_line.size() + right_line.size();
+  const int KLength = left_line_offset.size() + right_line_offset.size();
   cv::Point points[KLength];
-  for (l = 0; l < left_line.size(); l++)
+  for (l = 0; l < left_line_offset.size(); ++l)
   {
-    points[l] = cv::Point(left_line[l].x, left_line[l].y);
+    points[l] = cv::Point(left_line_offset[l].x, left_line_offset[l].y);
   }
-  for (r = right_line.size() - 1; r >= 0; r--)
+  for (r = right_line_offset.size() - 1; r >= 0; r--)
   {
-    points[l] = cv::Point(right_line[r].x, right_line[r].y);
-    l++;
+    points[l] = cv::Point(right_line_offset[r].x, right_line_offset[r].y);
+    ++l;
   }
   cv::fillConvexPoly(dynamic_mask_, points, KLength, cv::Scalar(255, 255, 255));
   cv::bitwise_and(input_frame, dynamic_mask_, output_frame);
@@ -580,29 +645,39 @@ void LaneDetector::ROILaneRight(cv::Mat &input_frame, cv::Mat &output_frame)
 {
   right_lane_ROI_ = cv::Mat::zeros(cv::Size(input_frame.cols, input_frame.rows), CV_8UC1);
   output_frame = input_frame.clone();
-  float offset_center = -0.07;
-  float offset_right = 0.05;
-  if (right_line_index_ == -1 || short_right_line_)
-    offset_right = 0.11;
-  if (center_line_index_ == -1 || short_center_line_)
-    offset_center = -0.13;
+  float offset_center = -0.08;
+  float offset_right = 0.06;
+  if (starting_line_timeout_ > 0)
+  {
+    offset_right = 0.02;
+    offset_center = -0.03;
+  }
+  else
+  {
+    if (!right_line_.isExist() || right_line_.isShort())
+      offset_right = 0.11;
+    if (!center_line_.isExist() || center_line_.isShort())
+      offset_center = -0.13;
+  }
+  
+  
 
-  std::vector<cv::Point2f> center_line = createOffsetLine(middle_coeff_, offset_center);
-  std::vector<cv::Point2f> right_line = createOffsetLine(right_coeff_, offset_right);
-  cv::transform(center_line, center_line, world2topview_.rowRange(0, 2));
-  cv::transform(right_line, right_line, world2topview_.rowRange(0, 2));
+  std::vector<cv::Point2f> center_line_offset = createOffsetLine(center_line_.getCoeff(), center_line_.getDegree(), offset_center);
+  std::vector<cv::Point2f> right_line_offset = createOffsetLine(right_line_.getCoeff(), right_line_.getDegree(), offset_right);
+  cv::transform(center_line_offset, center_line_offset, world2topview_.rowRange(0, 2));
+  cv::transform(right_line_offset, right_line_offset, world2topview_.rowRange(0, 2));
 
   int c, r;
-  const int KLength = center_line.size() + right_line.size();
+  const int KLength = center_line_offset.size() + right_line_offset.size();
   cv::Point points[KLength];
-  for (c = 0; c < center_line.size(); c++)
+  for (c = 0; c < center_line_offset.size(); ++c)
   {
-    points[c] = cv::Point(center_line[c].x, center_line[c].y);
+    points[c] = cv::Point(center_line_offset[c].x, center_line_offset[c].y);
   }
-  for (r = right_line.size() - 1; r >= 0; r--)
+  for (r = right_line_offset.size() - 1; r >= 0; r--)
   {
-    points[c] = cv::Point(right_line[r].x, right_line[r].y);
-    c++;
+    points[c] = cv::Point(right_line_offset[r].x, right_line_offset[r].y);
+    ++c;
   }
 
   cv::fillConvexPoly(right_lane_ROI_, points, KLength, cv::Scalar(255, 255, 255));
@@ -618,29 +693,38 @@ void LaneDetector::ROILaneLeft(cv::Mat &input_frame, cv::Mat &output_frame)
 {
   left_lane_ROI_ = cv::Mat::zeros(cv::Size(input_frame.cols, input_frame.rows), CV_8UC1);
   output_frame = input_frame.clone();
-  float offset_center = 0.05;
-  float offset_left = -0.07;
-  if (left_line_index_ == -1 || short_left_line_)
-    offset_left = -0.13;
-  if (center_line_index_ == -1 || short_center_line_)
-    offset_center = 0.11;
-
-  std::vector<cv::Point2f> center_line = createOffsetLine(middle_coeff_, offset_center);
-  std::vector<cv::Point2f> left_line = createOffsetLine(left_coeff_, offset_left);
-  cv::transform(center_line, center_line, world2topview_.rowRange(0, 2));
-  cv::transform(left_line, left_line, world2topview_.rowRange(0, 2));
+  float offset_center = 0.06;
+  float offset_left = -0.08;
+  if (starting_line_timeout_ > 0)
+  {
+    offset_center = 0.02;
+    offset_left = -0.03;
+    --starting_line_timeout_;
+  }
+  else
+  {
+    if (!left_line_.isExist() || left_line_.isShort())
+      offset_left = -0.13;
+    if (!center_line_.isExist() || center_line_.isShort())
+      offset_center = 0.11;
+  }
+  
+  std::vector<cv::Point2f> center_line_offset = createOffsetLine(center_line_.getCoeff(), center_line_.getDegree(), offset_center);
+  std::vector<cv::Point2f> left_line_offset = createOffsetLine(left_line_.getCoeff(), left_line_.getDegree(), offset_left);
+  cv::transform(center_line_offset, center_line_offset, world2topview_.rowRange(0, 2));
+  cv::transform(left_line_offset, left_line_offset, world2topview_.rowRange(0, 2));
 
   int c, l;
-  const int KLength = center_line.size() + left_line.size();
+  const int KLength = center_line_offset.size() + left_line_offset.size();
   cv::Point points[KLength];
-  for (c = 0; c < center_line.size(); c++)
+  for (c = 0; c < center_line_offset.size(); ++c)
   {
-    points[c] = cv::Point(center_line[c].x, center_line[c].y);
+    points[c] = cv::Point(center_line_offset[c].x, center_line_offset[c].y);
   }
-  for (l = left_line.size() - 1; l >= 0; l--)
+  for (l = left_line_offset.size() - 1; l >= 0; l--)
   {
-    points[c] = cv::Point(left_line[l].x, left_line[l].y);
-    c++;
+    points[c] = cv::Point(left_line_offset[l].x, left_line_offset[l].y);
+    ++c;
   }
 
   cv::fillConvexPoly(left_lane_ROI_, points, KLength, cv::Scalar(255, 255, 255));
@@ -654,12 +738,12 @@ void LaneDetector::ROILaneLeft(cv::Mat &input_frame, cv::Mat &output_frame)
 
 void LaneDetector::filterSmallLines()
 {
-  for (int i = 0; i < lanes_vector_converted_.size(); i++)
+  for (int i = 0; i < lines_vector_converted_.size(); ++i)
   {
-    float sum = arcLength(lanes_vector_converted_[i], false);
+    float sum = arcLength(lines_vector_converted_[i], false);
     if (sum < min_length_search_line_)
     {
-      lanes_vector_converted_.erase(lanes_vector_converted_.begin() + i);
+      lines_vector_converted_.erase(lines_vector_converted_.begin() + i);
       i--;
     }
   }
@@ -667,40 +751,22 @@ void LaneDetector::filterSmallLines()
 
 void LaneDetector::convertCoordinates()
 {
-  for (int i = 0; i < lanes_vector_.size(); i++)
+  for (int i = 0; i < lines_vector_.size(); ++i)
   {
-    quickSortPointsY(lanes_vector_[i], 0, lanes_vector_[i].size() - 1);
+    quickSortPointsY(lines_vector_[i], 0, lines_vector_[i].size() - 1);
   }
-  quickSortLinesY(0, lanes_vector_.size() - 1);
+  quickSortLinesY(0, lines_vector_.size() - 1);
 
-  lanes_vector_converted_.clear();
-  for (int i = 0; i < lanes_vector_.size(); i++)
+  lines_vector_converted_.clear();
+  for (int i = 0; i < lines_vector_.size(); ++i)
   {
     std::vector<cv::Point2f> line;
-    cv::Mat(lanes_vector_[i]).copyTo(line);
+    cv::Mat(lines_vector_[i]).copyTo(line);
 
     cv::transform(line, line, topview2world_.rowRange(0, 2));
 
-    lanes_vector_converted_.push_back(line);
+    lines_vector_converted_.push_back(line);
   }
-}
-
-float LaneDetector::getAproxY(std::vector<float> coeff, float x)
-{
-  size_t nDegree = coeff.size();
-
-  float nY = 0;
-  float nXdouble = 1;
-  float nX = x;
-
-  for (size_t j = 0; j < nDegree; j++)
-  {
-    // multiply current x by a coefficient
-    nY += coeff[j] * nXdouble;
-    // power up the X
-    nXdouble *= nX;
-  }
-  return nY;
 }
 
 void LaneDetector::convertApproxToFrameCoordinate()
@@ -710,18 +776,18 @@ void LaneDetector::convertApproxToFrameCoordinate()
   aprox_lines_frame_coordinate_[2].clear();
 
   cv::Point2f p;
-  float increment = 0.1;
+  float increment = 0.04;
   for (float x = TOPVIEW_MIN_X; x < TOPVIEW_MAX_X; x += increment)
   {
     p.x = x;
 
-    p.y = getAproxY(left_coeff_, x);
+    p.y = getPolyY(left_line_.getCoeff(), x);
     aprox_lines_frame_coordinate_[0].push_back(p);
 
-    p.y = getAproxY(middle_coeff_, x);
+    p.y = getPolyY(center_line_.getCoeff(), x);
     aprox_lines_frame_coordinate_[1].push_back(p);
 
-    p.y = getAproxY(right_coeff_, x);
+    p.y = getPolyY(right_line_.getCoeff(), x);
     aprox_lines_frame_coordinate_[2].push_back(p);
   }
   cv::transform(aprox_lines_frame_coordinate_[0], aprox_lines_frame_coordinate_[0], world2topview_.rowRange(0, 2));
@@ -732,13 +798,13 @@ void LaneDetector::convertApproxToFrameCoordinate()
 void LaneDetector::initRecognizeLines()
 {
   // check lines growth
-  for (int i = 0; i < lanes_vector_converted_.size(); i++)
+  for (int i = 0; i < lines_vector_converted_.size(); ++i)
   {
-    for (int j = 1; j < lanes_vector_converted_[i].size(); j++)
+    for (int j = 1; j < lines_vector_converted_[i].size(); ++j)
     {
-      if (lanes_vector_converted_[i][j - 1].x - lanes_vector_converted_[i][j].x > 0)
+      if (lines_vector_converted_[i][j - 1].x - lines_vector_converted_[i][j].x > 0)
       {
-        lanes_vector_converted_[i].erase(lanes_vector_converted_[i].begin() + j, lanes_vector_converted_[i].end());
+        lines_vector_converted_[i].erase(lines_vector_converted_[i].begin() + j, lines_vector_converted_[i].end());
         break;
       }
     }
@@ -746,61 +812,38 @@ void LaneDetector::initRecognizeLines()
 
   float min = homography_frame_.cols;
   int min_index = -1;
-  for (int i = 0; i < lanes_vector_converted_.size(); i++)
+  for (int i = 0; i < lines_vector_converted_.size(); ++i)
   {
-    if (std::abs(nominal_center_line_Y_ - lanes_vector_converted_[i][0].y) < min && lanes_vector_converted_[i][0].x
-        < 1 && cv::arcLength(lanes_vector_converted_[i], false) > 0.15)
+    if (std::abs(nominal_center_line_Y_ - lines_vector_converted_[i][0].y) < min && lines_vector_converted_[i][0].x
+        < 1 && cv::arcLength(lines_vector_converted_[i], false) > 0.15)
     {
-      min = std::abs(nominal_center_line_Y_ - lanes_vector_converted_[i][0].y);
+      min = std::abs(nominal_center_line_Y_ - lines_vector_converted_[i][0].y);
       min_index = i;
     }
   }
-  center_line_index_ = min_index;
-
-  if (center_line_index_ == -1)
+  if (min_index == -1)
   {
-    right_line_index_ = -1;
-    left_line_index_ = -1;
+    center_line_.setExist(false);
+    right_line_.setExist(false);
+    left_line_.setExist(false);
     return;
   }
 
-  min = homography_frame_.cols;
-  min_index = -1;
-  for (int i = 0; i < lanes_vector_converted_.size(); i++)
-  {
-    if (lanes_vector_converted_[i][0].y < lanes_vector_converted_[center_line_index_][0].y &&
-        lanes_vector_converted_[i][0].x < 1 && cv::arcLength(lanes_vector_converted_[i], false) > 0.2)
-    {
-      float distance_last = getDistance(lanes_vector_converted_[center_line_index_][0], lanes_vector_converted_[i][0]);
-      float distance;
-      for (int j = 1; j < lanes_vector_converted_[i].size(); j++)
-      {
-        distance = getDistance(lanes_vector_converted_[center_line_index_][0], lanes_vector_converted_[i][j]);
-        if (distance_last - distance < 0)
-          break;
-        distance_last = distance;
-      }
-      if (distance_last < min && distance_last > 0.2 && distance_last < 0.5)
-      {
-        min = distance_last;
-        min_index = i;
-      }
-    }
-  }
-  right_line_index_ = min_index;
+  center_line_.setExist(true);
+  center_line_.setPoints(lines_vector_converted_[min_index]);
 
   min = homography_frame_.cols;
   min_index = -1;
-  for (int i = 0; i < lanes_vector_converted_.size(); i++)
+  for (int i = 0; i < lines_vector_converted_.size(); ++i)
   {
-    if (lanes_vector_converted_[i][0].y > lanes_vector_converted_[center_line_index_][0].y &&
-        lanes_vector_converted_[i][0].x < 1 && cv::arcLength(lanes_vector_converted_[i], false) > 0.2)
+    if (lines_vector_converted_[i][0].y < center_line_.getPoints()[0].y &&
+        lines_vector_converted_[i][0].x < 1 && cv::arcLength(lines_vector_converted_[i], false) > 0.2)
     {
-      float distance_last = getDistance(lanes_vector_converted_[center_line_index_][0], lanes_vector_converted_[i][0]);
+      float distance_last = getDistance(center_line_.getPoints()[0], lines_vector_converted_[i][0]);
       float distance;
-      for (int j = 1; j < lanes_vector_converted_[i].size(); j++)
+      for (int j = 1; j < lines_vector_converted_[i].size(); ++j)
       {
-        distance = getDistance(lanes_vector_converted_[center_line_index_][0], lanes_vector_converted_[i][j]);
+        distance = getDistance(center_line_.getPoints()[0], lines_vector_converted_[i][j]);
         if (distance_last - distance < 0)
           break;
         distance_last = distance;
@@ -812,7 +855,48 @@ void LaneDetector::initRecognizeLines()
       }
     }
   }
-  left_line_index_ = min_index;
+  if(min_index == -1)
+  {
+    right_line_.setExist(false);
+  }
+  else
+  {
+    right_line_.setExist(true);
+    right_line_.setPoints(lines_vector_converted_[min_index]);
+  }
+
+  min = homography_frame_.cols;
+  min_index = -1;
+  for (int i = 0; i < lines_vector_converted_.size(); ++i)
+  {
+    if (lines_vector_converted_[i][0].y > center_line_.getPoints()[0].y &&
+        lines_vector_converted_[i][0].x < 1 && cv::arcLength(lines_vector_converted_[i], false) > 0.2)
+    {
+      float distance_last = getDistance(center_line_.getPoints()[0], lines_vector_converted_[i][0]);
+      float distance;
+      for (int j = 1; j < lines_vector_converted_[i].size(); ++j)
+      {
+        distance = getDistance(center_line_.getPoints()[0], lines_vector_converted_[i][j]);
+        if (distance_last - distance < 0)
+          break;
+        distance_last = distance;
+      }
+      if (distance_last < min && distance_last > 0.2 && distance_last < 0.5)
+      {
+        min = distance_last;
+        min_index = i;
+      }
+    }
+  }
+  if(min_index == -1)
+  {
+    left_line_.setExist(false);
+  }
+  else
+  {
+    left_line_.setExist(true);
+    left_line_.setPoints(lines_vector_converted_[min_index]);
+  }
 }
 
 void LaneDetector::pointsRVIZVisualization()
@@ -822,12 +906,12 @@ void LaneDetector::pointsRVIZVisualization()
   points_cloud_.points.clear();
   points_cloud_.header.frame_id = "road_markings";
 
-  for (int i = 0; i < lanes_vector_converted_.size(); i++)
+  for (int i = 0; i < lines_vector_converted_.size(); ++i)
   {
-    for (int j = 0; j < lanes_vector_converted_[i].size(); j++)
+    for (int j = 0; j < lines_vector_converted_[i].size(); ++j)
     {
-      point.x = lanes_vector_converted_[i][j].x;
-      point.y = lanes_vector_converted_[i][j].y;
+      point.x = lines_vector_converted_[i][j].x;
+      point.y = lines_vector_converted_[i][j].y;
       points_cloud_.points.push_back(point);
     }
   }
@@ -835,94 +919,23 @@ void LaneDetector::pointsRVIZVisualization()
   points_cloud_pub_.publish(points_cloud_);
 }
 
-void LaneDetector::aproxVisualization()
-{
-  visualization_msgs::Marker marker;
-
-  marker.header.frame_id = "road_markings";
-  marker.header.stamp = ros::Time::now();
-  marker.ns = "line";
-  marker.type = visualization_msgs::Marker::LINE_STRIP;
-  marker.action = visualization_msgs::Marker::ADD;
-  marker.id = 0;
-  marker.lifetime = ros::Duration();
-
-  marker.color.r = 0.0f;
-  marker.color.g = 1.0f;
-  marker.color.b = 0.0f;
-  marker.color.a = 1.0f;
-
-  marker.scale.x = 0.003;
-
-  geometry_msgs::Point marker_point;
-  marker_point.z = 0;
-
-  float increment = 0.1;
-  for (float x = TOPVIEW_MIN_X; x < TOPVIEW_MAX_X; x += increment)
-  {
-    marker_point.x = x;
-    marker_point.y = getAproxY(left_coeff_, x);
-    marker.points.push_back(marker_point);
-  }
-  for (float x = TOPVIEW_MIN_X; x < TOPVIEW_MAX_X; x += increment)
-  {
-    marker_point.x = x;
-    marker_point.y = getAproxY(middle_coeff_, x);
-    marker.points.push_back(marker_point);
-  }
-  for (float x = TOPVIEW_MIN_X; x < TOPVIEW_MAX_X; x += increment)
-  {
-    marker_point.x = x;
-    marker_point.y = getAproxY(right_coeff_, x);
-    marker.points.push_back(marker_point);
-  }
-  aprox_visualization_pub_.publish(marker);
-}
-
-void LaneDetector::linesApproximation(std::vector<std::vector<cv::Point2f>> lanes_vector)
+void LaneDetector::linesApproximation()
 {
   unsigned char l_state, c_state, r_state;
-  left_coeff_.clear();
-  middle_coeff_.clear();
-  right_coeff_.clear();
-
-  // vectors length count
-  short_left_line_ = false;
-  short_right_line_ = false;
-  short_center_line_ = false;
-  double left_length = 0, right_length = 0, middle_length = 0;
-
-  if (left_line_index_ != -1)
-    left_length = cv::arcLength(lanes_vector[left_line_index_], false);
-  else
-    left_length = 0;
-  if (center_line_index_ != -1)
-    middle_length = cv::arcLength(lanes_vector[center_line_index_], false);
-  else
-    middle_length = 0;
-  if (right_line_index_ != -1)
-    right_length = cv::arcLength(lanes_vector[right_line_index_], false);
-  else
-    right_length = 0;
 
   int suitable_lines = 3;
+  if (left_line_.isShort())
+    --suitable_lines;
+  if (right_line_.isShort())
+    --suitable_lines;
+  if (center_line_.isShort())
+    --suitable_lines;
 
-  if (left_length < min_length_to_aprox_)
+  if (init_imageCallback_)
   {
-    short_left_line_ = true;
-    suitable_lines--;
-  }
-
-  if (right_length < min_length_to_aprox_)
-  {
-    short_right_line_ = true;
-    suitable_lines--;
-  }
-
-  if (middle_length < min_length_to_aprox_)
-  {
-    short_center_line_ = true;
-    suitable_lines--;
+    left_line_.setDegree(2);
+    center_line_.setDegree(2);
+    right_line_.setDegree(2);
   }
 
   switch (suitable_lines)
@@ -933,31 +946,46 @@ void LaneDetector::linesApproximation(std::vector<std::vector<cv::Point2f>> lane
     c_state = '+';
     r_state = '+';
 
-    if (!polyfit(poly_nDegree_, lanes_vector[left_line_index_], left_coeff_))
-      left_coeff_ = last_left_coeff_;
-    if (!polyfit(poly_nDegree_, lanes_vector[center_line_index_], middle_coeff_))
-      middle_coeff_ = last_middle_coeff_;
-    if (!polyfit(poly_nDegree_, lanes_vector[right_line_index_], right_coeff_))
-      right_coeff_ = last_right_coeff_;
-
+    if (init_imageCallback_)
+    {
+      left_line_.aprox();
+      center_line_.aprox();
+      right_line_.aprox();
+    }
+    else
+    {
+      left_line_.pfExecute();
+      center_line_.pfExecute();
+      right_line_.pfExecute();
+    }
     break;
 
   case 2:
-    if (short_left_line_)
+    if (left_line_.isShort())
     {
-      if (!polyfit(poly_nDegree_, lanes_vector[center_line_index_], middle_coeff_))
-        middle_coeff_ = last_middle_coeff_;
-      if (!polyfit(poly_nDegree_, lanes_vector[right_line_index_], right_coeff_))
-        right_coeff_ = last_right_coeff_;
+      if (init_imageCallback_)
+      {
+        center_line_.aprox();
+        right_line_.aprox();
+      }
+      else
+      {
+        center_line_.pfExecute();
+        right_line_.pfExecute();
+      }
+      
 
-      if (left_line_index_ == -1)
+      if (!left_line_.isExist())
       {
         // "l-  c+  r+"
         l_state = '-';
         c_state = '+';
         r_state = '+';
-        if (!polyfit(poly_nDegree_, createOffsetLine(middle_coeff_, left_lane_width_), left_coeff_))
-          left_coeff_ = last_left_coeff_;
+        left_line_.setDegree(center_line_.getDegree());
+        std::vector<float> tmp_coeff;
+        polyfit(createOffsetLine(center_line_.getCoeff(), center_line_.getDegree(), left_lane_width_),
+                                 left_line_.getDegree(), tmp_coeff);
+        left_line_.setCoeff(tmp_coeff);
       }
       else
       {
@@ -965,24 +993,35 @@ void LaneDetector::linesApproximation(std::vector<std::vector<cv::Point2f>> lane
         l_state = '/';
         c_state = '+';
         r_state = '+';
-        left_coeff_ = adjust(middle_coeff_, lanes_vector[left_line_index_], true);
+        left_line_.pfReset();
+        left_line_.setDegree(center_line_.getDegree());
+        adjust(center_line_, left_line_, true);
       }
     }
-    else if (short_right_line_)
+    else if (right_line_.isShort())
     {
-      if (!polyfit(poly_nDegree_, lanes_vector[center_line_index_], middle_coeff_))
-        middle_coeff_ = last_middle_coeff_;
-      if (!polyfit(poly_nDegree_, lanes_vector[left_line_index_], left_coeff_))
-        left_coeff_ = last_left_coeff_;
+      if (init_imageCallback_)
+      {
+        left_line_.aprox();
+        center_line_.aprox();
+      }
+      else
+      {
+        left_line_.pfExecute();
+        center_line_.pfExecute();
+      }
 
-      if (right_line_index_ == -1)
+      if (!right_line_.isExist())
       {
         // "l+  c+  r-"
         l_state = '+';
         c_state = '+';
         r_state = '-';
-        if (!polyfit(poly_nDegree_, createOffsetLine(middle_coeff_, -1 * right_lane_width_), right_coeff_))
-          right_coeff_ = last_right_coeff_;
+        right_line_.setDegree(center_line_.getDegree());
+        std::vector<float> tmp_coeff;
+        polyfit(createOffsetLine(center_line_.getCoeff(), center_line_.getDegree(), -1 * right_lane_width_),
+                                 right_line_.getDegree(), tmp_coeff);
+        right_line_.setCoeff(tmp_coeff);
       }
       else
       {
@@ -990,24 +1029,35 @@ void LaneDetector::linesApproximation(std::vector<std::vector<cv::Point2f>> lane
         l_state = '+';
         c_state = '+';
         r_state = '/';
-        right_coeff_ = adjust(middle_coeff_, lanes_vector[right_line_index_], false);
+        right_line_.pfReset();
+        right_line_.setDegree(center_line_.getDegree());
+        adjust(center_line_, right_line_, false);
       }
     }
-    else if (short_center_line_)
+    else if (center_line_.isShort())
     {
-      if (!polyfit(poly_nDegree_, lanes_vector[left_line_index_], left_coeff_))
-        left_coeff_ = last_left_coeff_;
-      if (!polyfit(poly_nDegree_, lanes_vector[right_line_index_], right_coeff_))
-        right_coeff_ = last_right_coeff_;
+      if (init_imageCallback_)
+      {
+        left_line_.aprox();
+        right_line_.aprox();
+      }
+      else
+      {
+        left_line_.pfExecute();
+        right_line_.pfExecute();
+      }
 
-      if (center_line_index_ == -1)
+      if (!center_line_.isExist())
       {
         // "l+  c-  r+"
         l_state = '+';
         c_state = '-';
         r_state = '+';
-        if (!polyfit(poly_nDegree_, createOffsetLine(right_coeff_, right_lane_width_), middle_coeff_))
-          middle_coeff_ = last_middle_coeff_;
+        center_line_.setDegree(right_line_.getDegree());
+        std::vector<float> tmp_coeff;
+        polyfit(createOffsetLine(right_line_.getCoeff(), right_line_.getDegree(), right_lane_width_),
+                                 center_line_.getDegree(), tmp_coeff);
+        center_line_.setCoeff(tmp_coeff);
       }
       else
       {
@@ -1015,38 +1065,51 @@ void LaneDetector::linesApproximation(std::vector<std::vector<cv::Point2f>> lane
         l_state = '+';
         c_state = '/';
         r_state = '+';
-        middle_coeff_ = adjust(right_coeff_, lanes_vector[center_line_index_], true);
+        center_line_.pfReset();
+        center_line_.setDegree(right_line_.getDegree());
+        adjust(right_line_, center_line_, true);
       }
     }
     break;
 
   case 1:
-    if (!short_right_line_)
+    if (!right_line_.isShort())
     {
-      if (!polyfit(poly_nDegree_, lanes_vector[right_line_index_], right_coeff_))
-        right_coeff_ = last_right_coeff_;
-      if (center_line_index_ != -1 || left_line_index_ != -1)
+      if (init_imageCallback_)
+        right_line_.aprox();
+      else
+        right_line_.pfExecute();
+      
+      if (center_line_.isExist() || left_line_.isExist())
       {
-        if (center_line_index_ != -1 && left_line_index_ != -1)
+        if (center_line_.isExist() && left_line_.isExist())
         {
           // "l/  c/  r+"
           l_state = '/';
           c_state = '/';
           r_state = '+';
-          middle_coeff_ = adjust(right_coeff_, lanes_vector[center_line_index_], true);
-
-          left_coeff_ = adjust(right_coeff_, lanes_vector[left_line_index_], true);
+          center_line_.pfReset();
+          left_line_.pfReset();
+          center_line_.setDegree(right_line_.getDegree());
+          left_line_.setDegree(right_line_.getDegree());
+          adjust(right_line_, center_line_, true);
+          adjust(right_line_, left_line_, true);
         }
-        else if (center_line_index_ != -1)
+        else if (center_line_.isExist())
         {
           // "l-  c/  r+"
           l_state = '-';
           c_state = '/';
           r_state = '+';
-          middle_coeff_ = adjust(right_coeff_, lanes_vector[center_line_index_], true);
-
-          if (!polyfit(poly_nDegree_, createOffsetLine(middle_coeff_, left_lane_width_), left_coeff_))
-            left_coeff_ = last_left_coeff_;
+          center_line_.pfReset();
+          center_line_.setDegree(right_line_.getDegree());
+          left_line_.setDegree(right_line_.getDegree());
+          adjust(right_line_, center_line_, true);
+          
+          std::vector<float> tmp_coeff;
+          polyfit(createOffsetLine(center_line_.getCoeff(), center_line_.getDegree(), left_lane_width_),
+                                   left_line_.getDegree(), tmp_coeff);
+          left_line_.setCoeff(tmp_coeff);
         }
         else
         {
@@ -1054,10 +1117,15 @@ void LaneDetector::linesApproximation(std::vector<std::vector<cv::Point2f>> lane
           l_state = '/';
           c_state = '-';
           r_state = '+';
-          left_coeff_ = adjust(right_coeff_, lanes_vector[left_line_index_], true);
-
-          if (!polyfit(poly_nDegree_, createOffsetLine(right_coeff_, right_lane_width_), middle_coeff_))
-            middle_coeff_ = last_middle_coeff_;
+          left_line_.pfReset();
+          center_line_.setDegree(right_line_.getDegree());
+          left_line_.setDegree(right_line_.getDegree());
+          adjust(right_line_, left_line_, true);
+          
+          std::vector<float> tmp_coeff;
+          polyfit(createOffsetLine(right_line_.getCoeff(), right_line_.getDegree(), right_lane_width_),
+                                   center_line_.getDegree(), tmp_coeff);
+          center_line_.setCoeff(tmp_coeff);
         }
       }
       else
@@ -1066,39 +1134,57 @@ void LaneDetector::linesApproximation(std::vector<std::vector<cv::Point2f>> lane
         l_state = '-';
         c_state = '-';
         r_state = '+';
-        if (!polyfit(poly_nDegree_, createOffsetLine(right_coeff_, right_lane_width_), middle_coeff_))
-          middle_coeff_ = last_middle_coeff_;
-        if (!polyfit(poly_nDegree_, createOffsetLine(middle_coeff_, left_lane_width_), left_coeff_))
-          left_coeff_ = last_left_coeff_;
+        center_line_.setDegree(right_line_.getDegree());
+        left_line_.setDegree(right_line_.getDegree());
+        
+        std::vector<float> tmp_coeff;
+        polyfit(createOffsetLine(right_line_.getCoeff(), right_line_.getDegree(), right_lane_width_),
+                                 center_line_.getDegree(), tmp_coeff);
+        center_line_.setCoeff(tmp_coeff);
+
+        polyfit(createOffsetLine(center_line_.getCoeff(), center_line_.getDegree(), left_lane_width_),
+                                 left_line_.getDegree(), tmp_coeff);
+        left_line_.setCoeff(tmp_coeff);
       }
     }
 
-    else if (!short_left_line_)
+    else if (!left_line_.isShort())
     {
-      if (!polyfit(poly_nDegree_, lanes_vector[left_line_index_], left_coeff_))
-        left_coeff_ = last_left_coeff_;
-      if (center_line_index_ != -1 || right_line_index_ != -1)
+      if (init_imageCallback_)
+        left_line_.aprox();
+      else
+        left_line_.pfExecute();
+      
+      if (center_line_.isExist() || right_line_.isExist())
       {
-        if (center_line_index_ != -1 && right_line_index_ != -1)
+        if (center_line_.isExist() && right_line_.isExist())
         {
           // "l+  c/  r/"
           l_state = '+';
           c_state = '/';
           r_state = '/';
-          middle_coeff_ = adjust(left_coeff_, lanes_vector[center_line_index_], false);
-
-          right_coeff_ = adjust(left_coeff_, lanes_vector[right_line_index_], false);
+          center_line_.pfReset();
+          right_line_.pfReset();
+          center_line_.setDegree(left_line_.getDegree());
+          right_line_.setDegree(left_line_.getDegree());
+          adjust(left_line_, center_line_, false);
+          adjust(left_line_, right_line_, false);
         }
-        else if (center_line_index_ != -1)
+        else if (center_line_.isExist())
         {
           // "l+  c/  r-"
           l_state = '+';
           c_state = '/';
           r_state = '-';
-          middle_coeff_ = adjust(left_coeff_, lanes_vector[center_line_index_], false);
-
-          if (!polyfit(poly_nDegree_, createOffsetLine(middle_coeff_, -1 * right_lane_width_), right_coeff_))
-            right_coeff_ = last_right_coeff_;
+          center_line_.pfReset();
+          center_line_.setDegree(left_line_.getDegree());
+          right_line_.setDegree(left_line_.getDegree());
+          adjust(left_line_, center_line_, false);
+          
+          std::vector<float> tmp_coeff;
+          polyfit(createOffsetLine(center_line_.getCoeff(), center_line_.getDegree(), -1 * right_lane_width_),
+                                   right_line_.getDegree(), tmp_coeff);
+          right_line_.setCoeff(tmp_coeff);
         }
         else
         {
@@ -1106,10 +1192,15 @@ void LaneDetector::linesApproximation(std::vector<std::vector<cv::Point2f>> lane
           l_state = '+';
           c_state = '-';
           r_state = '/';
-          right_coeff_ = adjust(left_coeff_, lanes_vector[right_line_index_], false);
-
-          if (!polyfit(poly_nDegree_, createOffsetLine(left_coeff_, -1 * left_lane_width_), middle_coeff_))
-            middle_coeff_ = last_middle_coeff_;
+          right_line_.pfReset();
+          center_line_.setDegree(left_line_.getDegree());
+          right_line_.setDegree(left_line_.getDegree());
+          adjust(left_line_, right_line_, false);
+          
+          std::vector<float> tmp_coeff;
+          polyfit(createOffsetLine(left_line_.getCoeff(), left_line_.getDegree(), -1 * left_lane_width_),
+                                   center_line_.getDegree(), tmp_coeff);
+          center_line_.setCoeff(tmp_coeff);
         }
       }
       else
@@ -1118,39 +1209,56 @@ void LaneDetector::linesApproximation(std::vector<std::vector<cv::Point2f>> lane
         l_state = '+';
         c_state = '-';
         r_state = '-';
-        if (!polyfit(poly_nDegree_, createOffsetLine(left_coeff_, -1 * left_lane_width_), middle_coeff_))
-          middle_coeff_ = last_middle_coeff_;
-        if (!polyfit(poly_nDegree_, createOffsetLine(middle_coeff_, -1 * right_lane_width_), right_coeff_))
-          right_coeff_ = last_right_coeff_;
+        center_line_.setDegree(left_line_.getDegree());
+        right_line_.setDegree(left_line_.getDegree());
+        std::vector<float> tmp_coeff;
+        polyfit(createOffsetLine(left_line_.getCoeff(), left_line_.getDegree(), -1 * left_lane_width_),
+                                 center_line_.getDegree(), tmp_coeff);
+        center_line_.setCoeff(tmp_coeff);
+
+        polyfit(createOffsetLine(center_line_.getCoeff(), center_line_.getDegree(), -1 * right_lane_width_),
+                                 right_line_.getDegree(), tmp_coeff);
+        right_line_.setCoeff(tmp_coeff);
       }
     }
 
-    else if (!short_center_line_)
+    else if (!center_line_.isShort())
     {
-      if (!polyfit(poly_nDegree_, lanes_vector[center_line_index_], middle_coeff_))
-        middle_coeff_ = last_middle_coeff_;
-      if (left_line_index_ != -1 || right_line_index_ != -1)
+      if (init_imageCallback_)
+        center_line_.aprox();
+      else
+        center_line_.pfExecute();
+      
+      if (left_line_.isExist() || right_line_.isExist())
       {
-        if (left_line_index_ != -1 && right_line_index_ != -1)
+        if (left_line_.isExist() && right_line_.isExist())
         {
           // "l/  c+  r/"
           l_state = '/';
           c_state = '+';
           r_state = '/';
-          left_coeff_ = adjust(middle_coeff_, lanes_vector[left_line_index_], true);
-
-          right_coeff_ = adjust(middle_coeff_, lanes_vector[right_line_index_], false);
+          left_line_.pfReset();
+          right_line_.pfReset();
+          left_line_.setDegree(center_line_.getDegree());
+          right_line_.setDegree(center_line_.getDegree());
+          adjust(center_line_, left_line_, true);
+          adjust(center_line_, right_line_, false);
         }
-        else if (left_line_index_ != -1)
+        else if (left_line_.isExist())
         {
           // "l/  c+  r-"
           l_state = '/';
           c_state = '+';
           r_state = '-';
-          left_coeff_ = adjust(middle_coeff_, lanes_vector[left_line_index_], true);
-
-          if (!polyfit(poly_nDegree_, createOffsetLine(middle_coeff_, -1 * right_lane_width_), right_coeff_))
-            right_coeff_ = last_right_coeff_;
+          left_line_.pfReset();
+          left_line_.setDegree(center_line_.getDegree());
+          right_line_.setDegree(center_line_.getDegree());
+          adjust(center_line_, left_line_, true);
+          
+          std::vector<float> tmp_coeff;
+          polyfit(createOffsetLine(center_line_.getCoeff(), center_line_.getDegree(), -1 * right_lane_width_),
+                                   right_line_.getDegree(), tmp_coeff);
+          right_line_.setCoeff(tmp_coeff);
         }
         else
         {
@@ -1158,10 +1266,15 @@ void LaneDetector::linesApproximation(std::vector<std::vector<cv::Point2f>> lane
           l_state = '-';
           c_state = '+';
           r_state = '/';
-          right_coeff_ = adjust(middle_coeff_, lanes_vector[right_line_index_], false);
+          right_line_.pfReset();
+          left_line_.setDegree(center_line_.getDegree());
+          right_line_.setDegree(center_line_.getDegree());
+          adjust(center_line_, right_line_, false);
 
-          if (!polyfit(poly_nDegree_, createOffsetLine(middle_coeff_, left_lane_width_), left_coeff_))
-            left_coeff_ = last_left_coeff_;
+          std::vector<float> tmp_coeff;
+          polyfit(createOffsetLine(center_line_.getCoeff(), center_line_.getDegree(), left_lane_width_),
+                                   left_line_.getDegree(), tmp_coeff);
+          left_line_.setCoeff(tmp_coeff);
         }
       }
       else
@@ -1170,10 +1283,17 @@ void LaneDetector::linesApproximation(std::vector<std::vector<cv::Point2f>> lane
         l_state = '-';
         c_state = '+';
         r_state = '-';
-        if (!polyfit(poly_nDegree_, createOffsetLine(middle_coeff_, left_lane_width_), left_coeff_))
-          left_coeff_ = last_left_coeff_;
-        if (!polyfit(poly_nDegree_, createOffsetLine(middle_coeff_, -1 * right_lane_width_), right_coeff_))
-          right_coeff_ = last_right_coeff_;
+        left_line_.setDegree(center_line_.getDegree());
+        right_line_.setDegree(center_line_.getDegree());
+        
+        std::vector<float> tmp_coeff;
+        polyfit(createOffsetLine(center_line_.getCoeff(), center_line_.getDegree(), left_lane_width_),
+                                 left_line_.getDegree(), tmp_coeff);
+        left_line_.setCoeff(tmp_coeff);
+        
+        polyfit(createOffsetLine(center_line_.getCoeff(), center_line_.getDegree(), -1 * right_lane_width_),
+                                 right_line_.getDegree(), tmp_coeff);
+        right_line_.setCoeff(tmp_coeff);
       }
     }
     break;
@@ -1183,34 +1303,21 @@ void LaneDetector::linesApproximation(std::vector<std::vector<cv::Point2f>> lane
     l_state = '-';
     c_state = '-';
     r_state = '-';
-    if (!last_left_coeff_.empty())
-      left_coeff_ = last_left_coeff_;
-    if (!last_right_coeff_.empty())
-      right_coeff_ = last_right_coeff_;
-    if (!last_middle_coeff_.empty())
-      middle_coeff_ = last_middle_coeff_;
     break;
   }
-
-  last_left_coeff_.clear();
-  last_middle_coeff_.clear();
-  last_right_coeff_.clear();
-
-  last_left_coeff_ = left_coeff_;
-  last_middle_coeff_ = middle_coeff_;
-  last_right_coeff_ = right_coeff_;
 
   if (debug_mode_)
   {
     std::cout << "--------aprox state---------" << std::endl;
-    std::cout << "left_index   " << left_line_index_ << std::endl;
-    std::cout << "middle_index " << center_line_index_ << std::endl;
-    std::cout << "right_index  " << right_line_index_ << std::endl
+
+    std::cout << "left_length   " << left_line_.getLength() << std::endl;
+    std::cout << "center_length " << center_line_.getLength() << std::endl;
+    std::cout << "right_length  " << right_line_.getLength() << std::endl
               << std::endl;
 
-    std::cout << "left_length   " << left_length << std::endl;
-    std::cout << "middle_length " << middle_length << std::endl;
-    std::cout << "right_length  " << right_length << std::endl
+    std::cout << "left_degree   " << left_line_.getDegree() << std::endl;
+    std::cout << "center_degree " << center_line_.getDegree() << std::endl;
+    std::cout << "right_degree  " << right_line_.getDegree() << std::endl
               << std::endl;
 
     std::cout << "l" << l_state << "  c" << c_state << "  r" << r_state << std::endl;
@@ -1219,37 +1326,33 @@ void LaneDetector::linesApproximation(std::vector<std::vector<cv::Point2f>> lane
 
 void LaneDetector::lanesVectorVisualization(cv::Mat &visualization_frame)
 {
-  lanes_vector_.clear();
-  for (int i = 0; i < lanes_vector_converted_.size(); i++)
+  lines_vector_.clear();
+  for (int i = 0; i < lines_vector_converted_.size(); ++i)
   {
     std::vector<cv::Point2f> line2f;
     std::vector<cv::Point> line;
-    cv::transform(lanes_vector_converted_[i], line2f, world2topview_.rowRange(0, 2));
+    cv::transform(lines_vector_converted_[i], line2f, world2topview_.rowRange(0, 2));
     cv::Mat(line2f).copyTo(line);
-    lanes_vector_.push_back(line);
+    lines_vector_.push_back(line);
   }
 
   visualization_frame = cv::Mat::zeros(visualization_frame.size(), CV_8UC3);
-  if (lanes_vector_.empty())
+  if (lines_vector_.empty())
     return;
-  for (int i = 0; i < lanes_vector_.size(); i++)
+  for (int i = 0; i < lines_vector_.size(); ++i)
   {
-    for (int j = 0; j < lanes_vector_[i].size(); j++)
+    for (int j = 0; j < lines_vector_[i].size(); ++j)
     {
-      cv::circle(visualization_frame, lanes_vector_[i][j], 2, cv::Scalar(255, 0, 0), CV_FILLED, cv::LINE_AA);
+      cv::circle(visualization_frame, lines_vector_[i][j], 2, cv::Scalar(255, 0, 0), CV_FILLED, cv::LINE_AA);
     }
   }
 
-  int red_value = 0;
-  for (int i = 0; i < lanes_vector_.size(); i++)
+  for (int i = 0; i < lines_vector_.size(); ++i)
   {
-    if (i % 2 == 0)
-      red_value = 0;
-    else
-      red_value = 255;
-    for (int j = 1; j < lanes_vector_[i].size(); j++)
+    for (int j = 1; j < lines_vector_[i].size(); ++j)
     {
-      cv::line(visualization_frame, lanes_vector_[i][j], lanes_vector_[i][j - 1], cv::Scalar(red_value, 0, 255), 1);
+      cv::line(visualization_frame, lines_vector_[i][j], lines_vector_[i][j - 1],
+               cv::Scalar(color_set[i % 19][0], color_set[i % 19][1], color_set[i % 19][2]), 1);
     }
   }
 }
@@ -1268,327 +1371,201 @@ void LaneDetector::removeCar(cv::Mat &frame)
   cv::bitwise_and(frame, car_mask, frame);
 }
 
-void LaneDetector::addBottomPoint()
+void LaneDetector::adjust(RoadLine &good_road_line,
+                          RoadLine &short_road_line, bool left_offset)
 {
-  cv::Point2f temp;
-  if (left_line_index_ > -1)
-  {
-    if (lanes_vector_converted_[left_line_index_][0].x > ((TOPVIEW_MIN_X + TOPVIEW_MAX_X) / 4))
-    {
-      temp.x = TOPVIEW_MIN_X;
-      temp.y = getAproxY(last_left_coeff_, TOPVIEW_MIN_X);
-      lanes_vector_converted_[left_line_index_].insert(lanes_vector_converted_[left_line_index_].begin(), temp);
-    }
-  }
+  short_road_line.setDegree(good_road_line.getDegree());
 
-  if (right_line_index_ > -1)
-  {
-    if (lanes_vector_converted_[right_line_index_][0].x > ((TOPVIEW_MIN_X + TOPVIEW_MAX_X) / 4))
-    {
-      temp.x = TOPVIEW_MIN_X;
-      temp.y = getAproxY(last_right_coeff_, TOPVIEW_MIN_X);
-      lanes_vector_converted_[right_line_index_].insert(lanes_vector_converted_[right_line_index_].begin(), temp);
-    }
-  }
-
-  if (center_line_index_ > -1)
-  {
-    if (lanes_vector_converted_[center_line_index_][0].x > ((TOPVIEW_MIN_X + TOPVIEW_MAX_X) / 4))
-    {
-      temp.x = TOPVIEW_MIN_X;
-      temp.y = getAproxY(last_middle_coeff_, TOPVIEW_MIN_X);
-      lanes_vector_converted_[center_line_index_].insert(lanes_vector_converted_[center_line_index_].begin(), temp);
-    }
-  }
-}
-
-bool LaneDetector::polyfit(int nDegree, std::vector<cv::Point2f> line, std::vector<float> &coeff)
-{
-  if (line.size() < nDegree)
-    return false;
-
-  // more intuative this way
-  nDegree++;
-
-  size_t nCount = line.size();
-  boost::numeric::ublas::matrix<float> oXMatrix(nCount, nDegree);
-  boost::numeric::ublas::matrix<float> oYMatrix(nCount, 1);
-
-  // copy y matrix
-  for (size_t i = 0; i < nCount; i++)
-  {
-    oYMatrix(i, 0) = line[i].y;
-  }
-
-  // create the X matrix
-  for (size_t nRow = 0; nRow < nCount; nRow++)
-  {
-    float nVal = 1.0f;
-    for (int nCol = 0; nCol < nDegree; nCol++)
-    {
-      oXMatrix(nRow, nCol) = nVal;
-      nVal *= line[nRow].x;
-    }
-  }
-  // transpose X matrix
-  boost::numeric::ublas::matrix<float> oXtMatrix(trans(oXMatrix));
-  // multiply transposed X matrix with X matrix
-  boost::numeric::ublas::matrix<float> oXtXMatrix(prec_prod(oXtMatrix, oXMatrix));
-  // multiply transposed X matrix with Y matrix
-  boost::numeric::ublas::matrix<float> oXtYMatrix(prec_prod(oXtMatrix, oYMatrix));
-
-  // lu decomposition
-  boost::numeric::ublas::permutation_matrix<int> pert(oXtXMatrix.size1());
-  const std::size_t singular = lu_factorize(oXtXMatrix, pert);
-
-  // must be singular
-  if (singular != 0)
-    return false;
-
-  // backsubstitution
-  lu_substitute(oXtXMatrix, pert, oXtYMatrix);
-
-  // copy the result to coeff
-
-  std::vector<float> vec(oXtYMatrix.data().begin(), oXtYMatrix.data().end());
-  coeff = vec;
-  return true;
-}
-
-std::vector<float> LaneDetector::adjust(std::vector<float> good_poly_coeff,
-                                        std::vector<cv::Point2f> line, bool left_offset)
-{
-  std::vector<float> coeff;
-  float a, b, width;
-  if (line[1].y - line[line.size() - 1].y != 0)
-  {
-    a = -1 * (line[1].x - line[line.size() - 1].x) / (line[1].y - line[line.size() - 1].y);
-    b = line[line.size() / 2].y - a * line[line.size() / 2].x;
-
-    float delta = ((good_poly_coeff[1] - a) * (good_poly_coeff[1] - a))
-                  - 4 * (good_poly_coeff[2] * (good_poly_coeff[0] - b));
-    float x1 = (-1 * (good_poly_coeff[1] - a) - sqrtf(delta)) / (2 * good_poly_coeff[2]);
-    float x2 = (-1 * (good_poly_coeff[1] - a) + sqrtf(delta)) / (2 * good_poly_coeff[2]);
-    float y1 = a * x1 + b;
-    float y2 = a * x2 + b;
-    float dst1 = getDistance(cv::Point2f(x1, y1), line[line.size() / 2]);
-    float dst2 = getDistance(cv::Point2f(x2, y2), line[line.size() / 2]);
-
-    // check if nan
-    if (dst1 != dst1)
-      dst1 = right_lane_width_;
-    if (dst2 != dst2)
-      dst2 = right_lane_width_;
-
-    width = std::min(dst1, dst2);
-  }
-  else
-    width = std::abs(line[1].y - getAproxY(good_poly_coeff, line[1].x));
+  float step = 0.03;
+  float offset = 0.2;
+  int count = 0;
   if (!left_offset)
-    width *= -1;
-
-  if (polyfit(poly_nDegree_, createOffsetLine(good_poly_coeff, width), coeff))
-    return coeff;
+  {
+    step *= -1;
+    offset *= -1;
+  }
+  float last_cost = 9999999;  // init huge value
+  std::vector<float> tmp_coeff;
+  while (true || std::fabs(offset) > 1)
+  {
+    if (polyfit(createOffsetLine(good_road_line.getCoeff(), good_road_line.getDegree(), offset), short_road_line.getDegree(), tmp_coeff))
+    {
+      float current_cost = 0;
+      for (int i = 0; i <= short_road_line.pointsSize(); ++i)
+      {
+        float aprox = getPolyY(tmp_coeff, short_road_line.getPoints()[i].x);
+        current_cost += std::fabs(aprox - short_road_line.getPoints()[i].y);
+      }
+      if (current_cost > last_cost)
+        break;
+      else
+        last_cost = current_cost;
+    }
+    offset += step;
+    ++count;
+  }
+  offset -= step;
+  if (!polyfit(createOffsetLine(good_road_line.getCoeff(), good_road_line.getDegree(), offset), short_road_line.getDegree(), tmp_coeff))
+  {
+    std::vector<float> coeff = good_road_line.getCoeff();
+    if (left_offset)
+      coeff[0] += left_lane_width_;
+    else
+      coeff[0] -= right_lane_width_;
+    short_road_line.setCoeff(coeff);
+  }
   else
   {
-    coeff = good_poly_coeff;
-    good_poly_coeff[0] -= width;
+    short_road_line.setCoeff(tmp_coeff);
   }
+  
 }
 
 void LaneDetector::calcRoadWidth()
 {
-  std::vector<cv::Point2f> center_line_points;
-
+  debug_points_.clear();
   cv::Point2f p;
-  float increment = 0.05;
-  for (float x = TOPVIEW_MIN_X; x < TOPVIEW_MAX_X; x += increment)
+  cv::Point2f p_ahead;
+  p_ahead.x = 0.6;
+  p_ahead.y = getPolyY(center_line_.getCoeff(), p_ahead.x);
+  double deriative;
+  if (center_line_.getDegree() == 3)
+    deriative = 3 * center_line_.getCoeff()[3] * pow(p_ahead.x, 2)
+              + 2 * center_line_.getCoeff()[2] * p_ahead.x
+              + center_line_.getCoeff()[1];
+  else
+    deriative = 2 * center_line_.getCoeff()[2] * p_ahead.x
+              + center_line_.getCoeff()[1];
+
+  double a_param_orthg = -1 / deriative;
+  double b_param_orthg = p_ahead.y - a_param_orthg * p_ahead.x;
+
+  // right lane
+  float r_lane_width = 0;
+  if (right_line_.isExist())
   {
-    p.x = x;
-    p.y = getAproxY(middle_coeff_, x);
-    center_line_points.push_back(p);
-  }
+    p.y = p_ahead.y - 0.3;
+    float step = -0.01;
+    float last_dist = 9999999;  // init huge value
 
-  float widthSum_r = 0;
-  float widthSum_l = 0;
-  float a_param_orthg = 0;
-  float b_param_orthg = 0;
-  float delta_right = 0, delta_left = 0;
-  float x1_r = 0, x2_r = 0, y1_r = 0, y2_r = 0;
-  float dst1_r = 0, dst2_r = 0;
-  float x1_l = 0, x2_l = 0, y1_l = 0, y2_l = 0;
-  float dst1_l = 0, dst2_l = 0;
-
-  for (int i = 0; i < center_line_points.size(); i++)
-  {
-    a_param_orthg = -1 / (2 * last_middle_coeff_[2] * center_line_points[i].x + last_middle_coeff_[1]);
-    // if full horizontal there are some errors in delta
-    if (std::abs(a_param_orthg) > 200)
-      a_param_orthg = 200;
-    b_param_orthg = center_line_points[i].y - a_param_orthg * center_line_points[i].x;
-
-    delta_right = ((last_right_coeff_[1] - a_param_orthg) * (last_right_coeff_[1] - a_param_orthg))
-                  - 4 * (last_right_coeff_[2] * (last_right_coeff_[0] - b_param_orthg));
-    delta_left = ((last_left_coeff_[1] - a_param_orthg) * (last_left_coeff_[1] - a_param_orthg))
-                  - 4 * (last_left_coeff_[2] * (last_left_coeff_[0] - b_param_orthg));
-
-    x1_r = (-1 * (last_right_coeff_[1] - a_param_orthg) - sqrtf(delta_right)) / (2 * last_right_coeff_[2]);
-    x2_r = (-1 * (last_right_coeff_[1] - a_param_orthg) + sqrtf(delta_right)) / (2 * last_right_coeff_[2]);
-    y1_r = a_param_orthg * x1_r + b_param_orthg;
-    y2_r = a_param_orthg * x2_r + b_param_orthg;
-
-    x1_l = (-1 * (last_left_coeff_[1] - a_param_orthg) - sqrtf(delta_left)) / (2 * last_left_coeff_[2]);
-    x2_l = (-1 * (last_left_coeff_[1] - a_param_orthg) + sqrtf(delta_left)) / (2 * last_left_coeff_[2]);
-    y1_l = a_param_orthg * x1_l + b_param_orthg;
-    y2_l = a_param_orthg * x2_l + b_param_orthg;
-
-    dst1_r = sqrtf(((x1_r - center_line_points[i].x) * (x1_r - center_line_points[i].x))
-            + ((y1_r - center_line_points[i].y) * (y1_r - center_line_points[i].y)));
-    dst2_r = sqrtf(((x2_r - center_line_points[i].x) * (x2_r - center_line_points[i].x))
-            + ((y2_r - center_line_points[i].y) * (y2_r - center_line_points[i].y)));
-
-    dst1_l = sqrtf(((x1_l - center_line_points[i].x) * (x1_l - center_line_points[i].x))
-            + ((y1_l - center_line_points[i].y) * (y1_l - center_line_points[i].y)));
-    dst2_l = sqrtf(((x2_l - center_line_points[i].x) * (x2_l - center_line_points[i].x))
-            + ((y2_l - center_line_points[i].y) * (y2_l - center_line_points[i].y)));
-
-    if (dst1_r > dst2_r)
-      widthSum_r += dst2_r;
-    else
-      widthSum_r += dst1_r;
-
-    if (dst1_l > dst2_l)
-      widthSum_l += dst2_l;
-    else
-      widthSum_l += dst1_l;
-  }
-
-  if (widthSum_r / center_line_points.size() < 0.47 && widthSum_r / center_line_points.size() > 0.35)
-    right_lane_width_ = widthSum_r / center_line_points.size();
-
-  if (widthSum_l / center_line_points.size() < 0.47 && widthSum_l / center_line_points.size() > 0.35)
-    left_lane_width_ = widthSum_l / center_line_points.size();
-}
-
-void LaneDetector::generatePoints()
-{
-  if (left_line_index_ != -1)
-  {
-    if (lanes_vector_converted_[left_line_index_].size()
-        / cv::arcLength(lanes_vector_converted_[left_line_index_], false) < points_density_ * 2)
+    while (true)
     {
-      for (int i = 0; i < lanes_vector_converted_[left_line_index_].size() - 1; i++)
+      p.x = (p.y - b_param_orthg) / a_param_orthg;
+      cv::Point2f p_aprox;
+      p_aprox.x = p.x;
+      p_aprox.y = getPolyY(right_line_.getCoeff(), p_aprox.x);
+      r_lane_width = getDistance(p, p_aprox);
+      if (r_lane_width - last_dist > 0)
       {
-        float distance = getDistance(lanes_vector_converted_[left_line_index_][i],
-                                     lanes_vector_converted_[left_line_index_][i + 1]);
-        if (distance > 1 / points_density_)
+        if (debug_mode_)
         {
-          int add = distance * points_density_;
-          cv::Point2f p;
-          float x1 = lanes_vector_converted_[left_line_index_][i].x;
-          float y1 = lanes_vector_converted_[left_line_index_][i].y;
-          float x_dif = (lanes_vector_converted_[left_line_index_][i + 1].x
-                        - lanes_vector_converted_[left_line_index_][i].x) / (add + 1);
-          float y_dif = (lanes_vector_converted_[left_line_index_][i + 1].y
-                        - lanes_vector_converted_[left_line_index_][i].y) / (add + 1);
-          for (int j = 0; j < add; j++)
-          {
-            p.x = x1 + x_dif * (j + 1);
-            p.y = y1 + y_dif * (j + 1);
-            lanes_vector_converted_[left_line_index_].insert(lanes_vector_converted_[left_line_index_].begin()
-                                                            + i + 1, p);
-            i++;
-          }
+          debug_points_.clear();
+          debug_points_.push_back(p_ahead);
+          debug_points_.push_back(p_aprox);
         }
+        r_lane_width = getDistance(p_ahead, p_aprox);
+        break;
       }
+      else
+      {
+        if (r_lane_width > 0.6)
+        {
+          r_lane_width = 99;
+          break;
+        }
+        last_dist = r_lane_width;
+        p.y += step;
+      }
+    }
+    if (r_lane_width > 0.3 && r_lane_width < 0.5)
+      right_lane_width_ = r_lane_width;
+    else if (r_lane_width > 0.6)
+    {
+      ROS_INFO("Right line too far. Delete index");
+      right_lane_width_ = 0.4;
+      right_line_.setExist(false);
     }
   }
 
-  if (center_line_index_ != -1)
+  // left lane
+  float l_lane_width = 0;
+  if (left_line_.isExist())
   {
-    if (lanes_vector_converted_[center_line_index_].size()
-        / cv::arcLength(lanes_vector_converted_[center_line_index_], false) < points_density_ * 2)
+    p.y = p_ahead.y + 0.3;
+    float step = 0.01;
+    float last_dist = 9999999;  // init huge value
+
+    while (true)
     {
-      for (int i = 0; i < lanes_vector_converted_[center_line_index_].size() - 1; i++)
+      p.x = (p.y - b_param_orthg) / a_param_orthg;
+      cv::Point2f p_aprox;
+      p_aprox.x = p.x;
+      p_aprox.y = getPolyY(left_line_.getCoeff(), p_aprox.x);
+      l_lane_width = getDistance(p, p_aprox);
+      if (l_lane_width - last_dist > 0)
       {
-        float distance = getDistance(lanes_vector_converted_[center_line_index_][i],
-                                     lanes_vector_converted_[center_line_index_][i + 1]);
-        if (distance > 1 / points_density_)
+        if (debug_mode_)
         {
-          int add = distance * points_density_;
-          cv::Point2f p;
-          float x1 = lanes_vector_converted_[center_line_index_][i].x;
-          float y1 = lanes_vector_converted_[center_line_index_][i].y;
-          float x_dif = (lanes_vector_converted_[center_line_index_][i + 1].x
-                        - lanes_vector_converted_[center_line_index_][i].x) / (add + 1);
-          float y_dif = (lanes_vector_converted_[center_line_index_][i + 1].y
-                        - lanes_vector_converted_[center_line_index_][i].y) / (add + 1);
-          for (int j = 0; j < add; j++)
-          {
-            p.x = x1 + x_dif * (j + 1);
-            p.y = y1 + y_dif * (j + 1);
-            lanes_vector_converted_[center_line_index_].insert(lanes_vector_converted_[center_line_index_].begin()
-                                                              + i + 1, p);
-            i++;
-          }
+          debug_points_.push_back(p_ahead);
+          debug_points_.push_back(p_aprox);
         }
+        l_lane_width = getDistance(p_ahead, p_aprox);
+        break;
       }
+      else
+      {
+        if (l_lane_width > 0.6)
+        {
+          l_lane_width = 99;
+          break;
+        }
+        last_dist = l_lane_width;
+        p.y += step;
+      }
+    }
+    if (l_lane_width > 0.3 && l_lane_width < 0.5)
+      left_lane_width_ = l_lane_width;
+    else if (l_lane_width > 0.6)
+    {
+      ROS_INFO("Left line too far. Delete index");
+      left_lane_width_ = 0.4;
+      left_line_.setExist(false);
     }
   }
 
-  if (right_line_index_ != -1)
+  if (debug_mode_)
   {
-    if (lanes_vector_converted_[right_line_index_].size()
-        / cv::arcLength(lanes_vector_converted_[right_line_index_], false) < points_density_ * 2)
-    {
-      for (int i = 0; i < lanes_vector_converted_[right_line_index_].size() - 1; i++)
-      {
-        float distance = getDistance(lanes_vector_converted_[right_line_index_][i],
-                                     lanes_vector_converted_[right_line_index_][i + 1]);
-        if (distance > 1 / points_density_)
-        {
-          int add = distance * points_density_;
-          cv::Point2f p;
-          float x1 = lanes_vector_converted_[right_line_index_][i].x;
-          float y1 = lanes_vector_converted_[right_line_index_][i].y;
-          float x_dif = (lanes_vector_converted_[right_line_index_][i + 1].x
-                        - lanes_vector_converted_[right_line_index_][i].x) / (add + 1);
-          float y_dif = (lanes_vector_converted_[right_line_index_][i + 1].y
-                        - lanes_vector_converted_[right_line_index_][i].y) / (add + 1);
-          for (int j = 0; j < add; j++)
-          {
-            p.x = x1 + x_dif * (j + 1);
-            p.y = y1 + y_dif * (j + 1);
-            lanes_vector_converted_[right_line_index_].insert(lanes_vector_converted_[right_line_index_].begin()
-                                                              + i + 1, p);
-            i++;
-          }
-        }
-      }
-    }
+    std::cout << std::endl;
+    std::cout << "right width now: " << r_lane_width << std::endl;
+    std::cout << "right_lane_width: " << right_lane_width_ << std::endl;
+    std::cout << "left width now: " << l_lane_width << std::endl;
+    std::cout << "left_lane_width: " << left_lane_width_ << std::endl;
   }
 }
 
-void LaneDetector::removeHorizontalLines()
-{
-  for (int i = 0; i < lanes_vector_converted_.size(); i++)
-  {
-    float dx = lanes_vector_converted_[i][lanes_vector_converted_[i].size() - 1].x - lanes_vector_converted_[i][0].x;
-    if (dx < 0.1)
-      lanes_vector_converted_.erase(lanes_vector_converted_.begin() + i);
-  }
-}
-
-std::vector<cv::Point2f> LaneDetector::createOffsetLine(std::vector<float> coeff, float offset)
+std::vector<cv::Point2f> LaneDetector::createOffsetLine(const std::vector<float> &coeff, const int &degree, float offset)
 {
   std::vector<cv::Point2f> new_line;
   cv::Point2f p;
-  for (float i = TOPVIEW_MIN_X - 0.1; i < TOPVIEW_MAX_X + 0.1; i += 0.05)
+  for (float i = TOPVIEW_MIN_X - 0.2; i < TOPVIEW_MAX_X + 0.2; i += 0.05)
   {
-    float deriative = 2 * coeff[2] * i + coeff[1];
+    float deriative;
+    switch (degree)
+    {
+    case 2:
+      deriative = 2 * coeff[2] * i + coeff[1];
+      break;
+    case 3:
+      deriative = 3 * coeff[3] * pow(i, 2) + 2 * coeff[2] * i + coeff[1];
+      break;
+    case 1:
+      deriative = coeff[1];
+      break;
+    }
+
     float angle = atan(deriative);
     p.x = i - offset * sin(angle);
-    p.y = getAproxY(coeff, i) + offset * cos(angle);
+    p.y = getPolyY(coeff, i) + offset * cos(angle);
     new_line.push_back(p);
   }
   return new_line;
@@ -1596,8 +1573,8 @@ std::vector<cv::Point2f> LaneDetector::createOffsetLine(std::vector<float> coeff
 
 void LaneDetector::detectStartAndIntersectionLine()
 {
-  float detect_slope = 2.2;
-  float detect_lenght = 0.2;
+  float detect_slope = 1.0;
+  float detect_lenght = 0.15;
   // morphology variables
   int morph_size = 7;
   int morph_elem = 0;
@@ -1623,7 +1600,7 @@ void LaneDetector::detectStartAndIntersectionLine()
   detectLines(right_lane_frame_, right_lines);
 
   // check right lane
-  for (int i = 0; i < right_lines.size(); i++)
+  for (int i = 0; i < right_lines.size(); ++i)
   {
     cv::RotatedRect rect = cv::minAreaRect(right_lines[i]);
 
@@ -1640,6 +1617,7 @@ void LaneDetector::detectStartAndIntersectionLine()
     float d1, d2;
     d1 = getDistance(rect_vector[0], rect_vector[1]);
     d2 = getDistance(rect_vector[1], rect_vector[2]);
+
     if (d1 < detect_lenght && d2 < detect_lenght)
       continue;
     float a = 0;
@@ -1666,7 +1644,7 @@ void LaneDetector::detectStartAndIntersectionLine()
   }
 
   // check left lane
-  for (int i = 0; i < left_lines.size(); i++)
+  for (int i = 0; i < left_lines.size(); ++i)
   {
     cv::RotatedRect rect = cv::minAreaRect(left_lines[i]);
 
@@ -1683,6 +1661,7 @@ void LaneDetector::detectStartAndIntersectionLine()
     float d1, d2;
     d1 = getDistance(rect_vector[0], rect_vector[1]);
     d2 = getDistance(rect_vector[1], rect_vector[2]);
+
     if (d1 < detect_lenght && d2 < detect_lenght)
       continue;
     float a = 0;
@@ -1708,11 +1687,60 @@ void LaneDetector::detectStartAndIntersectionLine()
     }
   }
 
-  if (std::abs(right_distance - left_distance) < 0.09 && left_distance > 0)
+  if(debug_mode_)
+	{
+		cv::Mat rlf, llf;
+
+		rlf = cv::Mat::zeros(homography_frame_.size(), CV_8UC3);
+		llf = cv::Mat::zeros(homography_frame_.size(), CV_8UC3);
+
+		cv::drawContours(llf, left_lines, -1, cv::Scalar(255,0,0), 2);
+		cv::drawContours(rlf, right_lines, -1, cv::Scalar(255,0,0), 2);
+
+		for(int i = 0; i < left_lines.size(); i++)
+		{
+			cv::RotatedRect rect = cv::minAreaRect(left_lines[i]);
+			cv::Point2f vertices2f[4];
+    		rect.points(vertices2f);
+
+    		// Convert them so we can use them in a fillConvexPoly
+    		cv::Point vertices[4];    
+    		for(int i = 0; i < 4; ++i){
+        		vertices[i] = vertices2f[i];
+    		}
+			cv::fillConvexPoly(llf, vertices,4, cv::Scalar(0,0,255));
+		}
+		for(int i = 0; i < right_lines.size(); i++)
+		{
+			cv::RotatedRect rect = cv::minAreaRect(right_lines[i]);
+
+			cv::Point2f vertices2f[4];
+    		rect.points(vertices2f);
+			//ROS_INFO("1: %.4f       2: %.4f    3: %.4f   4: %.4f", vertices2f[0].x, vertices2f[1].x, vertices2f[2].x, vertices2f[3].x);
+
+    		// Convert them so we can use them in a fillConvexPoly
+    		cv::Point vertices[4];    
+    		for(int i = 0; i < 4; ++i){
+        		vertices[i] = vertices2f[i];
+			}
+			cv::fillConvexPoly(rlf, vertices,4, cv::Scalar(0,0,255));
+		}
+
+    cv::namedWindow("LANE_DEBUG", cv::WINDOW_NORMAL);
+    cv::Mat m_raw, m_filtered, m_all;
+    cv::hconcat(left_lane_frame_, right_lane_frame_, m_raw);
+    cv::cvtColor(m_raw, m_raw, CV_GRAY2BGR);
+    cv::hconcat(llf, rlf, m_filtered);
+    cv::vconcat(m_raw, m_filtered, m_all);
+    cv::imshow("LANE_DEBUG", m_all);
+	}
+
+  if (std::abs(right_distance - left_distance) < 0.25 && left_distance > 0)
   {
     std_msgs::Float32 msg;
     msg.data = right_distance;
     starting_line_pub_.publish(msg);
+    starting_line_timeout_ = 50;
   }
   else if (right_distance > 0)
   {
@@ -1720,4 +1748,94 @@ void LaneDetector::detectStartAndIntersectionLine()
     msg.data = right_distance;
     intersection_pub_.publish(msg);
   }
+}
+
+void LaneDetector::drawParticles(int num)
+{
+  if(num > 19)
+    num = 19;
+  cv::Mat pf_mat;
+  pf_mat = cv::Mat::zeros(homography_frame_.size(), CV_8UC3);
+
+  std::vector<float> pf_coeff;
+  std::vector<cv::Point2f> pf_cp;
+  std::vector<cv::Point2f> pf_line;
+  cv::Point2f p;
+  for (int i = 0; i < num; ++i)
+  {
+    if (center_line_.isPFInitialized())
+    {
+      pf_line.clear();
+      pf_cp.clear();
+      pf_cp = center_line_.getParticleControlPoints(i);
+      pf_coeff = center_line_.getParticleCoeff(i);
+      for (float x = TOPVIEW_MIN_X; x < TOPVIEW_MAX_X; x += 0.03)
+      {
+        p.x = x;
+        p.y = getPolyY(pf_coeff, x);
+        pf_line.push_back(p);
+      }
+      cv::transform(pf_line, pf_line, world2topview_.rowRange(0, 2));
+      cv::transform(pf_cp, pf_cp, world2topview_.rowRange(0, 2));
+      for (int j = 0; j < pf_line.size(); ++j)
+      {
+        cv::circle(pf_mat, pf_line[j], 1, cv::Scalar(color_set[i][0], color_set[i][1], color_set[i][2]), CV_FILLED);
+      }
+      for (int j = 0; j < pf_cp.size(); ++j)
+      {
+        cv::circle(pf_mat, pf_cp[j], 3, cv::Scalar(color_set[i][0], color_set[i][1], color_set[i][2]), CV_FILLED);
+      }
+    }
+
+    if (left_line_.isPFInitialized())
+    {
+      pf_line.clear();
+      pf_cp.clear();
+      pf_cp = left_line_.getParticleControlPoints(i);
+      pf_coeff = left_line_.getParticleCoeff(i);
+      for (float x = TOPVIEW_MIN_X; x < TOPVIEW_MAX_X; x += 0.03)
+      {
+        p.x = x;
+        p.y = getPolyY(pf_coeff, x);
+        pf_line.push_back(p);
+      }
+      cv::transform(pf_line, pf_line, world2topview_.rowRange(0, 2));
+      cv::transform(pf_cp, pf_cp, world2topview_.rowRange(0, 2));
+      for (int j = 0; j < pf_line.size(); ++j)
+      {
+        cv::circle(pf_mat, pf_line[j], 1, cv::Scalar(color_set[i][0], color_set[i][1], color_set[i][2]), CV_FILLED);
+      }
+      for (int j = 0; j < pf_cp.size(); ++j)
+      {
+        cv::circle(pf_mat, pf_cp[j], 3, cv::Scalar(color_set[i][0], color_set[i][1], color_set[i][2]), CV_FILLED);
+      }
+    }
+
+    if (right_line_.isPFInitialized())
+    {
+      pf_line.clear();
+      pf_cp.clear();
+      pf_cp = right_line_.getParticleControlPoints(i);
+      pf_coeff = right_line_.getParticleCoeff(i);
+      for (float x = TOPVIEW_MIN_X; x < TOPVIEW_MAX_X; x += 0.03)
+      {
+        p.x = x;
+        p.y = getPolyY(pf_coeff, x);
+        pf_line.push_back(p);
+      }
+      cv::transform(pf_line, pf_line, world2topview_.rowRange(0, 2));
+      cv::transform(pf_cp, pf_cp, world2topview_.rowRange(0, 2));
+      for (int j = 0; j < pf_line.size(); ++j)
+      {
+        cv::circle(pf_mat, pf_line[j], 1, cv::Scalar(color_set[i][0], color_set[i][1], color_set[i][2]), CV_FILLED);
+      }
+      for (int j = 0; j < pf_cp.size(); ++j)
+      {
+        cv::circle(pf_mat, pf_cp[j], 3, cv::Scalar(color_set[i][0], color_set[i][1], color_set[i][2]), CV_FILLED);
+      }
+    }
+  }
+
+  cv::namedWindow("Particle Filter", cv::WINDOW_NORMAL);
+  cv::imshow("Particle Filter", pf_mat);
 }

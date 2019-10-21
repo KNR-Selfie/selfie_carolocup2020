@@ -70,7 +70,8 @@ add_message_files(
    search.action
    driving.action
    starting.action
-
+   intersection.action
+   park.action
  )
 
 ## Generate added messages and services with any dependencies listed here

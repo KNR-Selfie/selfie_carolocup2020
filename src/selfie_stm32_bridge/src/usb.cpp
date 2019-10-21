@@ -135,3 +135,22 @@ void USB_STM::fill_publishers(Pub_messages &pub_data)
 
 
 }
+USB_STM::~USB_STM()
+{
+    send_frame = (UsbSendFrame_s *)send_buffer;
+    send_frame->startbyte = frame_startbyte;
+    send_frame->code = frame_code;
+    send_frame->length = USB_SEND_SIZE - 4;
+
+    send_frame->timestamp_ms = 0;
+    send_frame->steering_angle = 0;
+    send_frame->steering_angle_velocity = 0;
+    send_frame->speed = 0;
+    send_frame->acceleration = 0;
+    send_frame->jerk = 0;
+    send_frame->left_indicator = 0;
+    send_frame->right_indicator = 0;
+    send_frame->endbyte = frame_endbyte;
+
+    write(fd, &send_buffer, USB_SEND_SIZE);
+}

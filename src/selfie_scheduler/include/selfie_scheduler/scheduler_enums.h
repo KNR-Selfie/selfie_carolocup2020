@@ -1,11 +1,18 @@
 #ifndef SCHEDULER_ENUMS_H
 #define SCHEDULER_ENUMS_H
-typedef enum program_states
+
+//#include <map>
+typedef enum program_state
 {
+    //generic states
+    SELFIE_IDLE = 0,
+    SELFIE_READY, // car ready, waiting for button press
+    SELFIE_NO_ACTION,
+
     //starting_procedure
-    SELFIE_READY = 0, // car ready, waiting for button press
-    START_SIGN, // button pressed
-    START_DRIVE, // car started to drive
+    BUTTON_FREE_DRIVE_PRESSED, // button starting Free Drive and Parking
+    BUTTON_OBSTACLE_DRIVE_PRESSED, // button starting Obstacle Evasion Course
+    START_DRIVE, // car started to move
     END_DRIVE, // car drove given distance
 
     //track ride
@@ -18,13 +25,47 @@ typedef enum program_states
 
     //parking
     START_SEARCHING_PLACE, //start to search parking place
-    FIND_PLACE, // parking place found (don't know if suitable)
+    FOUND_PLACE_MEASURING, // parking place found, now car is stopped and measures it again
     FIND_PROPER_PLACE, // suitable parking place found
     START_PARK, // parking procedure started
     IN_PLACE, // car parked
     OUT_PLACE, // car drives out of parking place
     READY_TO_DRIVE, // car ready to further ride
 
+    //intersection
+    STOPPED_ON_INTERSECTION,  //car stopped before intersection
+    FOUND_OBSTACLES, //Found obstacles on priority road
+    APPROACHING_TO_INTERSECTION_WITH_OBSTACLES, //Found obstacles on priority road, and approaching to it in meantime
+    WAITING_ON_INTERSECTION, //car stops on intersection even if there aren't any obstacles
+    ROAD_CLEAR  //none obstacles on priority road
+
+
 }feedback_variable;
+
+//std::map<program_state,std::string> program_state_string
+//{
+//    {SELFIE_IDLE,"SELFIE_IDLE"},
+//    {SELFIE_READY,"SELFIE_READY"}
+
+//};
+typedef enum action
+{
+    IDLE = 0,
+    STARTING,
+    DRIVING,
+    PARKING_SEARCH,
+    PARK,
+    ERROR,
+
+}action_variable;
+
+typedef enum rc_state
+{
+    RC_MANUAL = 0,
+    RC_HALF_AUTONOMOUS,
+    RC_AUTONOMOUS,
+
+}rc_state_variable;
+
 
 #endif // SCHEDULER_ENUMS_H
