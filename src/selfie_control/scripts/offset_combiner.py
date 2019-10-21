@@ -32,6 +32,9 @@ if __name__ == '__main__':
 
     srv = Server(HeadingCoeffConfig, config_callback)
 
+    L = rospy.get_param('~L', 0.3)
+    print("L set to: " + str(L))
+
     position_offset_sub = rospy.Subscriber('position_offset',
                                             Float64,
                                             position_offset_callback,

@@ -1,5 +1,5 @@
 <launch>
-  <node name="pylon_camera_node" type="pylon_camera_node" pkg="pylon_camera" output="screen">
+  <node name="pylon_camera_node" type="pylon_camera_node" pkg="pylon_camera" respawn="true" output="screen">
       <param name="camera_info_url" value="file://$(find selfie_camera)/config/basler_distortion.yaml" />
       <param name="image_encoding" value="mono8" />
       <param name="frame_rate" value="150" />
