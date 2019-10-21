@@ -7,6 +7,9 @@ Server uses [search.action](https://github.com/KNR-Selfie/selfie_carolocup2020/w
 rosrun selfie_park detect_parking_spot
 ```
 ## Topics
+###Action name
+- `search`
+
 ### Subscribed topics
 - `/obstacles` ([selfie_msgs/PolygonArray](https://github.com/KNR-Selfie/selfie_carolocup2020/wiki/Messages-and-actions))
   - detected obstacles
@@ -22,11 +25,16 @@ rosrun selfie_park detect_parking_spot
 ###
  - `point_min_x`,`point_min_y`,`point_max_x`,`point_max_x` (*float*)
    - describing area of interest
- - `visualization` (*bool*, default: false)
+ - `visualization_in_searching` (*bool*, default: true)
    - Whether or not visualization topics are active
  - `default_speed_in_parking_zone` (*float*, default: 0.8)
  - `speed_when_found_place` (*float*, default: 0.3)
    - speed when found possible free place
+ - `box_angle_deg` (*float*, default: 55)
+   - describes maximum angle (in degrees) between car and found place (used mainly in filtering out wrong places)
+ - `max_distance_to_free_place` (*float*, default: 0.8)
+   - describes maximum angle between car and found place (used mainly in filtering out wrong places)
+
 
 # Park Action
 ## Usage
