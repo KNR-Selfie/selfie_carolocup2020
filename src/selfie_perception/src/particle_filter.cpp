@@ -86,13 +86,13 @@ void ParticleFilter::prediction(double std)
 
       particles_[i].points[j].y += dist_y(gen);
 
-      if (particles_[i].points[j].x < TOPVIEW_MAX_X - 0.2)
+      if (particles_[i].points[j].x < TOPVIEW_MAX_X - 0.15)
       {
         particles_[i].poly_degree = 2;
       }
       else
       {
-        particles_[i].poly_degree = 2;
+        particles_[i].poly_degree = 3;
       }
       
     }
@@ -114,9 +114,8 @@ void ParticleFilter::updateWeights(std::vector<cv::Point2f> &p_obs)
     {
       distance_sum += std::fabs(p_obs[j].y - getPolyY(particles_[i].coeff, p_obs[j].x));
     }
-    //std::cout << distance_sum << std::endl;
     particles_[i].weight = 1 / (1 + exp(9 * distance_sum));
-    weights_sum += distance_sum;
+    weights_sum += particles_[i].weight;
   }
 
   for (int i = 0; i < num_particles_; ++i)
@@ -127,8 +126,9 @@ void ParticleFilter::updateWeights(std::vector<cv::Point2f> &p_obs)
 }
 
 void ParticleFilter::resample()
-{
-  std::default_random_engine gen;
+{/*
+  std::random_device r;
+  std::default_random_engine gen(r());
   std::discrete_distribution<int> dist(weights_.begin(), weights_.end());
   std::vector<Particle> resampled_particles;
 
@@ -137,6 +137,30 @@ void ParticleFilter::resample()
     resampled_particles.push_back(particles_[dist(gen)]);
   }
   particles_ = resampled_particles;
+*/
+  ////
+  
+  std::vector<Particle> resampled_particles;
+  std::random_device rd;
+  std::default_random_engine gen(rd());
+  float invM = 1 / float(num_particles_);
+  std::uniform_real_distribution<> dis(0, invM);
+  float c = weights_[0];
+  float r = dis(gen);
+  int i = 0;
+  for (int m = 0; m < num_particles_; ++m)
+  {
+    float U = r + m * invM;
+    while (U > c)
+    {
+      ++i;
+      c += weights_[i];
+    }
+    resampled_particles.push_back(particles_[i]);
+  }
+  particles_ = resampled_particles;
+
+  std::cout << "size: "<< particles_.size() << std::endl;
 
   int max_index = 0;
   float max = 0;
