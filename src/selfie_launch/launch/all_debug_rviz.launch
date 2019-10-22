@@ -1,9 +1,12 @@
 <launch>
   <!-- COMMON PARAMS -->
   <arg name="lookahead" default="0.5" />
-  <arg name="max_curvature" default="1.0" />
+  <arg name="max_curvature" default="1.8" />
   <arg name="min_speed" default="0.5" />
-  <arg name="max_speed" default="2.5" />
+  <arg name="max_speed" default="3.0" />
+  <arg name="max_acceleration" default="1.0" />
+  <arg name="max_deceleration" default="1.5" />
+  <arg name="average_window_size" default="10" />
 
   <arg name="Kp" default="0.9" />
   <arg name="Kd" default="0.01" />
@@ -60,6 +63,10 @@
   <node name="extract_road_features" type="extract_road_features" pkg="selfie_path_planner" respawn="true" output="screen">
     <param name="lookahead" value="$(arg lookahead)" />
     <param name="min_speed" value="$(arg min_speed)" />
+    <param name="max_curvature" value="$(arg max_curvature)" />
+    <param name="max_acceleration" value="$(arg max_acceleration)" />
+    <param name="max_deceleration" value="$(arg max_deceleration)" />
+    <param name="average_window_size" value="$(arg average_window_size)" />
   </node>
 
   <node pkg="selfie_perception" type="detect_obstacles" name="selfie_obstacle_detector" respawn="true" output="screen">
