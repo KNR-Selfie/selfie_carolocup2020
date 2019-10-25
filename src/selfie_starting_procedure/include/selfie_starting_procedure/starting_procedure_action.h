@@ -15,18 +15,22 @@ class StartingProcedureAction
 protected:
 
   ros::NodeHandle nh_;
+  ros::NodeHandle pnh_;
   actionlib::SimpleActionServer<selfie_msgs::startingAction> as_; // NodeHandle instance must be created before this line. Otherwise strange error occurs.
   std::string action_name_;
 
-  // create messages that are used to published feedback/result
+  //params
+  float starting_speed_;
+
+  //create messages that are used to published feedback/result
   selfie_msgs::startingFeedback feedback_;
   selfie_msgs::startingResult result_;
 
-  // subscribers
+  //subscribers
   ros::Subscriber button_sub_;
   ros::Subscriber distance_sub_;
 
-  // publishers
+  //publishers
   ros::Publisher drive_pub_;
 
   int button_status_ = 0;
@@ -42,6 +46,7 @@ public:
 
   void driveBoxOut(float speed);
   void executeCB(const selfie_msgs::startingGoalConstPtr &goal);
+  void preemptCB();
   void buttonCB(const std_msgs::BoolConstPtr &msg);
   void distanceCB(const std_msgs::Float32ConstPtr &msg);
 };

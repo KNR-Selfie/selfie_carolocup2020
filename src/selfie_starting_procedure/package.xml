@@ -53,7 +53,6 @@
   <build_depend>roscpp</build_depend>
   <build_depend>std_msgs</build_depend>
   <build_depend>selfie_scheduler</build_depend>
-  <build_depend>roslint</build_depend>
   <build_export_depend>actionlib</build_export_depend>
   <build_export_depend>roscpp</build_export_depend>
   <build_export_depend>std_msgs</build_export_depend>
