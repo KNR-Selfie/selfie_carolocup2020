@@ -8,13 +8,9 @@
 class SearchClient : public ClientInterface
 {
 protected:
-    ros::NodeHandle nh_;
     actionlib::SimpleActionClient<selfie_msgs::searchAction> ac_;
     selfie_msgs::searchGoal goal_;
     geometry_msgs::Polygon result_;
-    program_state action_state_;
-    int result_flag_;
-    action next_action_;
 
 public:
     SearchClient(std::string name);
@@ -25,14 +21,11 @@ public:
     void cancelAction();
     bool waitForServer(float timeout);
 
-    program_state getActionState();
     void doneCb(const actionlib::SimpleClientGoalState& state,
                     const selfie_msgs::searchResultConstPtr& result);
     void activeCb();
     void feedbackCb(const selfie_msgs::searchFeedbackConstPtr& feedback);
     void getActionResult(boost::any &result);
-    int isActionFinished();
-    action getNextAction();
 };
 
 #endif // SEARCH_ACTION_CLIENT_H

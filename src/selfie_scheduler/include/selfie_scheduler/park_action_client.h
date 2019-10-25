@@ -8,13 +8,9 @@
 class ParkClient : public ClientInterface
 {
 protected:
-    ros::NodeHandle nh_;
     actionlib::SimpleActionClient<selfie_msgs::parkAction> ac_;
     selfie_msgs::parkGoal goal_;
     bool result_;
-    program_state action_state_;
-    int result_flag_;
-    action next_action_;
 
 public:
     ParkClient(std::string name);
@@ -25,17 +21,12 @@ public:
     void cancelAction();
     bool waitForServer(float timeout);
 
-    program_state getActionState();
     void doneCb(const actionlib::SimpleClientGoalState& state,
                     const selfie_msgs::parkResultConstPtr& result);
     void activeCb();
     void feedbackCb(const selfie_msgs::parkFeedbackConstPtr& feedback);
     bool getResult();
-    int isActionFinished();
     void getActionResult(boost::any &result);
-    action getNextAction();
-
-
 };
 
 

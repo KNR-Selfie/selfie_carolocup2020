@@ -2,6 +2,8 @@
 #define SCHEDULER_ENUMS_H
 
 //#include <map>
+#include <actionlib/client/simple_action_client.h>
+typedef actionlib::SimpleClientGoalState::StateEnum State;
 typedef enum program_state
 {
     //generic states
@@ -67,5 +69,11 @@ typedef enum rc_state
 
 }rc_state_variable;
 
+typedef enum client_goal_state
+{
+    EMPTY,
+    ABORTED,
+    SUCCESS,
 
+}client_goal_state_variable;
 #endif // SCHEDULER_ENUMS_H

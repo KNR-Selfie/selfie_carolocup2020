@@ -57,7 +57,6 @@ void Scheduler::init()
             stopCmdCreator();
             break;
     }
-
 }
 void Scheduler::startAction(action action_to_set)
 {
@@ -67,18 +66,18 @@ void Scheduler::startAction(action action_to_set)
 }
 int Scheduler::checkIfActionFinished()
 {
-    return current_client_ptr_->isActionFinished();
+    return current_client_ptr_->getClientGoalState();
 }
 void Scheduler::loop()
 {
-    if (checkIfActionFinished() == 1)
+    if (checkIfActionFinished() == SUCCESS)
     {
         current_client_ptr_->getActionResult(action_args_[current_client_ptr_->getNextAction()]);
         shiftAction();
     }
-    else if(checkIfActionFinished() == 2)
+    else if(checkIfActionFinished() == ABORTED)
     {
-        // empty state
+        // action_aborted
     }
     stateMachine();
 }
