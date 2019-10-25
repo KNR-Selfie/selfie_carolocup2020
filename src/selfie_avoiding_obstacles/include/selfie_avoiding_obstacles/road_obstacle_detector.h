@@ -72,16 +72,12 @@ private:
   void change_lane(float lane);
 
   bool is_on_right_lane(const Point &);
-  /*
-    void display_places(std::vector<Box> &, const std::string &);
-    void display_place(Box &, const std::string &);
-    */
+
+  void visualizeBoxes();
 };
 
 /*
 //TODO
-visualization
-maximum_length_of_obstacle_ as param
 filtering box depends on camera's field of view
 
 */

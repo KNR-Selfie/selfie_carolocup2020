@@ -84,6 +84,10 @@ void Road_obstacle_detector::filter_boxes(const selfie_msgs::PolygonArray &msg)
       }
     }
   }
+  if (visualization_)
+  {
+    visualizeBoxes();
+  }
 }
 
 void Road_obstacle_detector::road_markings_callback(const selfie_msgs::RoadMarkings &msg)
@@ -136,6 +140,12 @@ void Road_obstacle_detector::change_lane(float lane)
     ROS_INFO("Lane changed to left");
   else
     ROS_INFO("Lane changed to right");
+}
+
+void Road_obstacle_detector::visualizeBoxes()
+{
+  Box().visualizeList(filtered_boxes_, visualizer_, "boxes_on_lane", 0.9, 0.9, 0.9);
+  nearest_box_in_front_of_car_->visualize(visualizer_, "nearest_box", 1, 0.1, 0.1);
 }
 
 void Road_obstacle_detector::calculate_time(const ros::TimerEvent &time) { time_left_ -= timer_duration_; }
