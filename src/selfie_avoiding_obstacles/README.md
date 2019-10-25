@@ -24,5 +24,7 @@ rosrun selfie_avoiding_obstacles detect_road_obstacle
 
 ## Parameters
 ###
+ - `maximum_length_of_obstacle` (*float*, default: 0.8)
+   - How long can be approached obstacle (described in regulations)
  - `visualization` (*bool*, default: false)
    - Whether or not visualization topics are active

@@ -14,6 +14,7 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
     , maximum_distance_to_obstacle_(0.5)
 {
   pnh_.param<bool>("visualization", visualization_, false);
+  pnh_.param<float>("maximum_length_of_obstacle", maximum_length_of_obstacle_, 0.8);
   obstacles_sub_ = nh_.subscribe("/obstacles", 1, &Road_obstacle_detector::obstacle_callback, this);
   markings_sub_ = nh_.subscribe("/road_markings", 1, &Road_obstacle_detector::road_markings_callback, this);
   setpoint_pub_ = nh_.advertise<std_msgs::Float32>("/setpoint", 1);
