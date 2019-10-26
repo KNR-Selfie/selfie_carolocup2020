@@ -14,6 +14,7 @@ from numpy.polynomial.polynomial import Polynomial
 
 from selfie_msgs.msg import RoadMarkings
 from std_msgs.msg import Float64
+from std_msgs.msg import Float32
 
 max_speed = 3.0
 pub_speed = 0.0
@@ -108,7 +109,7 @@ if __name__ == '__main__':
                                      queue_size=1)
 
     act_speed_sub = rospy.Subscriber('stm32/speed',
-                                     Float64,
+                                     Float32,
                                      act_speed_callback,
                                      queue_size=1)
 
