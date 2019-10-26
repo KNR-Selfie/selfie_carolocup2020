@@ -106,7 +106,7 @@ class LaneDetector
   void adjust(RoadLine &good_road_line, RoadLine &short_road_line, bool left_offset);
   void calcRoadWidth();
   void generatePoints();
-  std::vector<cv::Point2f> createOffsetLine(const std::vector<float> &coeff, const int &degree, float offset);
+  std::vector<cv::Point2f> createOffsetLine(const std::vector<float> &coeff, const int &degree, float offset, float height = 0.2);
   void detectStartAndIntersectionLine();
 
   // visualization
@@ -119,18 +119,20 @@ class LaneDetector
 
   int starting_line_timeout_    {0};
   bool init_imageCallback_      {true};
-  float min_length_search_line_ {0.10};
+  float min_length_search_line_ {0.05};
   float max_delta_y_lane_       {0.08};
   float min_length_to_2aprox_   {0.56};
   float left_lane_width_        {0.4};
   float right_lane_width_       {0.4};
+  int proof_intersection_       {0};
+  int proof_start_line_         {0};
 
 // parameterized
   std::string config_file_      {""};
   bool debug_mode_              {false};
   bool hom_cut_tune_mode_       {false};
 
-  float max_mid_line_distance_  {0.12};
+  float max_mid_line_distance_  {0.15};
   float max_mid_line_gap_       {0.5};
   float nominal_center_line_Y_  {0.2};
   float points_density_         {15};

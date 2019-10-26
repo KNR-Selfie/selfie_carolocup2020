@@ -86,13 +86,13 @@ void ParticleFilter::prediction(double std)
 
       particles_[i].points[j].y += dist_y(gen);
 
-      if (particles_[i].points[j].x < TOPVIEW_MAX_X - 0.15)
+      if (particles_[i].points[j].x < TOPVIEW_MAX_X - 0.1)
       {
         particles_[i].poly_degree = 2;
       }
       else
       {
-        particles_[i].poly_degree = 3;
+        particles_[i].poly_degree = 2;
       }
       
     }
@@ -159,8 +159,6 @@ void ParticleFilter::resample()
     resampled_particles.push_back(particles_[i]);
   }
   particles_ = resampled_particles;
-
-  std::cout << "size: "<< particles_.size() << std::endl;
 
   int max_index = 0;
   float max = 0;

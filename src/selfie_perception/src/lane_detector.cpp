@@ -115,8 +115,8 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
     detectStartAndIntersectionLine();
   }
   else
-    //masked_frame_=  binary_cut_frame_.clone();
-    cv::filter2D(binary_cut_frame_, masked_frame_, -1, kernel_v_, cv::Point(-1, -1), 0, cv::BORDER_DEFAULT);
+    masked_frame_=  binary_cut_frame_.clone();
+    cv::filter2D(masked_frame_, masked_frame_, -1, kernel_v_, cv::Point(-1, -1), 0, cv::BORDER_DEFAULT);
   
   detectLines(masked_frame_, lines_vector_);
   if (lines_vector_.empty())
@@ -608,8 +608,8 @@ void LaneDetector::printInfoParams()
 void LaneDetector::dynamicMask(cv::Mat &input_frame, cv::Mat &output_frame)
 {
   dynamic_mask_ = cv::Mat::zeros(cv::Size(input_frame.cols, input_frame.rows), CV_8UC1);
-  float offset_right = -0.07;
-  float offset_left = 0.05;
+  float offset_right = -0.09;
+  float offset_left = 0.07;
   output_frame = input_frame.clone();
   if (!right_line_.isExist())
     offset_right = -0.14;
@@ -662,8 +662,8 @@ void LaneDetector::ROILaneRight(cv::Mat &input_frame, cv::Mat &output_frame)
   
   
 
-  std::vector<cv::Point2f> center_line_offset = createOffsetLine(center_line_.getCoeff(), center_line_.getDegree(), offset_center);
-  std::vector<cv::Point2f> right_line_offset = createOffsetLine(right_line_.getCoeff(), right_line_.getDegree(), offset_right);
+  std::vector<cv::Point2f> center_line_offset = createOffsetLine(center_line_.getCoeff(), center_line_.getDegree(), offset_center, -0.2);
+  std::vector<cv::Point2f> right_line_offset = createOffsetLine(right_line_.getCoeff(), right_line_.getDegree(), offset_right, -0.2);
   cv::transform(center_line_offset, center_line_offset, world2topview_.rowRange(0, 2));
   cv::transform(right_line_offset, right_line_offset, world2topview_.rowRange(0, 2));
 
@@ -709,8 +709,8 @@ void LaneDetector::ROILaneLeft(cv::Mat &input_frame, cv::Mat &output_frame)
       offset_center = 0.11;
   }
   
-  std::vector<cv::Point2f> center_line_offset = createOffsetLine(center_line_.getCoeff(), center_line_.getDegree(), offset_center);
-  std::vector<cv::Point2f> left_line_offset = createOffsetLine(left_line_.getCoeff(), left_line_.getDegree(), offset_left);
+  std::vector<cv::Point2f> center_line_offset = createOffsetLine(center_line_.getCoeff(), center_line_.getDegree(), offset_center, -0.2);
+  std::vector<cv::Point2f> left_line_offset = createOffsetLine(left_line_.getCoeff(), left_line_.getDegree(), offset_left, -0.2);
   cv::transform(center_line_offset, center_line_offset, world2topview_.rowRange(0, 2));
   cv::transform(left_line_offset, left_line_offset, world2topview_.rowRange(0, 2));
 
@@ -1543,11 +1543,11 @@ void LaneDetector::calcRoadWidth()
   }
 }
 
-std::vector<cv::Point2f> LaneDetector::createOffsetLine(const std::vector<float> &coeff, const int &degree, float offset)
+std::vector<cv::Point2f> LaneDetector::createOffsetLine(const std::vector<float> &coeff, const int &degree, float offset, float height)
 {
   std::vector<cv::Point2f> new_line;
   cv::Point2f p;
-  for (float i = TOPVIEW_MIN_X - 0.2; i < TOPVIEW_MAX_X + 0.2; i += 0.05)
+  for (float i = TOPVIEW_MIN_X - 0.2; i < TOPVIEW_MAX_X + height; i += 0.05)
   {
     float deriative;
     switch (degree)
@@ -1737,17 +1737,43 @@ void LaneDetector::detectStartAndIntersectionLine()
 
   if (std::abs(right_distance - left_distance) < 0.25 && left_distance > 0)
   {
-    std_msgs::Float32 msg;
-    msg.data = right_distance;
-    starting_line_pub_.publish(msg);
-    starting_line_timeout_ = 50;
+    if (proof_start_line_ == 3)
+    {
+      std_msgs::Float32 msg;
+      msg.data = right_distance;
+      starting_line_pub_.publish(msg);
+      starting_line_timeout_ = 50;
+    }
+    else
+    {
+      ++proof_start_line_;
+    }
+    
   }
   else if (right_distance > 0)
   {
-    std_msgs::Float32 msg;
-    msg.data = right_distance;
-    intersection_pub_.publish(msg);
+    if (proof_start_line_ > 0)
+      --proof_start_line_;
+    if (proof_intersection_ == 3)
+    {
+      std_msgs::Float32 msg;
+      msg.data = right_distance;
+      intersection_pub_.publish(msg);
+    }
+    else
+    {
+      ++proof_intersection_;
+    }
+    
   }
+  else
+  {
+    if (proof_intersection_ > 0)
+      --proof_intersection_;
+  }
+    
+  std::cout << "proof_start_line_: " << proof_start_line_ << std::endl;
+  std::cout << "proof_intersection_: " << proof_intersection_ << std::endl;
 }
 
 void LaneDetector::drawParticles(int num)
