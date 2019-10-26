@@ -16,7 +16,9 @@ from selfie_msgs.msg import RoadMarkings
 from std_msgs.msg import Float64
 
 max_speed = 3.0
-last_speed = 0.0
+pub_speed = 0.0
+act_speed = 0.0
+
 #max_acceleration = 1.0
 #max_deceleration = 1.5
 time_last_speed = time.time()
@@ -36,8 +38,9 @@ class StreamingMovingAverage:
 
 def road_markings_callback(msg):
     global sma
-    global last_speed
+    global pub_speed
     global time_last_speed
+    global act_speed
     c_poly = Polynomial(msg.center_line)
 
     # x - lookahead
@@ -55,24 +58,24 @@ def road_markings_callback(msg):
     curvature = abs(c_poly.deriv().deriv()(c_x)) / (1+c_poly.deriv()(c_x)**2)**1.5
     curvature = sma.process(curvature)
     if max_speed == 0:
-        speed = 0
+        pred_speed = 0
     elif curvature > max_curvature:
-        speed = min_speed
+        pred_speed = min_speed
     else:
-        speed = curvature * (min_speed - max_speed) / max_curvature + max_speed
+        pred_speed = curvature * (min_speed - max_speed) / max_curvature + max_speed
 
-    speed_diff = last_speed - speed
+    speed_diff = act_speed - pred_speed
     time_diff = time.time() - time_last_speed
     if speed_diff > 0:
         if speed_diff / time_diff > max_deceleration:
-            last_speed -= max_deceleration * time_diff
+            pub_speed -= max_deceleration * time_diff
         else:
-            last_speed = speed
+            pub_speed = pred_speed
     else:
         if speed_diff / time_diff > max_acceleration:
-            last_speed += max_acceleration * time_diff
+            pub_speed += max_acceleration * time_diff
         else:
-            last_speed = speed
+            pub_speed = pred_speed
 
     time_last_speed = time.time()
 
@@ -81,11 +84,15 @@ def road_markings_callback(msg):
 
     heading_offset_pub.publish(-theta)
     position_offset_pub.publish(c_dist)
-    speed_pub.publish(last_speed)
+    speed_pub.publish(pub_speed)
 
 def max_speed_callback(msg):
     global max_speed
     max_speed = msg.data
+
+def act_speed_callback(msg):
+    global act_speed
+    act_speed = msg.data
 
 if __name__ == '__main__':
     rospy.init_node('extract_road_features')
@@ -98,6 +105,11 @@ if __name__ == '__main__':
     max_speed_sub = rospy.Subscriber('max_speed',
                                      Float64,
                                      max_speed_callback,
+                                     queue_size=1)
+
+    act_speed_sub = rospy.Subscriber('stm32/speed',
+                                     Float64,
+                                     act_speed_callback,
                                      queue_size=1)
 
     global lookahead
