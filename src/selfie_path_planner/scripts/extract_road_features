@@ -20,8 +20,6 @@ max_speed = 3.0
 pub_speed = 0.0
 act_speed = 0.0
 
-#max_acceleration = 1.0
-#max_deceleration = 1.5
 time_last_speed = time.time()
 
 class StreamingMovingAverage:
@@ -129,8 +127,8 @@ if __name__ == '__main__':
     print("min_speed set to: " + str(min_speed))
     print("max_speed set to: " + str(max_speed))
     print("max_acceleration set to: " + str(max_acceleration))
-    print("max_speed set to: " + str(max_speed))
     print("max_deceleration set to: " + str(max_deceleration))
+    print("max_curvature set to: " + str(max_curvature))
     print("average_window_size set to: " + str(window_size))
 
     global sma
