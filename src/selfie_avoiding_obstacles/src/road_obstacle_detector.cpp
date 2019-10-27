@@ -18,6 +18,10 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
   obstacles_sub_ = nh_.subscribe("/obstacles", 1, &Road_obstacle_detector::obstacle_callback, this);
   markings_sub_ = nh_.subscribe("/road_markings", 1, &Road_obstacle_detector::road_markings_callback, this);
   setpoint_pub_ = nh_.advertise<std_msgs::Float32>("/setpoint", 1);
+  pnh_.param<float>("point_min_x", point_min_x_, 0.3);
+  pnh_.param<float>("point_max_x", point_max_x_, 1.1);
+  pnh_.param<float>("point_min_y", point_min_y_, -1.3);
+  pnh_.param<float>("point_max_y", point_max_y_, 1.3);
 
   if (visualization_)
   {
@@ -68,7 +72,7 @@ void Road_obstacle_detector::filter_boxes(const selfie_msgs::PolygonArray &msg)
     {
       Point p(polygon.points[a]);
 
-      if (is_on_right_lane(p))
+      if (is_on_right_lane(p) && p.check_position(point_min_x_, point_max_x_, point_min_y_, point_max_y_))
       {
         box_ok = true;
         break;

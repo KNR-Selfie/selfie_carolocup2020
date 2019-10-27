@@ -47,6 +47,13 @@ private:
   float center_line_[4];
   float right_line_[4];
 
+  // area of interest (camera's field of view)
+  float point_min_x_;
+  float point_max_x_;
+  float point_min_y_;
+  float point_max_y_;
+  
+
   float maximum_distance_to_obstacle_; // to avoid changing lane too early
   float maximum_length_of_obstacle_;
   float time_left_; // after passing this time car resturns on right lane
@@ -78,6 +85,6 @@ private:
 
 /*
 //TODO
-filtering box depends on camera's field of view
+update README
 
 */
