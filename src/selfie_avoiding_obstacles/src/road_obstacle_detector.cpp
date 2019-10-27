@@ -53,6 +53,7 @@ void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &
       change_lane(RIGHT);
       status_ = CLEAR;
       is_time_calculated_for_overtake_ = false;
+      timer_.stop();
     }
     break;
   default:
