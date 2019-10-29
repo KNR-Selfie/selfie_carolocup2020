@@ -131,6 +131,7 @@ class AppComm:
         for msg in msgs:
             code = msg[0]
             val = msg[1]
+            print code, val
             if code in self.dyns.keys():
                 try:
                     self.dyns[code].update_configuration({self.varNames[code]: val})

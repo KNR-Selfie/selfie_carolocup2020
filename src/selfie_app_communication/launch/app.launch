@@ -1,4 +1,4 @@
 <launch>
     <param name="app_settings" textfile="$(find selfie_app_communication)/settings.xml"/>
-    <node name="bluetooth" pkg="selfie_app_communication" type="app_comm.py"/>
+    <!--<node name="bluetooth" pkg="selfie_app_communication" type="app_comm.py"/>-->
 </launch>
