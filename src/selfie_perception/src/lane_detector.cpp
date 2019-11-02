@@ -409,8 +409,6 @@ void LaneDetector::mergeMiddleLines()
         if (lines_vector_converted_[i][0].y < getPolyY(right_line_.getCoeff(), lines_vector_converted_[i][0].x) - 0.02 ||
             lines_vector_converted_[i][0].y > getPolyY(left_line_.getCoeff(), lines_vector_converted_[i][0].x) + 0.02)
             {
-              //std::cout << "getPolyY(right_line_.getCoeff(), lines_vector_converted_[i][0].x): " << getPolyY(right_line_.getCoeff(), lines_vector_converted_[i][0].x) << std::endl;
-              //std::cout << "lines_vector_converted_[i][0].y" << lines_vector_converted_[i][0].y << std::endl;
               continue;
             }
     }
@@ -1771,9 +1769,6 @@ void LaneDetector::detectStartAndIntersectionLine()
     if (proof_intersection_ > 0)
       --proof_intersection_;
   }
-    
-  std::cout << "proof_start_line_: " << proof_start_line_ << std::endl;
-  std::cout << "proof_intersection_: " << proof_intersection_ << std::endl;
 }
 
 void LaneDetector::drawParticles(int num)
