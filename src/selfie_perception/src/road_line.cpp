@@ -120,7 +120,7 @@ void RoadLine::addBottomPoint()
   {
     cv::Point2f p;
     p.x = TOPVIEW_MIN_X;
-    p.y = getPolyY(coeff_, p.x);
+    p.y = points_[0].y;
     points_.insert(points_.begin(), p);
   }
 }

@@ -56,6 +56,8 @@ class LaneDetector
   cv::Mat world2topview_;
 
   cv::Mat kernel_v_;
+  cv::Mat dilate_element_;
+  cv::Mat close_element_;
   cv::Mat current_frame_;
   cv::Mat binary_frame_;
   cv::Mat binary_cut_frame_;
@@ -108,6 +110,9 @@ class LaneDetector
   void generatePoints();
   std::vector<cv::Point2f> createOffsetLine(const std::vector<float> &coeff, const int &degree, float offset, float height = 0.2);
   void detectStartAndIntersectionLine();
+  void recognizeLinesNew();
+  void LCRLinesDraw(cv::Mat &visualization_frame);
+  float findMinPointToParabola(cv::Point2f p, std::vector<float> coeff);
 
   // visualization
   sensor_msgs::PointCloud points_cloud_;
@@ -132,7 +137,7 @@ class LaneDetector
   bool debug_mode_              {false};
   bool hom_cut_tune_mode_       {false};
 
-  float max_mid_line_distance_  {0.15};
+  float max_mid_line_distance_  {0.2};
   float max_mid_line_gap_       {0.5};
   float nominal_center_line_Y_  {0.2};
   float points_density_         {15};
