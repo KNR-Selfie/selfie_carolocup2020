@@ -166,7 +166,7 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
   }
   else
   {
-    generatePoints();
+    //generatePoints();
     recognizeLinesNew();
     //recognizeLines();
     //generatePoints();
@@ -182,9 +182,9 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
     center_line_.calcParams();
     left_line_.calcParams();
 
-    //right_line_.generateForDensity();
-    //center_line_.generateForDensity();
-    //left_line_.generateForDensity();
+    right_line_.generateForDensity();
+    center_line_.generateForDensity();
+    left_line_.generateForDensity();
 
     linesApproximation();
     publishMarkings();
@@ -468,7 +468,7 @@ float LaneDetector::getDistance(cv::Point2f p1, cv::Point2f p2)
 void LaneDetector::recognizeLinesNew()
 {
   float max_cost = 0.05;
-  float ratio = 1.2;
+  float ratio = 0.4;
   center_line_.clearPoints();
   right_line_.clearPoints();
   left_line_.clearPoints();
@@ -479,34 +479,40 @@ void LaneDetector::recognizeLinesNew()
     float left_cost = 0;
     for (int j = 0; j < lines_vector_converted_[i].size(); ++j)
     {
-      float cost = 1 - (lines_vector_converted_[i][j].x - TOPVIEW_MIN_X) * ratio;
-      //std::cout << "cost: " << cost << std::endl;
+      float weight = 1 - (lines_vector_converted_[i][j].x - TOPVIEW_MIN_X) * ratio;
+      //std::cout << "weight: " << weight << std::endl;
       //std::cout << "x: " << lines_vector_converted_[i][j].x << std::endl;
-      center_cost += findMinPointToParabola(lines_vector_converted_[i][j], center_line_.getCoeff());
-      right_cost += findMinPointToParabola(lines_vector_converted_[i][j], right_line_.getCoeff());
-      left_cost += findMinPointToParabola(lines_vector_converted_[i][j], left_line_.getCoeff());
+      center_cost += weight * findMinPointToParabola(lines_vector_converted_[i][j], center_line_.getCoeff());
+      right_cost += weight * findMinPointToParabola(lines_vector_converted_[i][j], right_line_.getCoeff());
+      left_cost += weight * findMinPointToParabola(lines_vector_converted_[i][j], left_line_.getCoeff());
     }
     center_cost /= lines_vector_converted_[i].size();
     right_cost /= lines_vector_converted_[i].size();
     left_cost /= lines_vector_converted_[i].size();
 
-    if (std::fabs(center_cost) < max_cost)
+    center_cost = std::fabs(center_cost);
+    right_cost = std::fabs(right_cost);
+    left_cost = std::fabs(left_cost);
+
+    float min = std::min(std::min(center_cost, right_cost), left_cost);
+
+    if (min == center_cost && center_cost < max_cost)
     {
       center_line_.addPoints(lines_vector_converted_[i]);
     }
-    else if (std::fabs(right_cost) < max_cost)
+    else if (min == right_cost && right_cost < max_cost)
     {
       right_line_.addPoints(lines_vector_converted_[i]);
     }
-    else if (std::fabs(left_cost) < max_cost)
+    else if (min == left_cost && left_cost < max_cost)
     {
       left_line_.addPoints(lines_vector_converted_[i]);
     }
 
-    std::cout << "center_cost: " << center_cost << std::endl;
-    std::cout << "right_cost: " << right_cost << std::endl;
-    std::cout << "left_cost: " << left_cost << std::endl;
-    std::cout << "--------------------------" << std::endl;
+    //std::cout << "center_cost: " << center_cost << std::endl;
+    //std::cout << "right_cost: " << right_cost << std::endl;
+    //std::cout << "left_cost: " << left_cost << std::endl;
+    //std::cout << "--------------------------" << std::endl;
   }
 }
 
