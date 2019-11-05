@@ -24,6 +24,8 @@ namespace image_proc_fisheye
             cv::Mat mapx_;
             cv::Mat mapy_;
             bool camera_set_;
+            std::string mapx_file_{"empty"};
+            std::string mapy_file_{"empty"};
     };
 
 }
