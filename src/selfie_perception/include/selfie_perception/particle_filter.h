@@ -71,13 +71,16 @@ public:
   }
 
 private:
-  int poly_degree_{3};
+  int poly_degree_{2};
   int num_particles_{0};
   int num_control_points_{0};
   bool is_initialized_{false};
   std::vector<float> weights_;
   std::vector<Particle> particles_;
   Particle best_particle_;
+
+  float findMinPointToParabola(cv::Point2f p, std::vector<float> coeff);
+  float getDistance(cv::Point2f p1, cv::Point2f p2);
 };
 
 #endif  //  SELFIE_PARTICLE_FILTER_H
