@@ -99,15 +99,22 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
   }
   homography(current_frame_, homography_frame_);
 
+  cv::Mat test_mat;
+  cv::threshold(homography_frame_, test_mat, 0, 255, 1);
+
+  cv::bitwise_or(test_mat, homography_frame_, homography_frame_);
+
   cv::adaptiveThreshold(homography_frame_, binary_frame_, 255, cv::ADAPTIVE_THRESH_MEAN_C,
                         CV_THRESH_BINARY, treshold_block_size_, threshold_c_);
 
-  cv::bitwise_and(binary_frame_, hom_cut_mask_, binary_cut_frame_);
-  cv::medianBlur(binary_cut_frame_, binary_cut_frame_, 3);
+  cv::bitwise_not(test_mat, test_mat);
+  cv::bitwise_and(binary_frame_, test_mat, binary_frame_);
+
+  cv::medianBlur(binary_frame_, binary_frame_, 3);
 
   if (!init_imageCallback_)
   {
-    dynamicMask(binary_cut_frame_, masked_frame_);
+    dynamicMask(binary_frame_, masked_frame_);
     if (debug_mode_)
       cv::bitwise_and(homography_frame_, dynamic_mask_, homography_frame_);
 
@@ -117,7 +124,7 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
     detectStartAndIntersectionLine();
   }
   else
-    masked_frame_=  binary_cut_frame_.clone();
+    masked_frame_=  binary_frame_.clone();
 
   cv::filter2D(masked_frame_, masked_frame_, -1, kernel_v_, cv::Point(-1, -1), 0, cv::BORDER_DEFAULT);
   dilate( masked_frame_, masked_frame_, dilate_element_ );
@@ -175,7 +182,7 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
     center_line_.addBottomPoint();
     left_line_.addBottomPoint();
 
-    if (center_line_.isExist())
+    if (!center_line_.isShort())
       calcRoadWidth();
 
     right_line_.calcParams();
@@ -331,7 +338,7 @@ void LaneDetector::openCVVisualization()
 {
   cv::namedWindow("STD_DEBUG", cv::WINDOW_NORMAL);
   cv::Mat m_binary, m_std, m_four;
-  cv::hconcat(binary_cut_frame_, masked_frame_, m_binary);
+  cv::hconcat(binary_frame_, masked_frame_, m_binary);
   cv::cvtColor(m_binary, m_binary, CV_GRAY2BGR);
   cv::hconcat(debug_frame_, homography_frame_, m_std);
   cv::vconcat(m_binary, m_std, m_four);
@@ -344,7 +351,7 @@ void LaneDetector::openCVVisualization()
     cv::imshow("binary_frame", binary_frame_);
 
     cv::namedWindow("binary_cut_frame", cv::WINDOW_NORMAL);
-    cv::imshow("binary_cut_frame", binary_cut_frame_);
+    cv::imshow("binary_cut_frame", binary_frame_);
   }
   cv::waitKey(1);
 }
@@ -1058,7 +1065,7 @@ void LaneDetector::linesApproximation()
         right_line_.pfExecute();
       }
       
-
+      left_line_.pfReset();
       if (!left_line_.isExist())
       {
         // "l-  c+  r+"
@@ -1077,7 +1084,6 @@ void LaneDetector::linesApproximation()
         l_state = '/';
         c_state = '+';
         r_state = '+';
-        left_line_.pfReset();
         left_line_.setDegree(center_line_.getDegree());
         adjust(center_line_, left_line_, true);
       }
@@ -1094,7 +1100,8 @@ void LaneDetector::linesApproximation()
         left_line_.pfExecute();
         center_line_.pfExecute();
       }
-
+      
+      right_line_.pfReset();
       if (!right_line_.isExist())
       {
         // "l+  c+  r-"
@@ -1113,7 +1120,6 @@ void LaneDetector::linesApproximation()
         l_state = '+';
         c_state = '+';
         r_state = '/';
-        right_line_.pfReset();
         right_line_.setDegree(center_line_.getDegree());
         adjust(center_line_, right_line_, false);
       }
@@ -1131,6 +1137,7 @@ void LaneDetector::linesApproximation()
         right_line_.pfExecute();
       }
 
+      center_line_.pfReset();
       if (!center_line_.isExist())
       {
         // "l+  c-  r+"
@@ -1149,7 +1156,6 @@ void LaneDetector::linesApproximation()
         l_state = '+';
         c_state = '/';
         r_state = '+';
-        center_line_.pfReset();
         center_line_.setDegree(right_line_.getDegree());
         adjust(right_line_, center_line_, true);
       }
@@ -1164,6 +1170,8 @@ void LaneDetector::linesApproximation()
       else
         right_line_.pfExecute();
       
+      center_line_.pfReset();
+      left_line_.pfReset();
       if (center_line_.isExist() || left_line_.isExist())
       {
         if (center_line_.isExist() && left_line_.isExist())
@@ -1172,8 +1180,6 @@ void LaneDetector::linesApproximation()
           l_state = '/';
           c_state = '/';
           r_state = '+';
-          center_line_.pfReset();
-          left_line_.pfReset();
           center_line_.setDegree(right_line_.getDegree());
           left_line_.setDegree(right_line_.getDegree());
           adjust(right_line_, center_line_, true);
@@ -1185,7 +1191,6 @@ void LaneDetector::linesApproximation()
           l_state = '-';
           c_state = '/';
           r_state = '+';
-          center_line_.pfReset();
           center_line_.setDegree(right_line_.getDegree());
           left_line_.setDegree(right_line_.getDegree());
           adjust(right_line_, center_line_, true);
@@ -1201,7 +1206,6 @@ void LaneDetector::linesApproximation()
           l_state = '/';
           c_state = '-';
           r_state = '+';
-          left_line_.pfReset();
           center_line_.setDegree(right_line_.getDegree());
           left_line_.setDegree(right_line_.getDegree());
           adjust(right_line_, left_line_, true);
@@ -1239,6 +1243,8 @@ void LaneDetector::linesApproximation()
       else
         left_line_.pfExecute();
       
+      center_line_.pfReset();
+      right_line_.pfReset();
       if (center_line_.isExist() || right_line_.isExist())
       {
         if (center_line_.isExist() && right_line_.isExist())
@@ -1247,8 +1253,6 @@ void LaneDetector::linesApproximation()
           l_state = '+';
           c_state = '/';
           r_state = '/';
-          center_line_.pfReset();
-          right_line_.pfReset();
           center_line_.setDegree(left_line_.getDegree());
           right_line_.setDegree(left_line_.getDegree());
           adjust(left_line_, center_line_, false);
@@ -1260,7 +1264,6 @@ void LaneDetector::linesApproximation()
           l_state = '+';
           c_state = '/';
           r_state = '-';
-          center_line_.pfReset();
           center_line_.setDegree(left_line_.getDegree());
           right_line_.setDegree(left_line_.getDegree());
           adjust(left_line_, center_line_, false);
@@ -1276,7 +1279,6 @@ void LaneDetector::linesApproximation()
           l_state = '+';
           c_state = '-';
           r_state = '/';
-          right_line_.pfReset();
           center_line_.setDegree(left_line_.getDegree());
           right_line_.setDegree(left_line_.getDegree());
           adjust(left_line_, right_line_, false);
@@ -1313,6 +1315,8 @@ void LaneDetector::linesApproximation()
       else
         center_line_.pfExecute();
       
+      left_line_.pfReset();
+      right_line_.pfReset();
       if (left_line_.isExist() || right_line_.isExist())
       {
         if (left_line_.isExist() && right_line_.isExist())
@@ -1321,8 +1325,6 @@ void LaneDetector::linesApproximation()
           l_state = '/';
           c_state = '+';
           r_state = '/';
-          left_line_.pfReset();
-          right_line_.pfReset();
           left_line_.setDegree(center_line_.getDegree());
           right_line_.setDegree(center_line_.getDegree());
           adjust(center_line_, left_line_, true);
@@ -1334,7 +1336,6 @@ void LaneDetector::linesApproximation()
           l_state = '/';
           c_state = '+';
           r_state = '-';
-          left_line_.pfReset();
           left_line_.setDegree(center_line_.getDegree());
           right_line_.setDegree(center_line_.getDegree());
           adjust(center_line_, left_line_, true);
@@ -1350,7 +1351,6 @@ void LaneDetector::linesApproximation()
           l_state = '-';
           c_state = '+';
           r_state = '/';
-          right_line_.pfReset();
           left_line_.setDegree(center_line_.getDegree());
           right_line_.setDegree(center_line_.getDegree());
           adjust(center_line_, right_line_, false);
@@ -1387,6 +1387,9 @@ void LaneDetector::linesApproximation()
     l_state = '-';
     c_state = '-';
     r_state = '-';
+    left_line_.pfReset();
+    right_line_.pfReset();
+    center_line_.pfReset();
     break;
   }
 
@@ -1601,10 +1604,9 @@ void LaneDetector::calcRoadWidth()
   float r_lane_width = 0;
   if (right_line_.isExist())
   {
-    p.y = p_ahead.y - 0.3;
-    float step = -0.01;
+    p.y = p_ahead.y;
+    float step = -0.05;
     float last_dist = 9999999;  // init huge value
-
     while (true)
     {
       p.x = (p.y - b_param_orthg) / a_param_orthg;
@@ -1625,9 +1627,8 @@ void LaneDetector::calcRoadWidth()
       }
       else
       {
-        if (r_lane_width > 0.6)
+        if (r_lane_width > 1)
         {
-          r_lane_width = 99;
           break;
         }
         last_dist = r_lane_width;
@@ -1639,6 +1640,7 @@ void LaneDetector::calcRoadWidth()
     else if (r_lane_width > 0.6)
     {
       ROS_INFO("Right line too far. Delete index");
+      r_lane_width = 99;
       right_lane_width_ = 0.4;
       right_line_.setExist(false);
     }
@@ -1648,8 +1650,8 @@ void LaneDetector::calcRoadWidth()
   float l_lane_width = 0;
   if (left_line_.isExist())
   {
-    p.y = p_ahead.y + 0.3;
-    float step = 0.01;
+    p.y = p_ahead.y;
+    float step = 0.03;
     float last_dist = 9999999;  // init huge value
 
     while (true)
@@ -1671,9 +1673,8 @@ void LaneDetector::calcRoadWidth()
       }
       else
       {
-        if (l_lane_width > 0.6)
+        if (l_lane_width > 1)
         {
-          l_lane_width = 99;
           break;
         }
         last_dist = l_lane_width;
@@ -1685,6 +1686,7 @@ void LaneDetector::calcRoadWidth()
     else if (l_lane_width > 0.6)
     {
       ROS_INFO("Left line too far. Delete index");
+      l_lane_width = 99;
       left_lane_width_ = 0.4;
       left_line_.setExist(false);
     }

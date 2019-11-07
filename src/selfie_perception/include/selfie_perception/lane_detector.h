@@ -146,10 +146,10 @@ class LaneDetector
   float real_window_size_       {0.1};
   int threshold_c_              {-40};
 
-  int hom_cut_l_x_              {0};
-  int hom_cut_l_y_              {0};
-  int hom_cut_r_x_              {0};
-  int hom_cut_r_y_              {0};
+  int hom_cut_l_x_              {187};
+  int hom_cut_l_y_              {45};
+  int hom_cut_r_x_              {450};
+  int hom_cut_r_y_              {45};
 
   int pf_num_samples_           {50};
   int pf_num_points_            {3};

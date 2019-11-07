@@ -1,8 +1,8 @@
 <launch>
   <!-- COMMON PARAMS -->
-  <arg name="lookahead" default="0.5" />
+  <arg name="lookahead" default="0.55" />
   <arg name="max_curvature" default="1.8" />
-  <arg name="min_speed" default="0.5" />
+  <arg name="min_speed" default="1.5" />
   <arg name="max_speed" default="3.0" />
   <arg name="max_acceleration" default="1.0" />
   <arg name="max_deceleration" default="1.5" />
@@ -44,7 +44,7 @@
   <node name="detect_markings" type="detect_markings" pkg="selfie_perception" respawn="true" output="screen">
     <param name="config_file" value="$(arg homography_file)" />
     <param name="threshold_c" value="$(arg threshold_c)" />
-    <param name="real_window_size" value="0.15" />
+    <param name="real_window_size" value="0.1" />
 
     <param name="debug_mode" value="false"/>
     <param name="hom_cut_tune_mode" value="false"/>

@@ -64,7 +64,6 @@ bool RoadLine::pfExecute()
   }
   else
   {
-    pf_.setPolyDegree_(3);
     pf_.prediction(pf_std_);
   }
   
