@@ -1,6 +1,6 @@
 <launch>
   <node name="pylon_camera_node" type="pylon_camera_node" pkg="pylon_camera" respawn="true" output="screen">
-      <param name="camera_info_url" value="file://$(find selfie_camera)/config/basler_distortion.yaml" />
+      <param name="camera_info_url" value="" />
       <param name="image_encoding" value="mono8" />
       <param name="frame_rate" value="150" />
       <param name="brightness" value="150" />
@@ -8,15 +8,16 @@
       <param name="exposure_auto" value="false" />
       <param name="gain_auto" value="true" />
       <param name="exposure" value="6000.0" />
-      <param name="height" value="1232" />
-      <param name="width" value="1312" />
-      <param name="roi_offset_x" value="384" />
-      <param name="roi_offset_y" value="0" />
+      <param name="height" value="400" />
+      <param name="width" value="1024" />
+      <param name="roi_offset_x" value="512" />
+      <param name="roi_offset_y" value="460" />
   </node>
 
-  <node pkg="nodelet" type="nodelet" name="camera_nodelet_manager"  args="manager" />
+  <node pkg="nodelet" type="nodelet" name="camera_nodelet_manager"  args="manager" output="screen" />
   <node pkg="nodelet" type="nodelet" name="image_proc_fisheye" args="load image_proc_fisheye/RectifyNodelet camera_nodelet_manager" output="screen">
-    <remap from="camera_info" to="pylon_camera_node/camera_info" />
     <remap from="image_raw" to="pylon_camera_node/image_raw" />
+    <param name="mapx_file" value="$(find selfie_camera)/config/mapx.yaml" />
+    <param name="mapy_file" value="$(find selfie_camera)/config/mapy.yaml" />
   </node>
 </launch>
