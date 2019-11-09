@@ -60,7 +60,6 @@ class LaneDetector
   cv::Mat close_element_;
   cv::Mat current_frame_;
   cv::Mat binary_frame_;
-  cv::Mat binary_cut_frame_;
   cv::Mat dynamic_mask_;
   cv::Mat masked_frame_;
   cv::Mat left_lane_ROI_;
@@ -70,6 +69,7 @@ class LaneDetector
   cv::Mat homography_frame_;
   cv::Mat debug_frame_;
   cv::Mat hom_cut_mask_;
+  cv::Mat hom_cut_mask_inv_;
 
   std::vector<std::vector<cv::Point> > lines_vector_;
   std::vector<std::vector<cv::Point2f> > lines_vector_converted_;
@@ -134,8 +134,8 @@ class LaneDetector
 
 // parameterized
   std::string config_file_      {""};
+  std::string hom_cut_file_     {""};
   bool debug_mode_              {false};
-  bool hom_cut_tune_mode_       {false};
 
   float max_mid_line_distance_  {0.2};
   float max_mid_line_gap_       {0.5};
@@ -145,11 +145,6 @@ class LaneDetector
   int treshold_block_size_      {3};
   float real_window_size_       {0.1};
   int threshold_c_              {-40};
-
-  int hom_cut_l_x_              {187};
-  int hom_cut_l_y_              {45};
-  int hom_cut_r_x_              {450};
-  int hom_cut_r_y_              {45};
 
   int pf_num_samples_           {50};
   int pf_num_points_            {3};

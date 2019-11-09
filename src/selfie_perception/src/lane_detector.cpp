@@ -47,22 +47,6 @@ bool LaneDetector::init()
   if (treshold_block_size_ % 2 == 0)
     treshold_block_size_++;
 
-  // calc hom_cut_mask
-  hom_cut_mask_ = cv::Mat::zeros(cv::Size(TOPVIEW_COLS, TOPVIEW_ROWS), CV_8UC1);
-  if (hom_cut_r_x_ != 0 && hom_cut_r_y_ != 0)
-  {
-    cv::Point points[3];
-    points[0] = cv::Point(hom_cut_r_x_, homography_frame_.rows);
-    points[1] = cv::Point(homography_frame_.cols, homography_frame_.rows);
-    points[2] = cv::Point(homography_frame_.cols, hom_cut_r_y_);
-    cv::fillConvexPoly(hom_cut_mask_, points, 3, cv::Scalar(255, 255, 255));
-    points[0] = cv::Point(hom_cut_l_x_, homography_frame_.rows);
-    points[1] = cv::Point(0, homography_frame_.rows);
-    points[2] = cv::Point(0 , hom_cut_l_y_);
-    cv::fillConvexPoly(hom_cut_mask_, points, 3, cv::Scalar(255, 255, 255));
-  }
-  cv::bitwise_not(hom_cut_mask_, hom_cut_mask_);
-
   image_sub_ = it_.subscribe("/image_rect", 10, &LaneDetector::imageCallback, this);
   if (debug_mode_)
   {
@@ -99,16 +83,12 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
   }
   homography(current_frame_, homography_frame_);
 
-  cv::Mat test_mat;
-  cv::threshold(homography_frame_, test_mat, 0, 255, 1);
-
-  cv::bitwise_or(test_mat, homography_frame_, homography_frame_);
+  cv::bitwise_or(hom_cut_mask_, homography_frame_, homography_frame_);
 
   cv::adaptiveThreshold(homography_frame_, binary_frame_, 255, cv::ADAPTIVE_THRESH_MEAN_C,
                         CV_THRESH_BINARY, treshold_block_size_, threshold_c_);
 
-  cv::bitwise_not(test_mat, test_mat);
-  cv::bitwise_and(binary_frame_, test_mat, binary_frame_);
+  cv::bitwise_and(binary_frame_, hom_cut_mask_inv_, binary_frame_);
 
   cv::medianBlur(binary_frame_, binary_frame_, 3);
 
@@ -300,11 +280,11 @@ void LaneDetector::homography(cv::Mat input_frame, cv::Mat &homography_frame)
 
 void LaneDetector::getParams()
 {
-  cv::FileStorage fs;
-  if (pnh_.getParam("config_file", config_file_) && fs.open(config_file_, cv::FileStorage::READ))
+  cv::FileStorage fs1;
+  if (pnh_.getParam("config_file", config_file_) && fs1.open(config_file_, cv::FileStorage::READ))
   {
-    fs["world2cam"] >> world2cam_;
-    fs.release();
+    fs1["world2cam"] >> world2cam_;
+    fs1.release();
   }
   else
   {
@@ -316,17 +296,25 @@ void LaneDetector::getParams()
     -2206.631043183711,   -117.8258687217328,   -738.93303219503,
     -4.411887214969603,   -0.1088704319653951,  -0.5957339297068464);
   }
+
+  cv::FileStorage fs2;
+  if (pnh_.getParam("hom_cut_file", hom_cut_file_) && fs2.open(hom_cut_file_, cv::FileStorage::READ))
+  {
+    fs2["mat"] >> hom_cut_mask_;
+    fs2.release();
+  }
+  else
+  {
+    // zero hom_cut mask
+    ROS_INFO("Zero hom_cut mask");
+    hom_cut_mask_ = cv::Mat::zeros(cv::Size(TOPVIEW_COLS, TOPVIEW_ROWS), CV_8UC1);
+  }
+  cv::bitwise_not(hom_cut_mask_, hom_cut_mask_inv_);
   
   pnh_.getParam("real_window_size", real_window_size_);
   pnh_.getParam("threshold_c", threshold_c_);
   pnh_.getParam("debug_mode", debug_mode_);
-  pnh_.getParam("hom_cut_tune_mode", hom_cut_tune_mode_);
   pnh_.getParam("max_mid_line_gap", max_mid_line_gap_);
-
-  pnh_.getParam("hom_cut_l_x", hom_cut_l_x_);
-  pnh_.getParam("hom_cut_l_y", hom_cut_l_y_);
-  pnh_.getParam("hom_cut_r_x", hom_cut_r_x_);
-  pnh_.getParam("hom_cut_r_y", hom_cut_r_y_);
 
   pnh_.getParam("pf_num_samples", pf_num_samples_);
   pnh_.getParam("pf_num_points_", pf_num_points_);
@@ -344,15 +332,6 @@ void LaneDetector::openCVVisualization()
   cv::vconcat(m_binary, m_std, m_four);
 
   cv::imshow("STD_DEBUG", m_four);
-
-  if (hom_cut_tune_mode_)
-  {
-    cv::namedWindow("binary_frame", cv::WINDOW_NORMAL);
-    cv::imshow("binary_frame", binary_frame_);
-
-    cv::namedWindow("binary_cut_frame", cv::WINDOW_NORMAL);
-    cv::imshow("binary_cut_frame", binary_frame_);
-  }
   cv::waitKey(1);
 }
 
