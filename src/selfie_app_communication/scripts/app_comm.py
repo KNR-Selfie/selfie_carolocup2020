@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import rospy
-from std_msgs.msg import Float32, Empty
+from std_msgs.msg import Float32, Empty, String
 from std_srvs.srv import Empty
 import dynamic_reconfigure.client
 import bluetooth as bt
@@ -10,6 +10,8 @@ from binascii import hexlify, unhexlify
 from struct import pack, unpack
 from lxml import etree
 class AppComm:
+
+    iterTime = 0.2
     def __init__(self):
 
         rospy.init_node('app_comm')
@@ -32,7 +34,7 @@ class AppComm:
         self.targets = {}
         self.varNames = {}
         self.root = self.parse()
-        self.create()
+        self.init()
 
         self.btThread.start()
 
@@ -40,13 +42,17 @@ class AppComm:
         for key in self.transmitQueues.keys():
             self.transmitQueues[key] += (str(code) + str(pack(self.msgTypes[code],msg.data)))
 
+    def subCallbackString(self,msg,code):
+        for key in self.transmitQueues.keys():
+            self.transmitQueues[key] += (str(code) + str(msg.data) + '\x00')
+
     def parse(self):
         parser = etree.XMLParser(remove_blank_text=True)
         settings = rospy.get_param("app_settings")
         root = etree.XML(settings,parser)
         return root
 
-    def create(self):
+    def init(self):
 
         for tab in self.root:
             for row in tab:
@@ -63,11 +69,19 @@ class AppComm:
                         except:
                             print 'cant open client'
                     elif tag == 'sens':
-                        if element.get('type') == 'f':
-                            code = unhexlify(element.get('code'))
+                        code = unhexlify(element.get('code'))
+                        typ = element.get('type')
+                        if typ == 'f':
                             sub = rospy.Subscriber(element.get('topic'),Float32,lambda value,cd=code: self.subCallbackFloat32(value,cd))
-
                             self.subs.append(sub)
+                            
+
+                        elif typ == 's':
+                            sub = rospy.Subscriber(element.get('topic'),String, lambda value, cd=code: self.subCallbackString(value,cd))
+                            self.subs.append(sub)
+                        self.msgTypes[code] = typ
+
+                        
                     elif tag == 'srv':
                         if element.get('type') == 'e':
                             srv = rospy.ServiceProxy(element.get('srvname'),Empty)
@@ -77,7 +91,7 @@ class AppComm:
 
     def btFun(self):
         while not rospy.is_shutdown():
-            readable, writable, xd = select.select(self.activeConnections + [self.serverSocket], self.activeConnections, [], 0.01)
+            readable, writable, _ = select.select(self.activeConnections + [self.serverSocket], self.activeConnections, [], self.iterTime)
             if self.serverSocket in readable:
                 try:
                     remote_socket, (address,_) = self.serverSocket.accept()
@@ -125,6 +139,7 @@ class AppComm:
         typeLengths['e'] = 0
         typeLengths['?'] = 1   #bool
         typeLengths['f'] = 4
+        typeLengths['s'] = -1 #string
         return typeLengths
 
     def handleMsgs(self,msgs):
@@ -136,15 +151,15 @@ class AppComm:
                 try:
                     self.dyns[code].update_configuration({self.varNames[code]: val})
                 except:
-                    print 'server unavailable'
-                else: print 'calling dyn'
+                    print 'dynamic_reconfigure server unavailable'
+                else: print 'calling dynamic_reconfigure server'
             elif code in self.srvs.keys():
                 print val
                 try:
                     self.srvs[code]()
                 except:
                     print 'server unavailable'
-                else: print 'calling srv'
+                else: print 'calling server'
 
 
 if __name__ == '__main__':

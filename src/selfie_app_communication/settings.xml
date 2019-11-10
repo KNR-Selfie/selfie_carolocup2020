@@ -11,6 +11,7 @@
             </dyn>
             <sens name="sens" type="f" topic="distance" code="010104"/>
             <sens name="sens2" type="f" topic="speed" code="010106"/>
+            <sens name="enum" type="s" topic="enum" code="010112"/>
             <srv name="srv" srvname="resetVision" type="e" code="010105"/>
         </row>
         <row name="output"/>
