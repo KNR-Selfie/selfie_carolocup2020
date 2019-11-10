@@ -9,8 +9,8 @@
                 <var name="Ki_scale" varname="Ki_scale" code="010110" type="f"/>
                 <var name="Kd_scale" varname="Kd_scale" code="010111" type="f"/>
             </dyn>
-            <sens name="sens" type="f" topic="distance" code="010104"/>
-            <sens name="sens2" type="f" topic="speed" code="010106"/>
+            <sens name="distance" type="f" topic="distance" code="010104"/>
+            <sens name="speed" type="f" topic="speed" code="010106"/>
             <sens name="enum" type="s" topic="enum" code="010112"/>
             <srv name="srv" srvname="resetVision" type="e" code="010105"/>
         </row>
