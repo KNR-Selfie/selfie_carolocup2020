@@ -56,11 +56,12 @@ class image_converter:
                                [TOPVIEW_MAX_X, TOPVIEW_MAX_Y]])
 
       topview2world, mask = cv2.findHomography(pixels, coordinates)
+
       world2topview = cv2.invert(topview2world)
 
-      topview2cam_ = cv2.multiply(world2cam.mat(), topview2world)
+      topview2cam_ = world2cam.mat().dot(topview2world)
 
-      homography = cv2.warpPerspective(cv_image, topview2cam_, (topview_size[0], topview_size[1]))
+      homography = cv2.warpPerspective(cv_image, topview2cam_, (topview_size[0], topview_size[1]), flags=cv2.INTER_CUBIC | cv2.WARP_INVERSE_MAP)
 
       ret,thresh = cv2.threshold(homography,0,255,cv2.THRESH_BINARY_INV)
 
@@ -69,6 +70,7 @@ class image_converter:
       fs_write.release()
 
       cv2.imwrite(jpg_output_file, thresh)
+      print("Operation completed")
       only_once = False
 
 def main(args):
