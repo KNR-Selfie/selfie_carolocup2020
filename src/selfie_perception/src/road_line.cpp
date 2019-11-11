@@ -64,7 +64,6 @@ bool RoadLine::pfExecute()
   }
   else
   {
-    pf_.setPolyDegree_(3);
     pf_.prediction(pf_std_);
   }
   
@@ -116,11 +115,11 @@ void RoadLine::addBottomPoint()
   if (!exist_)
     return;
 
-  if (points_[0].x < ((TOPVIEW_MIN_X + TOPVIEW_MAX_X) / 2))
+  if (points_[0].x < ((TOPVIEW_MIN_X + TOPVIEW_MAX_X) / 3))
   {
     cv::Point2f p;
     p.x = TOPVIEW_MIN_X;
-    p.y = getPolyY(coeff_, p.x);
+    p.y = points_[0].y;
     points_.insert(points_.begin(), p);
   }
 }

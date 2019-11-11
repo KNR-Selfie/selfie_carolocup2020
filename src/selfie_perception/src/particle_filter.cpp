@@ -58,21 +58,14 @@ void ParticleFilter::prediction(double std)
   {
     for(int j = 0; j < num_control_points_; ++j)
     {
-      float deriative;
-      if (particles_[i]. poly_degree == 3)
-      {
-        deriative = 3 * particles_[i].coeff[3] * pow(particles_[i].points[j].x, 2) +
-                    2 * particles_[i].coeff[2] * particles_[i].points[j].x + particles_[i].coeff[1];
-      }
-      else
-      {
-        deriative = 2 * particles_[i].coeff[2] * particles_[i].points[j].x + particles_[i].coeff[1];
-      }
-      
-      float angle = atan(deriative);
+      //float deriative = 2 * particles_[i].coeff[2] * particles_[i].points[j].x + particles_[i].coeff[1];
+      //float angle = atan(deriative);
 
-      std::normal_distribution<float> dist_x(0, std * sin(angle));
-      std::normal_distribution<float> dist_y(0, std * cos(angle));
+      //std::normal_distribution<float> dist_x(0, std * sin(angle));
+      //std::normal_distribution<float> dist_y(0, std * cos(angle));
+
+      std::normal_distribution<float> dist_x(0, std);
+      std::normal_distribution<float> dist_y(0, std);
 
       particles_[i].points[j].x += dist_x(gen);
       if (particles_[i].points[j].x > TOPVIEW_MAX_X)
@@ -85,16 +78,6 @@ void ParticleFilter::prediction(double std)
       }
 
       particles_[i].points[j].y += dist_y(gen);
-
-      if (particles_[i].points[j].x < TOPVIEW_MAX_X - 0.2)
-      {
-        particles_[i].poly_degree = 2;
-      }
-      else
-      {
-        particles_[i].poly_degree = 2;
-      }
-      
     }
     if (!polyfit(particles_[i].points, particles_[i].poly_degree, particles_[i].coeff))
     {
@@ -112,11 +95,10 @@ void ParticleFilter::updateWeights(std::vector<cv::Point2f> &p_obs)
     float distance_sum = 0;
     for (int j = 0; j < p_obs.size(); ++j)
     {
-      distance_sum += std::fabs(p_obs[j].y - getPolyY(particles_[i].coeff, p_obs[j].x));
+      distance_sum += findMinPointToParabola(p_obs[j], particles_[i].coeff);
     }
-    //std::cout << distance_sum << std::endl;
     particles_[i].weight = 1 / (1 + exp(9 * distance_sum));
-    weights_sum += distance_sum;
+    weights_sum += particles_[i].weight;
   }
 
   for (int i = 0; i < num_particles_; ++i)
@@ -128,13 +110,23 @@ void ParticleFilter::updateWeights(std::vector<cv::Point2f> &p_obs)
 
 void ParticleFilter::resample()
 {
-  std::default_random_engine gen;
-  std::discrete_distribution<int> dist(weights_.begin(), weights_.end());
   std::vector<Particle> resampled_particles;
-
-  for (int i = 0; i < num_particles_; ++i)
+  std::random_device rd;
+  std::default_random_engine gen(rd());
+  float invM = 1 / float(num_particles_);
+  std::uniform_real_distribution<> dis(0, invM);
+  float c = weights_[0];
+  float r = dis(gen);
+  int i = 0;
+  for (int m = 0; m < num_particles_; ++m)
   {
-    resampled_particles.push_back(particles_[dist(gen)]);
+    float U = r + m * invM;
+    while (U > c)
+    {
+      ++i;
+      c += weights_[i];
+    }
+    resampled_particles.push_back(particles_[i]);
   }
   particles_ = resampled_particles;
 
@@ -190,6 +182,31 @@ std::vector<cv::Point2f> ParticleFilter::getControlPoints(int particle_id)
     empty.push_back(p);
     return empty;
   }
+}
+
+float ParticleFilter::findMinPointToParabola(cv::Point2f p, std::vector<float> coeff)
+{
+  cv::Point2f poly_p;
+  poly_p.x = p.x;
+  poly_p.y = getPolyY(coeff, p.x);
+  float min = p.y - poly_p.y;
+  float new_min = min;
+  float step = 0.05;
+  do
+  {
+    min = new_min;
+    poly_p.x -= step;
+    poly_p.y = getPolyY(coeff, poly_p.x);
+    new_min = getDistance(p, poly_p);
+  } while (new_min - min < 0);
+  return std::fabs(min);
+}
+
+float ParticleFilter::getDistance(cv::Point2f p1, cv::Point2f p2)
+{
+  float dx = (p1.x - p2.x);
+  float dy = (p1.y - p2.y);
+  return sqrtf(dx * dx + dy * dy);
 }
 
 void ParticleFilter::reset()
