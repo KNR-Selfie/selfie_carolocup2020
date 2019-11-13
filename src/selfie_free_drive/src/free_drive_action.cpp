@@ -70,7 +70,7 @@ void FreeDriveAction::executeCB(const selfie_msgs::drivingGoalConstPtr &goal)
   //publish result
   ROS_INFO("PARKING AREA");
   d_to_starting_line_ = 100;
-  result_.parking_area = true;
+  result_.event = false;
   as_.setSucceeded(result_);
 }
 
