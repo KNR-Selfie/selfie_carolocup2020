@@ -10,13 +10,11 @@
   <arg name="visualise" default="false" />
   <arg name="debug_mode" value="false"/>
   <arg name="real_window_size" value="0.1" />
-
   <arg name="homography_file" default="/home/$(env USER)/.ros/homography_export.yaml" />
   <arg name="hom_cut_file" default="/home/$(env USER)/.ros/hom_cut.yaml" />
 
   <!-- NODES -->
-  <node pkg="urg_node" type="urg_node" name="lidar" respawn="true" output="screen">
-  </node>
+  <node pkg="urg_node" type="urg_node" name="lidar" respawn="true" output="screen"/>
 
   <node name="stm32_bridge" type="selfie_stm32_bridge" pkg="selfie_stm32_bridge" respawn="true" output="screen">
     <remap from="/speed" to="/stm32/speed" />
@@ -40,16 +38,14 @@
 
   <node name="odometry" type="selfie_odometry" pkg="selfie_odometry" respawn="true" output="screen"/>
 
-  <node name="scheduler" type="scheduler" pkg="selfie_scheduler" respawn="true" output="screen" >
-  </node>
+  <node name="scheduler" type="scheduler" pkg="selfie_scheduler" respawn="true" output="screen" />
 
   <!--  INCLUDES -->
   <include file="$(find selfie_launch)/launch/subsystems/transforms.launch"/>
 
   <include file="$(find selfie_launch)/launch/subsystems/basler.launch"/>
 
-  <include file="$(find selfie_launch)/launch/subsystems/control.launch">
-  </include>
+  <include file="$(find selfie_launch)/launch/subsystems/control.launch"/>
 
   <include file="$(find selfie_launch)/launch/subsystems/action_servers.launch">
     <arg name="i_visualization_in_searching" value="$(arg visualization_in_searching)" />

@@ -5,9 +5,7 @@ const_setpoint:
   }
 detect_markings: 
   {  
-    # config_file: /home/michal/.ros/homography_export.yaml,
     debug_mode: false,
-    # hom_cut_file: /home/michal/.ros/hom_cut.yaml,
     pf_num_points: 3,
     pf_num_samples: 50,
     pf_num_samples_vis: 4,
@@ -40,11 +38,6 @@ free_drive:
     max_speed: 3.0,
     starting_line_distance_to_end: 0.45
   }
-# image_proc_fisheye: 
-#   {
-#     mapx_file: /home/michal/Programming/ros/workspaces/param/selfie_carolocup2020/src/camera/selfie_camera/config/mapx.yaml,
-#     mapy_file: /home/michal/Programming/ros/workspaces/param/selfie_carolocup2020/src/camera/selfie_camera/config/mapy.yaml
-#   }
 lidar: 
   {
     serial_port: /dev/sensors/hokuyo_H1312790
