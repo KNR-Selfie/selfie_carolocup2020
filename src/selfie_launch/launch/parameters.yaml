@@ -1,0 +1,132 @@
+const_setpoint: 
+{
+  topic: setpoint,
+  value: -0.2
+}
+detect_markings: 
+{  
+  config_file: /home/michal/.ros/homography_export.yaml,
+  debug_mode: false,
+  hom_cut_file: /home/michal/.ros/hom_cut.yaml,
+  pf_num_points: 3,
+  pf_num_samples: 50,
+  pf_num_samples_vis: 4,
+  pf_std: 0.015,
+  real_window_size: 0.1,
+  threshold_c: -15
+}
+detect_parking_spot: 
+{
+  default_speed_in_parking_zone: 0.8,
+  max_distance_to_free_place: 0.8,
+  point_max_x: 2,
+  point_max_y: 0.2,
+  point_min_x: 0.01,
+  point_min_y: -1,
+  speed_when_found_place: 0.3,
+  visualization_in_searching: false
+}
+extract_road_features: 
+{
+  average_window_size: 10,
+  lookahead: 0.55,
+  max_acceleration: 1.0,
+  max_curvature: 1.8,
+  max_deceleration: 1.5,
+  min_speed: 1.5
+}
+free_drive: 
+{
+  max_speed: 3.0,
+  starting_line_distance_to_end: 0.45
+}
+image_proc_fisheye: 
+{
+  mapx_file: /home/michal/Programming/ros/workspaces/param/selfie_carolocup2020/src/camera/selfie_camera/config/mapx.yaml,
+  mapy_file: /home/michal/Programming/ros/workspaces/param/selfie_carolocup2020/src/camera/selfie_camera/config/mapy.yaml
+}
+lidar: 
+{
+  serial_port: /dev/sensors/hokuyo_H1312790
+}
+offset_combiner: 
+{
+  L: 0.3
+}
+park_server: 
+{
+  dist_turn: 0.17,
+  idle_time: 2.0,
+  max_rot: 0.8,
+  max_turn: 0.8,
+  minimal_start_parking_x_: -0.16,
+  odom_to_back: -0.33,
+  odom_to_front: 0.18,
+  odom_to_laser: 0.2,
+  parking_speed: 0.4,
+  state_msgs: false
+}
+pid_controller: 
+{
+  Kd: 0.01,
+  Ki: 0.0,
+  Kp: 0.9,
+  lower_limit: -0.785,
+  upper_limit: 0.785,
+  windup_limit: 10
+}
+pylon_camera_node:
+  brightness: 150
+  brightness_continuous: true
+  camera_info_url: ''
+  exposure: 6000.0
+  exposure_auto: false
+  frame_rate: 150
+  gain_auto: true
+  height: 400
+  image_encoding: mono8
+  image_raw:
+    compressed: 
+    {
+      format: jpeg,
+      jpeg_quality: 80,
+      png_level: 9
+    }
+    compressedDepth: 
+    {
+      depth_max: 10.0,
+      depth_quantization: 100.0,
+      png_level: 9
+    }
+    theora: 
+    {
+      keyframe_frequency: 64,
+      optimize_for: 1,
+      quality: 31,
+      target_bitrate: 800000
+    }
+  roi_offset_x: 512
+  roi_offset_y: 460
+  width: 1024
+
+scheduler: 
+{
+  begin_action: 1,
+  parking_spot: 0.6,
+  starting_distance: 1.0
+}
+selfie_obstacle_detector: 
+{
+  lidar_offset: 0.0,
+  max_range: 2.0,
+  min_range: 0.03,
+  min_segment_size: 0.04,
+  min_to_divide: 0.03,
+  segment_threshold: 0.07,
+  upside_down: false,
+  visualize: false
+}
+starting_procedure: 
+{
+  starting_speed: 2.0
+}
