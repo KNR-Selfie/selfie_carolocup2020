@@ -1,8 +1,8 @@
 <launch>
   <!-- COMMON PARAMS -->
-  <arg name="lookahead" default="0.55" />
+ 
   <arg name="max_curvature" default="1.8" />
-  <arg name="min_speed" default="1.5" />
+
   <arg name="max_speed" default="3.0" />
   <arg name="max_acceleration" default="1.0" />
   <arg name="max_deceleration" default="1.5" />
@@ -21,11 +21,11 @@
   <arg name="default_speed_in_parking_zone" default="0.8" />
   <arg name="speed_when_found_place" default="0.3" />
   <arg name="max_distance_to_free_place" default="0.8" />
-  <arg name="visualization_in_searching" default="false" />
+  
 
   <arg name="parking_speed" default="0.4" />
   <arg name="parking_idle_time" default="2.0" />
-  <arg name="parking_msgs_output" default="false" />
+  
 
   <arg name="starting_speed" default="2.0" />
   <arg name="starting_distance" default="1.0" />
