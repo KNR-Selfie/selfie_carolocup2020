@@ -5,7 +5,7 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /FreeParkingPlaces1/Namespaces1
-        - /Marker1/Namespaces1
+        - /ObstaclesToAvoid1/Namespaces1
       Splitter Ratio: 0.5
     Tree Height: 633
   - Class: rviz/Selection
@@ -118,10 +118,17 @@ Visualization Manager:
     - Class: rviz/Marker
       Enabled: true
       Marker Topic: /avoiding_obstacles
-      Name: Marker
+      Name: ObstaclesToAvoid
       Namespaces:
-        boxes_on_lane: true
-        nearest_box: true
+        {}
+      Queue Size: 100
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /intersection_visualization
+      Name: Intersection
+      Namespaces:
+        obstacles_on_road: true
       Queue Size: 100
       Value: true
   Enabled: true
