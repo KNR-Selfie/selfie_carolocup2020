@@ -38,7 +38,7 @@ private:
   ros::NodeHandle pnh_;
   ros::Subscriber obstacles_sub_;
   ros::Subscriber markings_sub_;
-  ros::Subscriber speed_sub_;
+  ros::Publisher speed_pub_;
   ros::Publisher visualizer_;
   ros::Publisher setpoint_pub_;
   // Two services as switches activating active/passive mode
@@ -59,6 +59,10 @@ private:
   float left_lane_;
   float default_setpoint_;
 
+  float safety_margin_; // safety margin considering inaccurations in measuring speed etc..
+  float max_speed_;
+  std_msgs::Float64 speed_message_;
+
   float maximum_distance_to_obstacle_; // to avoid changing lane too early
   float maximum_length_of_obstacle_;
   float time_left_; // after passing this time car resturns on right lane
@@ -78,7 +82,7 @@ private:
   void filter_boxes(const selfie_msgs::PolygonArray &);           // filters boxes and saves in filtered_boxes_
   void road_markings_callback(const selfie_msgs::RoadMarkings &); // checks if boxes from filtered_boxes_ are on right lane
   void obstacle_callback(const selfie_msgs::PolygonArray &);
-  void calculate_overtake_time(const std_msgs::Float32 &);
+  void calculate_overtake_time();
   void calculate_time(const ros::TimerEvent &);
 
   bool switchToActive(std_srvs::Empty::Request &, std_srvs::Empty::Response &);
