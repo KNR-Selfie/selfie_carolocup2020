@@ -27,16 +27,23 @@ protected:
   // create messages that are used to published feedback/result
   selfie_msgs::drivingFeedback feedback_;
   selfie_msgs::drivingResult result_;
+  selfie_msgs::drivingGoal goal_;
 
   //subscribers
   ros::Subscriber starting_line_sub_;
+  ros::Subscriber intersection_sub_;
 
   //publishers
   ros::Publisher max_speed_pub_;
 
   float d_to_starting_line_;
-  float starting_line_distance_to_end;
+  float starting_line_distance_to_end_;
   bool starting_line_detected_;
+
+  float d_to_intersection_;
+  float intersection_distance_to_end_;
+  bool intersection_detected_;
+
   float max_speed_;
   int last_feedback_ {AUTONOMOUS_DRIVE};
 
@@ -47,8 +54,9 @@ public:
   void publishFeedback(feedback_variable program_state);
 
   void maxSpeedPub();
-  void executeCB(const selfie_msgs::drivingGoalConstPtr &goal);
+  void executeCB();
   void preemptCB();
   void startingLineCB(const std_msgs::Float32ConstPtr &msg);
+  void intersectionCB(const std_msgs::Float32 &msg);
 };
 #endif // FREE_DRIVE_ACTION_H
