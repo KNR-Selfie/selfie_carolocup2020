@@ -1,46 +1,22 @@
 <launch>
   <!-- PASSED PARAMS-->
-  <arg name="i_max_speed" />
-  <arg name="i_speed_when_found_place" />
-  <arg name="i_default_speed_in_parking_zone" />
   <arg name="i_visualization_in_searching" />
-  <arg name="i_max_distance_to_free_place" />
   <arg name="i_parking_msgs_output" />
-  <arg name="i_parking_speed" />
-  <arg name="i_parking_idle_time" />
-  <arg name="i_starting_speed" />
+
 
   <node name="free_drive" type="free_drive" pkg="selfie_free_drive" respawn="true" output="screen">
-    <param name="max_speed" value="$(arg i_max_speed)" />
-    <param name="starting_line_distance_to_end" value="0.45" />
   </node>
 
   <node name="detect_parking_spot" type="detect_parking_spot" pkg="selfie_park" respawn="true" output="screen">
-    <param name="point_min_x" value="0.01" />
-    <param name="point_max_x" value="2" />
-    <param name="point_min_y" value="-1" />
-    <param name="point_max_y" value="0.2" />
-    <param name="default_speed_in_parking_zone" value="$(arg i_default_speed_in_parking_zone)" />
-    <param name="speed_when_found_place" value="$(arg i_speed_when_found_place)" />
+
     <param name="visualization_in_searching" value="$(arg i_visualization_in_searching)" />
-    <param name="max_distance_to_free_place" value="$(arg i_max_distance_to_free_place)" />
   </node>
 
   <node name="park_server" type="park_server" pkg="selfie_park" respawn="true" output="screen">
-    <param name="minimal_start_parking_x_" value="-0.16" />
     <param name="state_msgs" value="$(arg i_parking_msgs_output)" />
-    <param name="max_rot" value="0.8" />
-    <param name="dist_turn" value="0.17" />
-    <param name="parking_speed" value="$(arg i_parking_speed)" />
-    <param name="odom_to_laser" value="0.2" />
-    <param name="odom_to_front" value="0.18" />
-    <param name="odom_to_back" value="-0.33" />
-    <param name="max_turn" value="0.8" />
-    <param name="idle_time" value="$(arg i_parking_idle_time)" />
   </node>
 
   <node name="starting_procedure" type="starting_procedure" pkg="selfie_starting_procedure" respawn="true" output="screen">
-    <param name="starting_speed" value="$(arg i_starting_speed)" />
   </node>
   
 </launch>
