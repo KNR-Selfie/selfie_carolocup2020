@@ -10,6 +10,7 @@
   <node name="detect_parking_spot" type="detect_parking_spot" pkg="selfie_park" respawn="true" output="screen">
 
     <param name="visualization_in_searching" value="$(arg i_visualization_in_searching)" />
+    <param name="max_search_time" value="20" />
   </node>
 
   <node name="park_server" type="park_server" pkg="selfie_park" respawn="true" output="screen">

@@ -22,6 +22,7 @@ Search_server::Search_server(const ros::NodeHandle &nh, const ros::NodeHandle &p
   pnh_.param<bool>("visualization_in_searching", visualization, true);
   pnh_.param<float>("max_distance_to_free_place", max_distance_to_free_place_, 0.8);
   pnh_.param<float>("box_angle_deg", tangens_of_box_angle_, 55); // maximum angle between car and found place
+  pnh_.param<float>("max_search_time", max_search_time_, 12);
   tangens_of_box_angle_ = tan(tangens_of_box_angle_ * M_PI / 180);
 
   speed_current.data = default_speed_in_parking_zone;
@@ -41,6 +42,7 @@ bool Search_server::init()
   speed_publisher.publish(speed_current);
   min_spot_lenght = search_server_.acceptNewGoal()->min_spot_lenght;
   publishFeedback(START_SEARCHING_PLACE);
+  timer_ = nh_.createTimer(ros::Duration(max_search_time_), &Search_server::endTimer, this);
   ROS_INFO("Initialized");
 }
 
@@ -164,6 +166,13 @@ bool Search_server::find_free_places()
   return false;
 }
 
+void Search_server::endTimer(const ros::TimerEvent &time)
+{
+  search_server_.setAborted();
+  ROS_INFO("Time passed, search_server server aborted");
+  timer_.stop();
+}
+
 void Search_server::send_goal()
 {
 
@@ -184,6 +193,7 @@ void Search_server::send_goal()
   // reset(); TODO
   ROS_INFO("Place found and sent");
   search_server_.setSucceeded(result);
+  timer_.stop();
 }
 
 void Search_server::display_place(Box &place, const std::string &name)

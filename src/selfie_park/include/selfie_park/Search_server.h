@@ -45,10 +45,13 @@ private:
   std::vector<Box> potential_free_places;
   Box first_free_place;
 
+  float max_search_time_; // maximum time (in sec) of searching for free place when it passes service will be aborted
+  ros::Timer timer_;
+
   float min_spot_lenght;
   bool visualization;
 
-  float tangens_of_box_angle_; //describes max deviation
+  float tangens_of_box_angle_; // describes max deviation
   float max_distance_to_free_place_;
   float default_speed_in_parking_zone;
   float speed_when_found_place;
@@ -68,6 +71,7 @@ private:
   bool init();
   void preemptCB();
   void manager(const selfie_msgs::PolygonArray &);
+  void endTimer(const ros::TimerEvent &time);
   void filter_boxes(const selfie_msgs::PolygonArray &); // odfiltrowywuje boxy,
                                                         // pozostawia tylko te
                                                         // po prawej
