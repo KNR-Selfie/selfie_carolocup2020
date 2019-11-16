@@ -34,6 +34,14 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
   if (visualization_)
   {
     visualizer_ = nh_.advertise<visualization_msgs::Marker>("/avoiding_obstacles", 1);
+    // Initializing EmptyMarker
+    emptyMarker.header.frame_id = "laser";
+    emptyMarker.header.stamp = ros::Time::now();
+    emptyMarker.ns = "nearest_box";
+    emptyMarker.type = visualization_msgs::Marker::LINE_LIST;
+    emptyMarker.action = visualization_msgs::Marker::ADD;
+    emptyMarker.id = 0;
+    emptyMarker.lifetime = ros::Duration();
   }
   status_ = PASSIVE;
   ROS_INFO("road_obstacle_detector initialized ");
@@ -169,7 +177,11 @@ void Road_obstacle_detector::change_lane(float lane)
 void Road_obstacle_detector::visualizeBoxes()
 {
   Box().visualizeList(filtered_boxes_, visualizer_, "boxes_on_lane", 0.9, 0.9, 0.9);
-  nearest_box_in_front_of_car_->visualize(visualizer_, "nearest_box", 1, 0.1, 0.1);
+  if (filtered_boxes_.empty())
+  {
+    visualizer_.publish(emptyMarker);
+  } else
+    nearest_box_in_front_of_car_->visualize(visualizer_, "nearest_box", 1, 0.1, 0.1);
 }
 
 void Road_obstacle_detector::distanceCallback(const std_msgs::Float32 &msg) { current_distance_ -= msg.data; }
