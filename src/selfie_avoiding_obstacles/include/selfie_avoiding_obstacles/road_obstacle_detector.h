@@ -38,6 +38,7 @@ private:
   ros::NodeHandle pnh_;
   ros::Subscriber obstacles_sub_;
   ros::Subscriber markings_sub_;
+  ros::Subscriber distance_sub_;
   ros::Publisher speed_pub_;
   ros::Publisher visualizer_;
   ros::Publisher setpoint_pub_;
@@ -59,16 +60,16 @@ private:
   float left_lane_;
   float default_setpoint_;
 
-  float safety_margin_; // safety margin considering inaccurations in measuring speed etc..
   float max_speed_;
   float safe_speed_;
   std_msgs::Float64 speed_message_;
 
   float maximum_distance_to_obstacle_; // to avoid changing lane too early
   float maximum_length_of_obstacle_;
-  float time_left_; // after passing this time car resturns on right lane
-  float timer_duration_;
-  ros::Timer timer_;
+
+  float safety_margin_; // safety margin considering inaccurations in measuring distance etc..
+  float current_distance_;
+  float return_distance_; // after passing this distance car returns on right lane
 
   std::list<Box> filtered_boxes_; // boxes are sorted by x valule
   // ascendend (near->far)
@@ -77,14 +78,13 @@ private:
 
   bool visualization_;
   bool received_road_markings_;
-  bool is_time_calculated_for_overtake_;
   status status_;
 
   void filter_boxes(const selfie_msgs::PolygonArray &);           // filters boxes and saves in filtered_boxes_
   void road_markings_callback(const selfie_msgs::RoadMarkings &); // checks if boxes from filtered_boxes_ are on right lane
   void obstacle_callback(const selfie_msgs::PolygonArray &);
-  void calculate_overtake_time();
-  void calculate_time(const ros::TimerEvent &);
+  void distanceCallback(const std_msgs::Float32 &);
+  void calculate_return_distance();
 
   bool switchToActive(std_srvs::Empty::Request &, std_srvs::Empty::Response &);
   bool switchToPassive(std_srvs::Empty::Request &, std_srvs::Empty::Response &);
