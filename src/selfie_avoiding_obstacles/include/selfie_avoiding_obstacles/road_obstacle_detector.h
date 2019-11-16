@@ -77,7 +77,8 @@ private:
   std_msgs::Float32 setpoint_value_;
 
   bool visualization_;
-  visualization_msgs::Marker emptyMarker;
+  visualization_msgs::Marker empty_marker_;
+  Box area_of_interest_box_;
   bool received_road_markings_;
   status status_;
 

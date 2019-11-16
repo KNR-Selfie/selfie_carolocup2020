@@ -34,14 +34,17 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
   if (visualization_)
   {
     visualizer_ = nh_.advertise<visualization_msgs::Marker>("/avoiding_obstacles", 1);
-    // Initializing EmptyMarker
-    emptyMarker.header.frame_id = "laser";
-    emptyMarker.header.stamp = ros::Time::now();
-    emptyMarker.ns = "nearest_box";
-    emptyMarker.type = visualization_msgs::Marker::LINE_LIST;
-    emptyMarker.action = visualization_msgs::Marker::ADD;
-    emptyMarker.id = 0;
-    emptyMarker.lifetime = ros::Duration();
+    // Initializing empty_marker_
+    empty_marker_.header.frame_id = "laser";
+    empty_marker_.header.stamp = ros::Time::now();
+    empty_marker_.ns = "nearest_box";
+    empty_marker_.type = visualization_msgs::Marker::LINE_LIST;
+    empty_marker_.action = visualization_msgs::Marker::ADD;
+    empty_marker_.id = 0;
+    empty_marker_.lifetime = ros::Duration();
+    // Initializing Box describing area of interest
+    area_of_interest_box_ = Box(Point(point_min_x_, point_max_y_), Point(point_min_x_, point_min_y_),
+                                Point(point_max_x_, point_max_y_), Point(point_max_x_, point_min_y_));
   }
   status_ = PASSIVE;
   ROS_INFO("road_obstacle_detector initialized ");
@@ -177,9 +180,10 @@ void Road_obstacle_detector::change_lane(float lane)
 void Road_obstacle_detector::visualizeBoxes()
 {
   Box().visualizeList(filtered_boxes_, visualizer_, "boxes_on_lane", 0.9, 0.9, 0.9);
+  area_of_interest_box_.visualize(visualizer_, "area_of_interest", 1, 1, 1);
   if (filtered_boxes_.empty())
   {
-    visualizer_.publish(emptyMarker);
+    visualizer_.publish(empty_marker_);
   } else
     nearest_box_in_front_of_car_->visualize(visualizer_, "nearest_box", 1, 0.1, 0.1);
 }
