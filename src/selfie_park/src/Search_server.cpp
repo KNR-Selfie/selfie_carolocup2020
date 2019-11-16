@@ -56,7 +56,13 @@ void Search_server::manager(const selfie_msgs::PolygonArray &msg)
   }
   filter_boxes(msg);
   if (visualization)
+  {
+
     display_places(boxes_on_the_right_side, "FilteredBoxes");
+    area_of_interest_ = Box(Point(point_min_x, point_max_y), Point(point_min_x, point_min_y),
+                            Point(point_max_x, point_max_y), Point(point_max_x, point_min_y));
+    area_of_interest_.visualize(visualize_free_place, "Area of interest", 1, 1, 1);
+  }
   // ROS_INFO("Size of  boxes_on_the_right %lu",boxes_on_the_right_side.size());
 
   switch (action_status.action_status)
@@ -159,7 +165,9 @@ bool Search_server::find_free_places()
                tmp_box.top_left.x, tmp_box.top_left.y, tmp_box.top_right.x, tmp_box.top_right.y, tmp_box.bottom_left.x,
                tmp_box.bottom_left.y, tmp_box.bottom_right.x, tmp_box.bottom_right.y);
       if (visualization)
+      {
         display_place(tmp_box, "first_free_place");
+      }
       return true;
     }
   }
@@ -196,7 +204,7 @@ void Search_server::send_goal()
   timer_.stop();
 }
 
-void Search_server::display_place(Box &place, const std::string &name)
+void Search_server::display_place(Box &place, const std::string &name, float r, float g, float b)
 {
   visualization_msgs::Marker marker;
 
@@ -208,9 +216,9 @@ void Search_server::display_place(Box &place, const std::string &name)
   marker.id = 0;
   marker.lifetime = ros::Duration();
 
-  marker.color.r = 100.0f;
-  marker.color.g = 255.0f;
-  marker.color.b = 200.0f;
+  marker.color.r = r;
+  marker.color.g = g;
+  marker.color.b = b;
   marker.color.a = 1.0f;
 
   marker.scale.x = 0.01;

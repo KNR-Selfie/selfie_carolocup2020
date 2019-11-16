@@ -50,6 +50,7 @@ private:
 
   float min_spot_lenght;
   bool visualization;
+  Box area_of_interest_;
 
   float tangens_of_box_angle_; // describes max deviation
   float max_distance_to_free_place_;
@@ -79,5 +80,5 @@ private:
   void send_goal();
 
   void display_places(std::vector<Box> &, const std::string &);
-  void display_place(Box &, const std::string &);
+  void display_place(Box &, const std::string &, float = 100.0f, float = 255.0f, float = 200.0f);
 };
