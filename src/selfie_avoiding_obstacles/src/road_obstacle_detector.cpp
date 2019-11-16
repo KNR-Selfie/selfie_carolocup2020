@@ -22,6 +22,8 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
   pnh_.param<float>("point_max_x", point_max_x_, 1.1);
   pnh_.param<float>("point_min_y", point_min_y_, -1.3);
   pnh_.param<float>("point_max_y", point_max_y_, 1.3);
+  pnh_.param<float>("right_lane_setpoint", right_lane_, -0.2);
+  pnh_.param<float>("left_lane_setpoint", left_lane_, 0.2);
 
   if (visualization_)
   {
@@ -42,7 +44,7 @@ void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &
     if (!filtered_boxes_.empty())
       if (nearest_box_in_front_of_car_->bottom_left.x <= maximum_distance_to_obstacle_)
       {
-        change_lane(LEFT);
+        change_lane(left_lane_);
         status_ = OVERTAKING;
         speed_sub_ = nh_.subscribe("/speed", 1, &Road_obstacle_detector::calculate_overtake_time, this);
       }
@@ -50,7 +52,7 @@ void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &
   case OVERTAKING:
     if (time_left_ <= 0 && is_time_calculated_for_overtake_)
     {
-      change_lane(RIGHT);
+      change_lane(right_lane_);
       status_ = CLEAR;
       is_time_calculated_for_overtake_ = false;
       timer_.stop();
@@ -141,7 +143,7 @@ void Road_obstacle_detector::change_lane(float lane)
 {
   setpoint_value_.data = lane;
   setpoint_pub_.publish(setpoint_value_);
-  if (lane == LEFT)
+  if (lane == left_lane_)
     ROS_INFO("Lane changed to left");
   else
     ROS_INFO("Lane changed to right");

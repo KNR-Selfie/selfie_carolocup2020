@@ -18,9 +18,6 @@
 
 #include <selfie_park/shapes.h>
 
-#define LEFT 0.2
-#define RIGHT -0.2
-
 using namespace std;
 
 class Road_obstacle_detector
@@ -52,7 +49,9 @@ private:
   float point_max_x_;
   float point_min_y_;
   float point_max_y_;
-  
+  // Setpoints for lanes
+  float right_lane_;
+  float left_lane_;
 
   float maximum_distance_to_obstacle_; // to avoid changing lane too early
   float maximum_length_of_obstacle_;
