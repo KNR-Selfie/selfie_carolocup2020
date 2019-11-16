@@ -9,6 +9,7 @@ Search_server::Search_server(const ros::NodeHandle &nh, const ros::NodeHandle &p
     : nh_(nh)
     , pnh_(pnh)
     , search_server_(nh_, "search", false)
+    , received_distance_(false)
 {
   search_server_.registerGoalCallback(boost::bind(&Search_server::init, this));
   search_server_.registerPreemptCallback(boost::bind(&Search_server::preemptCB, this));
@@ -22,7 +23,7 @@ Search_server::Search_server(const ros::NodeHandle &nh, const ros::NodeHandle &p
   pnh_.param<bool>("visualization_in_searching", visualization, true);
   pnh_.param<float>("max_distance_to_free_place", max_distance_to_free_place_, 0.8);
   pnh_.param<float>("box_angle_deg", tangens_of_box_angle_, 55); // maximum angle between car and found place
-  pnh_.param<float>("max_search_time", max_search_time_, 12);
+  pnh_.param<float>("length_of_parking_area", length_of_parking_area_, 2.5);
   tangens_of_box_angle_ = tan(tangens_of_box_angle_ * M_PI / 180);
 
   speed_current.data = default_speed_in_parking_zone;
@@ -37,12 +38,12 @@ Search_server::~Search_server() {}
 bool Search_server::init()
 {
   obstacles_sub = nh_.subscribe("/obstacles", 1, &Search_server::manager, this);
+  distance_sub_ = nh_.subscribe("/distance", 1, &Search_server::distanceCb, this);
   speed_publisher = nh_.advertise<std_msgs::Float64>("/max_speed", 0.5);
 
   speed_publisher.publish(speed_current);
   min_spot_lenght = search_server_.acceptNewGoal()->min_spot_lenght;
   publishFeedback(START_SEARCHING_PLACE);
-  timer_ = nh_.createTimer(ros::Duration(max_search_time_), &Search_server::endTimer, this);
   ROS_INFO("Initialized");
 }
 
@@ -174,11 +175,20 @@ bool Search_server::find_free_places()
   return false;
 }
 
-void Search_server::endTimer(const ros::TimerEvent &time)
+void Search_server::distanceCb(const std_msgs::Float32 &msg)
 {
-  search_server_.setAborted();
-  ROS_INFO("Time passed, search_server server aborted");
-  timer_.stop();
+  current_distance_ = msg.data;
+  received_distance_ = true;
+  if (!max_distance_calculated_)
+  {
+    max_distance_ = current_distance_ + length_of_parking_area_;
+    max_distance_calculated_ = true;
+  }
+  if (max_distance_ < current_distance_)
+  {
+    ROS_INFO("Haven't found free place in designated distance, aborting");
+    preemptCB();
+  }
 }
 
 void Search_server::send_goal()
@@ -198,10 +208,9 @@ void Search_server::send_goal()
   p.y = first_free_place.top_left.y;
   result.parking_spot.points.push_back(p);
 
-  // reset(); TODO
   ROS_INFO("Place found and sent");
   search_server_.setSucceeded(result);
-  timer_.stop();
+  endAction();
 }
 
 void Search_server::display_place(Box &place, const std::string &name, float r, float g, float b)
@@ -318,8 +327,20 @@ void Search_server::publishFeedback(unsigned int newActionStatus)
   search_server_.publishFeedback(action_status);
 }
 
+void calculateMaxDistance() {}
+
 void Search_server::preemptCB()
 {
   ROS_INFO("Action preempted");
+  endAction();
   search_server_.setAborted();
+}
+
+void Search_server::endAction() // shutting donw unnecesary subscribers and publishers
+{
+  obstacles_sub.shutdown();
+  distance_sub_.shutdown();
+  speed_publisher.shutdown();
+  received_distance_ = false;
+  max_distance_calculated_ = false;
 }
