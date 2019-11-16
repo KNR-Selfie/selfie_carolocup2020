@@ -61,6 +61,7 @@ private:
 
   float safety_margin_; // safety margin considering inaccurations in measuring speed etc..
   float max_speed_;
+  float safe_speed_;
   std_msgs::Float64 speed_message_;
 
   float maximum_distance_to_obstacle_; // to avoid changing lane too early

@@ -28,6 +28,7 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
   pnh_.param<float>("left_lane_setpoint", left_lane_, 0.2);
   pnh_.param<float>("deafult_setpoint", default_setpoint_, -0.2);
   pnh_.param<float>("maximum_speed", max_speed_, 0.3);
+  pnh_.param<float>("safe_speed", safe_speed_, 0.1);
   pnh_.param<float>("safety_margin", safety_margin_, 1.15);
   speed_message_.data = max_speed_;
 
@@ -49,18 +50,27 @@ void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &
   case CLEAR:
     filter_boxes(msg);
     if (!filtered_boxes_.empty())
+    {
+      speed_message_.data = safe_speed_;
       if (nearest_box_in_front_of_car_->bottom_left.x <= maximum_distance_to_obstacle_)
       {
         change_lane(left_lane_);
         status_ = OVERTAKING;
       }
+    } else
+      speed_message_.data = max_speed_;
+
     break;
   case OVERTAKING:
     if (time_left_ <= 0)
     {
+      speed_message_.data = safe_speed_;
       change_lane(right_lane_);
       status_ = CLEAR;
       timer_.stop();
+    } else
+    {
+      speed_message_.data = max_speed_;
     }
     break;
   case PASSIVE:
