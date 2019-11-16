@@ -12,6 +12,7 @@
 #include <selfie_msgs/PolygonArray.h>
 #include <selfie_msgs/RoadMarkings.h>
 #include <std_msgs/Float32.h>
+#include <std_srvs/Empty.h>
 #include <visualization_msgs/Marker.h>
 
 #include <ros/console.h>
@@ -30,7 +31,8 @@ private:
   enum status
   {
     CLEAR,
-    OVERTAKING
+    OVERTAKING,
+    PASSIVE,
   };
   ros::NodeHandle nh_;
   ros::NodeHandle pnh_;
@@ -39,6 +41,9 @@ private:
   ros::Subscriber speed_sub_;
   ros::Publisher visualizer_;
   ros::Publisher setpoint_pub_;
+  // Two services as switches activating active/passive mode
+  ros::ServiceServer passive_mode_service_;
+  ros::ServiceServer active_mode_service_;
   // Polymonial coefficients describing road markings
   float left_line_[4];
   float center_line_[4];
@@ -52,6 +57,7 @@ private:
   // Setpoints for lanes
   float right_lane_;
   float left_lane_;
+  float default_setpoint_;
 
   float maximum_distance_to_obstacle_; // to avoid changing lane too early
   float maximum_length_of_obstacle_;
@@ -74,6 +80,9 @@ private:
   void obstacle_callback(const selfie_msgs::PolygonArray &);
   void calculate_overtake_time(const std_msgs::Float32 &);
   void calculate_time(const ros::TimerEvent &);
+
+  bool switchToActive(std_srvs::Empty::Request &, std_srvs::Empty::Response &);
+  bool switchToPassive(std_srvs::Empty::Request &, std_srvs::Empty::Response &);
 
   void change_lane(float lane);
 

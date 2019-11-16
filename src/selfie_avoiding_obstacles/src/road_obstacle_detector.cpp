@@ -16,7 +16,8 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
   pnh_.param<bool>("visualization", visualization_, false);
   pnh_.param<float>("maximum_length_of_obstacle", maximum_length_of_obstacle_, 0.8);
   obstacles_sub_ = nh_.subscribe("/obstacles", 1, &Road_obstacle_detector::obstacle_callback, this);
-  markings_sub_ = nh_.subscribe("/road_markings", 1, &Road_obstacle_detector::road_markings_callback, this);
+  passive_mode_service_ = nh_.advertiseService("/avoiding_obst_set_passive", &Road_obstacle_detector::switchToPassive, this);
+  active_mode_service_ = nh_.advertiseService("/avoiding_obst_set_active", &Road_obstacle_detector::switchToActive, this);
   setpoint_pub_ = nh_.advertise<std_msgs::Float32>("/setpoint", 1);
   pnh_.param<float>("point_min_x", point_min_x_, 0.3);
   pnh_.param<float>("point_max_x", point_max_x_, 1.1);
@@ -24,12 +25,13 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
   pnh_.param<float>("point_max_y", point_max_y_, 1.3);
   pnh_.param<float>("right_lane_setpoint", right_lane_, -0.2);
   pnh_.param<float>("left_lane_setpoint", left_lane_, 0.2);
+  pnh_.param<float>("deafult_setpoint", default_setpoint_, -0.2);
 
   if (visualization_)
   {
     visualizer_ = nh_.advertise<visualization_msgs::Marker>("/avoiding_obstacles", 1);
   }
-  status_ = CLEAR;
+  status_ = PASSIVE;
   ROS_INFO("road_obstacle_detector initialized ");
 }
 
@@ -57,6 +59,10 @@ void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &
       is_time_calculated_for_overtake_ = false;
       timer_.stop();
     }
+    break;
+  case PASSIVE:
+    setpoint_value_.data = default_setpoint_;
+    setpoint_pub_.publish(setpoint_value_);
     break;
   default:
     ROS_ERROR("Wrong avoiding_obstacle action status");
@@ -156,3 +162,17 @@ void Road_obstacle_detector::visualizeBoxes()
 }
 
 void Road_obstacle_detector::calculate_time(const ros::TimerEvent &time) { time_left_ -= timer_duration_; }
+
+bool Road_obstacle_detector::switchToActive(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response)
+{
+  markings_sub_ = nh_.subscribe("/road_markings", 1, &Road_obstacle_detector::road_markings_callback, this);
+  status_ = CLEAR;
+  return true;
+}
+
+bool Road_obstacle_detector::switchToPassive(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response)
+{
+  markings_sub_.shutdown();
+  status_ = PASSIVE;
+  return true;
+}
