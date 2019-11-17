@@ -56,8 +56,8 @@ def road_markings_callback(msg):
     theta = atan(slope)
     curvature = abs(c_poly.deriv().deriv()(c_x)) / (1+c_poly.deriv()(c_x)**2)**1.5
     curvature = sma.process(curvature)
-    if max_speed == 0:
-        pred_speed = 0
+    if max_speed < min_speed:
+        pred_speed = max_speed
     elif curvature > max_curvature:
         pred_speed = min_speed
     else:
