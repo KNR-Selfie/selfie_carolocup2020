@@ -34,7 +34,8 @@ extract_road_features:
 free_drive: 
   {
     max_speed: 3.0,
-    starting_line_distance_to_end: 0.45
+    starting_line_distance_to_end: 0.45,
+    intersection_distance_to_end: 0.8
   }
 lidar: 
   {
