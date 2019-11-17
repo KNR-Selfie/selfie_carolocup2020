@@ -189,7 +189,15 @@ void Road_obstacle_detector::visualizeBoxes()
     nearest_box_in_front_of_car_->visualize(visualizer_, "nearest_box", 1, 0.1, 0.1);
 }
 
-void Road_obstacle_detector::distanceCallback(const std_msgs::Float32 &msg) { current_distance_ -= msg.data; }
+void Road_obstacle_detector::distanceCallback(const std_msgs::Float32 &msg)
+{
+  current_distance_ = msg.data;
+  if (status_ == OVERTAKING && current_distance_ > return_distance_)
+  {
+    selfie_msgs::PolygonArray temp;
+    obstacle_callback(temp);
+  }
+}
 
 bool Road_obstacle_detector::switchToActive(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response)
 {
