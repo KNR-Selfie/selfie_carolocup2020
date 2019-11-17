@@ -9,15 +9,13 @@ FreeDriveAction::FreeDriveAction(const ros::NodeHandle &nh, const ros::NodeHandl
   nh_(nh),
   pnh_(pnh),
   as_(nh_, "free_drive", false),
-  d_to_starting_line_(100),
-  d_to_intersection_(100),
+  distance_to_event_(100),
   starting_line_distance_to_end_(0.45),
   intersection_distance_to_end_(0.8),
-  starting_line_detected_(false),
-  intersection_detected_(false),
+  event_detected_(false),
   max_speed_(2)
 {
-  as_.registerGoalCallback(boost::bind(&FreeDriveAction::executeCB, this));
+  as_.registerGoalCallback(boost::bind(&FreeDriveAction::registerGoal, this));
   as_.registerPreemptCallback(boost::bind(&FreeDriveAction::preemptCB, this));
   as_.start();
   max_speed_pub_ = nh_.advertise<std_msgs::Float64>("max_speed", 1);
@@ -29,13 +27,14 @@ FreeDriveAction::FreeDriveAction(const ros::NodeHandle &nh, const ros::NodeHandl
   ROS_INFO("starting_line_distance_to_end: %.3f", starting_line_distance_to_end_);
   ROS_INFO("intersection_distance_to_end: %.3f\n", intersection_distance_to_end_);
   ROS_INFO("Free drive initialized initialized");
+  last_event_time_ = std::chrono::steady_clock::now();
 }
 FreeDriveAction::~FreeDriveAction(void)
 {
   ROS_INFO("free_drive dead");
 }
 
-void FreeDriveAction::executeCB()
+void FreeDriveAction::registerGoal()
 {
   goal_ = *(as_.acceptNewGoal());
   ROS_INFO("mode 0 - no obstacles");
@@ -43,111 +42,105 @@ void FreeDriveAction::executeCB()
   ROS_INFO("received goal: mode %d", goal_.mode);
   publishFeedback(AUTONOMOUS_DRIVE);
 
-  d_to_starting_line_ = 100;
-  d_to_intersection_ = 100;
-  ros::Rate loop_rate(50);
+  distance_to_event_ = 100;
 
   if (goal_.mode == 0)
   {
+    event_distance_to_end_ = starting_line_distance_to_end_;
     starting_line_sub_ = nh_.subscribe("/starting_line", 100, &FreeDriveAction::startingLineCB, this);
-    ROS_INFO("starting_line_sub_");
-    while (!(d_to_starting_line_ < starting_line_distance_to_end_))
-    {
-      if (starting_line_detected_)
-      {
-        if (last_feedback_ != DETECT_START_LINE)
-        {
-          publishFeedback(DETECT_START_LINE);
-          last_feedback_ = DETECT_START_LINE;
-        }
-        starting_line_detected_ = false;
-      }
-      else
-      {
-        if (last_feedback_ != AUTONOMOUS_DRIVE)
-        {
-          publishFeedback(AUTONOMOUS_DRIVE);
-          last_feedback_ = AUTONOMOUS_DRIVE;
-        }
-      }
-
-      maxSpeedPub();
-      loop_rate.sleep();
-
-      if(!as_.isActive())
-          return;
-    }
-    starting_line_sub_.shutdown();
-
-    //publish result
-    ROS_INFO("PARKING AREA");
-    d_to_starting_line_ = 100;
-    result_.event = false;
-    as_.setSucceeded(result_);
   }
   else
   {
-    ROS_INFO("intersection_sub_");
+    event_distance_to_end_ = intersection_distance_to_end_;
     intersection_sub_ = nh_.subscribe("/intersection_distance", 100, &FreeDriveAction::intersectionCB, this);
-    while (!(d_to_intersection_ < intersection_distance_to_end_))
+  }
+  executeLoop();
+}
+
+void FreeDriveAction::executeLoop()
+{
+  ros::Rate loop_rate(50);
+
+  while (!(distance_to_event_ < event_distance_to_end_) && ros::ok())
+  {
+    if (event_detected_ && last_feedback_ == AUTONOMOUS_DRIVE)
     {
-      if (starting_line_detected_)
+      if (goal_.mode == 0)
       {
-        if (last_feedback_ != DETECT_CROSSROAD)
-        {
-          publishFeedback(DETECT_CROSSROAD);
-          last_feedback_ = DETECT_CROSSROAD;
-        }
-        starting_line_detected_ = false;
+        publishFeedback(DETECT_START_LINE);
+        last_feedback_ = DETECT_START_LINE;
       }
       else
       {
-        if (last_feedback_ != AUTONOMOUS_DRIVE)
-        {
-          publishFeedback(AUTONOMOUS_DRIVE);
-          last_feedback_ = AUTONOMOUS_DRIVE;
-        }
+        publishFeedback(DETECT_CROSSROAD);
+        last_feedback_ = DETECT_CROSSROAD;
       }
-
-      //maxSpeedPub();
-      loop_rate.sleep();
-
-      if(!as_.isActive())
-          return;
+      event_detected_ = false;
     }
-    intersection_sub_.shutdown();
+    else
+    {
+      if (last_feedback_ != AUTONOMOUS_DRIVE &&
+          std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - last_event_time_) > std::chrono::seconds(1))
+      {
+        publishFeedback(AUTONOMOUS_DRIVE);
+        last_feedback_ = AUTONOMOUS_DRIVE;
+        event_detected_ = false;
+      }
+    }
 
-    //publish result
-    ROS_INFO("INTERSECTION");
-    d_to_intersection_ = 100;
+    if (goal_.mode == 0)
+    {
+      maxSpeedPub();
+    }
+
+    if(!as_.isActive())
+    {
+      starting_line_sub_.shutdown();
+      intersection_sub_.shutdown();
+      return;
+    }
+    ros::spinOnce();
+    loop_rate.sleep();
+  }
+
+  //publish result
+  if (goal_.mode == 0)
+  {
+    ROS_INFO("PARKING AREA DETECTED");
+    result_.event = false;
+    as_.setSucceeded(result_);
+    starting_line_sub_.shutdown();
+  }
+  else
+  {
+    ROS_INFO("INTERSECTION DETECTED");
     result_.event = true;
     as_.setSucceeded(result_);
+    intersection_sub_.shutdown();
   }
 }
 
-void FreeDriveAction::startingLineCB(const std_msgs::Float32ConstPtr &msg)
+void FreeDriveAction::startingLineCB(const std_msgs::Float32 &msg)
 {
-  ROS_INFO("ELO");
-  starting_line_detected_ = true;
-  d_to_starting_line_ = msg->data;
-  ROS_INFO("ELO");
+  event_detected_ = true;
+  distance_to_event_ = msg.data;
+  last_event_time_ = std::chrono::steady_clock::now();
 }
 
 void FreeDriveAction::intersectionCB(const std_msgs::Float32 &msg)
 {
-    ROS_INFO("ELO2");
-  intersection_detected_ = true;
-  d_to_intersection_ = msg.data;
-  ROS_INFO("ELO2");
+  event_detected_ = true;
+  distance_to_event_ = msg.data;
+  last_event_time_ = std::chrono::steady_clock::now();
 }
 
-void FreeDriveAction::publishFeedback(feedback_variable program_state)
+inline void FreeDriveAction::publishFeedback(feedback_variable program_state)
 {
   feedback_.action_status = program_state;
   as_.publishFeedback(feedback_);
 }
 
-void FreeDriveAction::maxSpeedPub()
+inline void FreeDriveAction::maxSpeedPub()
 {
   std_msgs::Float64 msg;
   msg.data = max_speed_;
@@ -155,6 +148,8 @@ void FreeDriveAction::maxSpeedPub()
 }
 void FreeDriveAction::preemptCB()
 {
-    ROS_INFO("Preempted");
-    as_.setAborted();
+  ROS_INFO("Preempted");
+  starting_line_sub_.shutdown();
+  intersection_sub_.shutdown();
+  as_.setAborted();
 }
