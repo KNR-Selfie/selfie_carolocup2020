@@ -27,6 +27,8 @@ rosrun selfie_avoiding_obstacles lane_controller
 - `/avoiding_obst_set_passive` ([std_srvs/Empty](https://docs.ros.org/api/std_srvs/html/srv/Empty.html))
 - `/avoiding_obst_set_passive` ([std_srvs/Empty](https://docs.ros.org/api/std_srvs/html/srv/Empty.html))
   - they are used to switch modes on active and passive
+- `/resetLaneControl` ([std_srvs/Empty](https://docs.ros.org/api/std_srvs/html/srv/Empty.html))
+  - used to reset node
 
 
 ## Parameters
