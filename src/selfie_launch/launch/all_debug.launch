@@ -6,7 +6,8 @@
   <!-- LAUNCH DEPENDENT PARAMS -->
   <arg name="visualization_in_searching" default="true" />
   <arg name="parking_msgs_output" default="true" />
-  <arg name="obstacles_detector_visualisation" default="true" />
+  <arg name="detect_obstacles_visualization" default="true" />
+  <arg name="lane_controller_visualization" default="true" />
   <arg name="debug_mode" value="true"/>
 
   <!-- PLATFORM DEPENDENT PARAMS -->
@@ -26,11 +27,14 @@
     <param name="debug_mode" value="$(arg debug_mode)"/>
   </node>
 
-  <node name="extract_road_features" type="extract_road_features" pkg="selfie_path_planner" respawn="true" output="screen">
+  <node name="extract_road_features" type="extract_road_features" pkg="selfie_path_planner" respawn="true" output="screen" />
+
+  <node pkg="selfie_perception" type="detect_obstacles" name="detect_obstacles" respawn="true" output="screen">
+    <param name="visualize" value="$(arg detect_obstacles_visualization)" />
   </node>
 
-  <node pkg="selfie_perception" type="detect_obstacles" name="selfie_obstacle_detector" respawn="true" output="screen">
-    <param name="visualize" value="$(arg obstacles_detector_visualisation)" />
+  <node pkg="selfie_avoiding_obstacles" type="lane_controller" name="lane_controller" respawn="true" output="screen">
+    <param name="visualization" value="$(arg lane_controller_visualization)" />
   </node>
 
   <node name="odometry" type="selfie_odometry" pkg="selfie_odometry" respawn="true" output="screen"/>

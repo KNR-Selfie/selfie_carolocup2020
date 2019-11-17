@@ -75,7 +75,7 @@ private:
   std::list<Box> filtered_boxes_; // boxes are sorted by x valule
   // ascendend (near->far)
   std::list<Box>::iterator nearest_box_in_front_of_car_;
-  std_msgs::Float32 setpoint_value_;
+  std_msgs::Float64 setpoint_value_;
 
   bool visualization_;
   visualization_msgs::Marker empty_marker_;

@@ -4,13 +4,7 @@
     <remap from="control_effort" to="steering_angle" />
   </node>
 
-  <node name="const_setpoint" pkg="selfie_control" type="const_float64.py" respawn="true" output="screen">
-
-  </node>
-
-  <node name="offset_combiner" pkg="selfie_control" type="offset_combiner.py" respawn="true" output="screen">
-
-  </node>
+  <node name="offset_combiner" pkg="selfie_control" type="offset_combiner.py" respawn="true" output="screen" />
 
   <node name="cmd_creator" type="cmd_creator" pkg="selfie_control" respawn="true" output="screen" />
 </launch>

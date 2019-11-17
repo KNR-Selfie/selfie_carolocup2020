@@ -13,13 +13,7 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
 {
   pnh_.param<bool>("visualization", visualization_, false);
   pnh_.param<float>("maximum_length_of_obstacle", maximum_length_of_obstacle_, 0.8);
-  obstacles_sub_ = nh_.subscribe("/obstacles", 1, &Road_obstacle_detector::obstacle_callback, this);
-  distance_sub_ = nh_.subscribe("/distance", 1, &Road_obstacle_detector::distanceCallback, this);
-  passive_mode_service_ = nh_.advertiseService("/avoiding_obst_set_passive", &Road_obstacle_detector::switchToPassive, this);
-  active_mode_service_ = nh_.advertiseService("/avoiding_obst_set_active", &Road_obstacle_detector::switchToActive, this);
-  reset_node_service_ = nh_.advertiseService("/resetLaneControl", &Road_obstacle_detector::reset_node, this);
-  setpoint_pub_ = nh_.advertise<std_msgs::Float64>("/setpoint", 1);
-  speed_pub_ = nh_.advertise<std_msgs::Float32>("/max_speed", 1);
+  pnh_.param<float>("maximum_distance_to_obstacle", maximum_distance_to_obstacle_, 0.5);
   pnh_.param<float>("ROI_min_x", ROI_min_x_, 0.3);
   pnh_.param<float>("ROI_max_x", ROI_max_x_, 1.1);
   pnh_.param<float>("ROI_min_y", ROI_min_y_, -1.3);
@@ -29,6 +23,13 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
   pnh_.param<float>("maximum_speed", max_speed_, 0.3);
   pnh_.param<float>("safe_speed", safe_speed_, 0.1);
   pnh_.param<float>("safety_margin", safety_margin_, 1.15);
+  
+  passive_mode_service_ = nh_.advertiseService("/avoiding_obst_set_passive", &Road_obstacle_detector::switchToPassive, this);
+  active_mode_service_ = nh_.advertiseService("/avoiding_obst_set_active", &Road_obstacle_detector::switchToActive, this);
+  reset_node_service_ = nh_.advertiseService("/resetLaneControl", &Road_obstacle_detector::reset_node, this);
+  setpoint_pub_ = nh_.advertise<std_msgs::Float64>("/setpoint", 1);
+  speed_pub_ = nh_.advertise<std_msgs::Float64>("/max_speed", 1);
+  
   speed_message_.data = max_speed_;
 
   if (visualization_)
@@ -47,7 +48,9 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
                                 Point(ROI_max_x_, ROI_min_y_));
   }
   status_ = PASSIVE;
+  setpoint_value_.data = right_lane_;
   timer_ = nh_.createTimer(ros::Duration(0.5), &Road_obstacle_detector::passive_timer_cb, this);
+  timer_.start();
 
   ROS_INFO("road_obstacle_detector initialized ");
 }
@@ -212,7 +215,9 @@ void Road_obstacle_detector::passive_timer_cb(const ros::TimerEvent &time) { set
 
 bool Road_obstacle_detector::switchToActive(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response)
 {
+  obstacles_sub_ = nh_.subscribe("/obstacles", 1, &Road_obstacle_detector::obstacle_callback, this);
   markings_sub_ = nh_.subscribe("/road_markings", 1, &Road_obstacle_detector::road_markings_callback, this);
+  distance_sub_ = nh_.subscribe("/distance", 1, &Road_obstacle_detector::distanceCallback, this);
   timer_.stop();
   status_ = CLEAR;
   return true;
@@ -221,9 +226,11 @@ bool Road_obstacle_detector::switchToActive(std_srvs::Empty::Request &request, s
 bool Road_obstacle_detector::switchToPassive(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response)
 {
   markings_sub_.shutdown();
+  obstacles_sub_.shutdown();
+  distance_sub_.shutdown();
   setpoint_value_.data = right_lane_;
-  timer_.start();
   status_ = PASSIVE;
+  timer_.start();
   return true;
 }
 
