@@ -1,7 +1,7 @@
 #include <iostream>
 
-#include <ros/ros.h>
 #include <geometry_msgs/Polygon.h>
+#include <ros/ros.h>
 #include <selfie_msgs/PolygonArray.h>
 #include <std_msgs/Float64.h>
 #include <visualization_msgs/Marker.h>
@@ -61,14 +61,8 @@ public:
     else
       return 1;
   }
-  float get_distance(const Point other)
-  {
-    return (std::sqrt(std::pow(other.x - x, 2) + pow(other.y - y, 2)));
-  }
-  float get_distance(geometry_msgs::Point32 other)
-  {
-    return (std::sqrt(std::pow(other.x - x, 2) + pow(other.y - y, 2)));
-  }
+  float get_distance(const Point other) { return (std::sqrt(std::pow(other.x - x, 2) + pow(other.y - y, 2))); }
+  float get_distance(geometry_msgs::Point32 other) { return (std::sqrt(std::pow(other.x - x, 2) + pow(other.y - y, 2))); }
   void print() { ROS_INFO("(x,y) = ( %f, %f )", x, y); }
 };
 
@@ -112,9 +106,8 @@ public:
       is_in_the_front = false;
 
     Point zero(0, 0);
-    vector<float> distances = {
-        zero.get_distance(right_side_poly.points[0]), zero.get_distance(right_side_poly.points[1]),
-        zero.get_distance(right_side_poly.points[2]), zero.get_distance(right_side_poly.points[3])};
+    vector<float> distances = {zero.get_distance(right_side_poly.points[0]), zero.get_distance(right_side_poly.points[1]),
+                               zero.get_distance(right_side_poly.points[2]), zero.get_distance(right_side_poly.points[3])};
 
     vector<float>::iterator min;
 
@@ -210,14 +203,11 @@ public:
 
   void make_lines()
   {
-    left_vertical_line.a =
-        (top_left.y - bottom_left.y) / (top_left.x - bottom_left.x);
+    left_vertical_line.a = (top_left.y - bottom_left.y) / (top_left.x - bottom_left.x);
     left_vertical_line.b = top_left.y - left_vertical_line.a * top_left.x;
 
-    bottom_horizontal_line.a =
-        (bottom_right.y - bottom_left.y) / (bottom_right.x - bottom_left.x);
-    bottom_horizontal_line.b =
-        bottom_right.y - bottom_horizontal_line.a * bottom_right.x;
+    bottom_horizontal_line.a = (bottom_right.y - bottom_left.y) / (bottom_right.x - bottom_left.x);
+    bottom_horizontal_line.b = bottom_right.y - bottom_horizontal_line.a * bottom_right.x;
   }
   void print_lines() {}
 
@@ -231,7 +221,7 @@ public:
     marker.type = visualization_msgs::Marker::LINE_LIST;
     marker.action = visualization_msgs::Marker::ADD;
     marker.id = 0;
-    marker.lifetime = ros::Duration();
+    marker.lifetime = ros::Duration(2);
 
     marker.color.r = red;
     marker.color.g = green;
@@ -260,7 +250,7 @@ public:
     marker.type = visualization_msgs::Marker::LINE_LIST;
     marker.action = visualization_msgs::Marker::ADD;
     marker.id = 0;
-    marker.lifetime = ros::Duration();
+    marker.lifetime = ros::Duration(2);
 
     marker.color.r = red;
     marker.color.g = green;
@@ -272,7 +262,7 @@ public:
 
     geometry_msgs::Point marker_point;
     marker_point.z = 0;
-    
+
     for (list<Box>::const_iterator iter = boxes.begin(); iter != boxes.end(); iter++)
     {
       iter->pushToMarker(marker_point, marker);
@@ -305,8 +295,8 @@ public:
     ROS_INFO("left_edge: %f", left_edge);
   }
 
-  private:
-  void pushToMarker(geometry_msgs::Point &marker_point,visualization_msgs::Marker &marker) const
+private:
+  void pushToMarker(geometry_msgs::Point &marker_point, visualization_msgs::Marker &marker) const
   {
     marker_point.x = this->bottom_left.x;
     marker_point.y = this->bottom_left.y;
@@ -336,6 +326,4 @@ public:
     marker_point.y = this->bottom_left.y;
     marker.points.push_back(marker_point);
   }
-
 };
-

@@ -42,7 +42,7 @@ void DriveClient::doneCb(const actionlib::SimpleClientGoalState& state,
             const selfie_msgs::drivingResultConstPtr& result)
 {
     ROS_INFO("Finished drive in state [%s]", state.toString().c_str());
-    ROS_INFO("drive result: %d", result->parking_area);
+    ROS_INFO("drive result: %d", result->event);
     if(state == actionlib::SimpleClientGoalState::StateEnum::ABORTED)
     {
         ROS_INFO("ABORTED!!");
@@ -50,7 +50,7 @@ void DriveClient::doneCb(const actionlib::SimpleClientGoalState& state,
     }
     else
     {
-        result_ = result->parking_area;
+        result_ = result->event;
         result_flag_ = 1;
     }
 }

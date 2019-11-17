@@ -11,6 +11,7 @@
 #include <geometry_msgs/PolygonStamped.h>
 #include <nav_msgs/Odometry.h>
 #include <selfie_msgs/PolygonArray.h>
+#include <std_msgs/Float32.h>
 #include <std_msgs/Float64.h>
 #include <std_msgs/Int16.h>
 #include <visualization_msgs/Marker.h>
@@ -35,6 +36,7 @@ private:
   ros::NodeHandle nh_;
   ros::NodeHandle pnh_;
   ros::Subscriber obstacles_sub;
+  ros::Subscriber distance_sub_;
   ros::Publisher visualize_free_place;
   ros::Publisher speed_publisher;
 
@@ -45,10 +47,16 @@ private:
   std::vector<Box> potential_free_places;
   Box first_free_place;
 
+  float length_of_parking_area_; // length of parking area, when this distance is covered service will be aborted
+  float max_distance_;
+  float current_distance_;
+  bool max_distance_calculated_;
+
   float min_spot_lenght;
   bool visualization;
+  Box area_of_interest_;
 
-  float tangens_of_box_angle_; //describes max deviation
+  float tangens_of_box_angle_; // describes max deviation
   float max_distance_to_free_place_;
   float default_speed_in_parking_zone;
   float speed_when_found_place;
@@ -67,7 +75,9 @@ private:
 
   bool init();
   void preemptCB();
+  void endAction();
   void manager(const selfie_msgs::PolygonArray &);
+  void distanceCb(const std_msgs::Float32 &);
   void filter_boxes(const selfie_msgs::PolygonArray &); // odfiltrowywuje boxy,
                                                         // pozostawia tylko te
                                                         // po prawej
@@ -75,5 +85,5 @@ private:
   void send_goal();
 
   void display_places(std::vector<Box> &, const std::string &);
-  void display_place(Box &, const std::string &);
+  void display_place(Box &, const std::string &, float = 100.0f, float = 255.0f, float = 200.0f);
 };

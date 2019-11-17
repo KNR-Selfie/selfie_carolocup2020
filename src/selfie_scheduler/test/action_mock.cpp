@@ -64,7 +64,7 @@ public:
         drive_action_.publishFeedback(drive_feedback);
         waitGivenTime(10);
         if (drive_action_.isActive())
-            drive_action_.setSucceeded([](bool result){selfie_msgs::drivingResult drive_result; drive_result.parking_area = result; return drive_result;}(true));
+            drive_action_.setSucceeded([](bool result){selfie_msgs::drivingResult drive_result; drive_result.event = result; return drive_result;}(true));
     }
     void park_action_goalCB(const selfie_msgs::parkGoalConstPtr &goal)
     {

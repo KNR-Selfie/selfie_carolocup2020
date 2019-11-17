@@ -12,5 +12,7 @@ int main(int argc, char **argv)
   ros::NodeHandle nh;
   ros::NodeHandle pnh("~");
   FreeDriveAction free_drive(nh, pnh);
+
   ros::spin();
+  return 0;
 }
