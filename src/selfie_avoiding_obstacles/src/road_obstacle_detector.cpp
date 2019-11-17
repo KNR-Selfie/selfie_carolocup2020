@@ -18,7 +18,7 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
   passive_mode_service_ = nh_.advertiseService("/avoiding_obst_set_passive", &Road_obstacle_detector::switchToPassive, this);
   active_mode_service_ = nh_.advertiseService("/avoiding_obst_set_active", &Road_obstacle_detector::switchToActive, this);
   setpoint_pub_ = nh_.advertise<std_msgs::Float32>("/setpoint", 1);
-  speed_pub_ = nh_.advertise<std_msgs::Float32>("/speed", 1);
+  speed_pub_ = nh_.advertise<std_msgs::Float32>("/max_speed", 1);
   pnh_.param<float>("ROI_min_x", ROI_min_x_, 0.3);
   pnh_.param<float>("ROI_max_x", ROI_max_x_, 1.1);
   pnh_.param<float>("ROI_min_y", ROI_min_y_, -1.3);
