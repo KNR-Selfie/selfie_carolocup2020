@@ -6,7 +6,7 @@ Current version overtakes static obstacles.
 ## Usage
 ```
 . devel/setup.bash
-rosrun selfie_avoiding_obstacles detect_road_obstacle
+rosrun selfie_avoiding_obstacles lane_controller
 ```
 ## Topics
 ### Subscribed topics
