@@ -78,7 +78,6 @@ private:
   void endAction();
   void manager(const selfie_msgs::PolygonArray &);
   void distanceCb(const std_msgs::Float32 &);
-  void calculateMaxDistance();
   void filter_boxes(const selfie_msgs::PolygonArray &); // odfiltrowywuje boxy,
                                                         // pozostawia tylko te
                                                         // po prawej

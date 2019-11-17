@@ -325,8 +325,6 @@ void Search_server::publishFeedback(unsigned int newActionStatus)
   search_server_.publishFeedback(action_status);
 }
 
-void calculateMaxDistance() {}
-
 void Search_server::preemptCB()
 {
   ROS_INFO("Action preempted");
