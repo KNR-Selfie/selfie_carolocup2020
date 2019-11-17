@@ -34,6 +34,8 @@ rosrun selfie_park detect_parking_spot
    - describes maximum angle (in degrees) between car and found place (used mainly in filtering out wrong places)
  - `max_distance_to_free_place` (*float*, default: 0.8)
    - describes maximum angle between car and found place (used mainly in filtering out wrong places)
+ - `length_of_parking_area` (*float*, default: 0.8)
+   - how long will be covered before cancelling searching
 
 
 # Park Action

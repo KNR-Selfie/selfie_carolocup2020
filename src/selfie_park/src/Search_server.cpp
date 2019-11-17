@@ -22,6 +22,7 @@ Search_server::Search_server(const ros::NodeHandle &nh, const ros::NodeHandle &p
   pnh_.param<bool>("visualization_in_searching", visualization, true);
   pnh_.param<float>("max_distance_to_free_place", max_distance_to_free_place_, 0.8);
   pnh_.param<float>("box_angle_deg", tangens_of_box_angle_, 55); // maximum angle between car and found place
+  pnh_.param<float>("length_of_parking_area", length_of_parking_area_, 2.5);
   tangens_of_box_angle_ = tan(tangens_of_box_angle_ * M_PI / 180);
 
   speed_current.data = default_speed_in_parking_zone;
@@ -36,6 +37,7 @@ Search_server::~Search_server() {}
 bool Search_server::init()
 {
   obstacles_sub = nh_.subscribe("/obstacles", 1, &Search_server::manager, this);
+  distance_sub_ = nh_.subscribe("/distance", 1, &Search_server::distanceCb, this);
   speed_publisher = nh_.advertise<std_msgs::Float64>("/max_speed", 0.5);
 
   speed_publisher.publish(speed_current);
@@ -54,7 +56,13 @@ void Search_server::manager(const selfie_msgs::PolygonArray &msg)
   }
   filter_boxes(msg);
   if (visualization)
+  {
+
     display_places(boxes_on_the_right_side, "FilteredBoxes");
+    area_of_interest_ = Box(Point(point_min_x, point_max_y), Point(point_min_x, point_min_y),
+                            Point(point_max_x, point_max_y), Point(point_max_x, point_min_y));
+    area_of_interest_.visualize(visualize_free_place, "Area of interest", 1, 1, 1);
+  }
   // ROS_INFO("Size of  boxes_on_the_right %lu",boxes_on_the_right_side.size());
 
   switch (action_status.action_status)
@@ -95,8 +103,8 @@ void Search_server::manager(const selfie_msgs::PolygonArray &msg)
       std::cout << "Place lost\n";
       speed_current.data = default_speed_in_parking_zone;
       publishFeedback(START_SEARCHING_PLACE);
+      speed_publisher.publish(speed_current);
     }
-    speed_publisher.publish(speed_current);
     break;
 
   default:
@@ -146,7 +154,7 @@ bool Search_server::find_free_places()
   for (; iter + 1 != end_iter; ++iter)
   {
     double dist = (*iter).top_left.get_distance((*(iter + 1)).bottom_left);
-    ROS_INFO("dist: %f", dist);
+    // ROS_INFO("dist: %f", dist);
     if (dist > min_space)
     {
 
@@ -157,11 +165,28 @@ bool Search_server::find_free_places()
                tmp_box.top_left.x, tmp_box.top_left.y, tmp_box.top_right.x, tmp_box.top_right.y, tmp_box.bottom_left.x,
                tmp_box.bottom_left.y, tmp_box.bottom_right.x, tmp_box.bottom_right.y);
       if (visualization)
+      {
         display_place(tmp_box, "first_free_place");
+      }
       return true;
     }
   }
   return false;
+}
+
+void Search_server::distanceCb(const std_msgs::Float32 &msg)
+{
+  current_distance_ = msg.data;
+  if (!max_distance_calculated_)
+  {
+    max_distance_ = current_distance_ + length_of_parking_area_;
+    max_distance_calculated_ = true;
+  }
+  if (max_distance_ < current_distance_)
+  {
+    ROS_INFO("Haven't found free place in designated distance, aborting");
+    preemptCB();
+  }
 }
 
 void Search_server::send_goal()
@@ -181,12 +206,12 @@ void Search_server::send_goal()
   p.y = first_free_place.top_left.y;
   result.parking_spot.points.push_back(p);
 
-  // reset(); TODO
   ROS_INFO("Place found and sent");
   search_server_.setSucceeded(result);
+  endAction();
 }
 
-void Search_server::display_place(Box &place, const std::string &name)
+void Search_server::display_place(Box &place, const std::string &name, float r, float g, float b)
 {
   visualization_msgs::Marker marker;
 
@@ -196,11 +221,11 @@ void Search_server::display_place(Box &place, const std::string &name)
   marker.type = visualization_msgs::Marker::LINE_LIST;
   marker.action = visualization_msgs::Marker::ADD;
   marker.id = 0;
-  marker.lifetime = ros::Duration();
+  marker.lifetime = ros::Duration(1);
 
-  marker.color.r = 100.0f;
-  marker.color.g = 255.0f;
-  marker.color.b = 200.0f;
+  marker.color.r = r;
+  marker.color.g = g;
+  marker.color.b = b;
   marker.color.a = 1.0f;
 
   marker.scale.x = 0.01;
@@ -250,7 +275,7 @@ void Search_server::display_places(std::vector<Box> &boxes, const std::string &n
   marker.type = visualization_msgs::Marker::LINE_LIST;
   marker.action = visualization_msgs::Marker::ADD;
   marker.id = 0;
-  marker.lifetime = ros::Duration();
+  marker.lifetime = ros::Duration(1);
 
   marker.color.r = 0.0f;
   marker.color.g = 255.0f;
@@ -303,5 +328,14 @@ void Search_server::publishFeedback(unsigned int newActionStatus)
 void Search_server::preemptCB()
 {
   ROS_INFO("Action preempted");
+  endAction();
   search_server_.setAborted();
+}
+
+void Search_server::endAction() // shutting donw unnecesary subscribers and publishers
+{
+  obstacles_sub.shutdown();
+  distance_sub_.shutdown();
+  speed_publisher.shutdown();
+  max_distance_calculated_ = false;
 }

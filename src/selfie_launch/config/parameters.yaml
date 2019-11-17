@@ -21,6 +21,8 @@ detect_parking_spot:
     point_min_x: 0.01,
     point_min_y: -1,
     speed_when_found_place: 0.3,
+    box_angle_deg: 45,
+    length_of_parking_area: 10,
   }
 extract_road_features: 
   {
