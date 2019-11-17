@@ -45,6 +45,7 @@ private:
   // Two services as switches activating active/passive mode
   ros::ServiceServer passive_mode_service_;
   ros::ServiceServer active_mode_service_;
+  ros::ServiceServer reset_node_service_;
   ros::Timer timer_;
   // Polymonial coefficients describing road markings
   float left_line_[4];
@@ -90,6 +91,7 @@ private:
 
   bool switchToActive(std_srvs::Empty::Request &, std_srvs::Empty::Response &);
   bool switchToPassive(std_srvs::Empty::Request &, std_srvs::Empty::Response &);
+  bool reset_node(std_srvs::Empty::Request &, std_srvs::Empty::Response &);
 
   void change_lane(float lane);
 

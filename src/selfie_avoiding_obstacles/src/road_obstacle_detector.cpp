@@ -17,6 +17,7 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
   distance_sub_ = nh_.subscribe("/distance", 1, &Road_obstacle_detector::distanceCallback, this);
   passive_mode_service_ = nh_.advertiseService("/avoiding_obst_set_passive", &Road_obstacle_detector::switchToPassive, this);
   active_mode_service_ = nh_.advertiseService("/avoiding_obst_set_active", &Road_obstacle_detector::switchToActive, this);
+  reset_node_service_ = nh_.advertiseService("/resetLaneControl", &Road_obstacle_detector::reset_node, this);
   setpoint_pub_ = nh_.advertise<std_msgs::Float32>("/setpoint", 1);
   speed_pub_ = nh_.advertise<std_msgs::Float32>("/max_speed", 1);
   pnh_.param<float>("ROI_min_x", ROI_min_x_, 0.3);
@@ -225,3 +226,12 @@ bool Road_obstacle_detector::switchToPassive(std_srvs::Empty::Request &request, 
   status_ = PASSIVE;
   return true;
 }
+
+bool Road_obstacle_detector::reset_node(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response)
+{
+  if (status_ != PASSIVE)
+    switchToActive(request, response);
+
+  return true;
+}
+
