@@ -9,7 +9,6 @@ Search_server::Search_server(const ros::NodeHandle &nh, const ros::NodeHandle &p
     : nh_(nh)
     , pnh_(pnh)
     , search_server_(nh_, "search", false)
-    , received_distance_(false)
 {
   search_server_.registerGoalCallback(boost::bind(&Search_server::init, this));
   search_server_.registerPreemptCallback(boost::bind(&Search_server::preemptCB, this));
@@ -178,7 +177,6 @@ bool Search_server::find_free_places()
 void Search_server::distanceCb(const std_msgs::Float32 &msg)
 {
   current_distance_ = msg.data;
-  received_distance_ = true;
   if (!max_distance_calculated_)
   {
     max_distance_ = current_distance_ + length_of_parking_area_;
@@ -341,6 +339,5 @@ void Search_server::endAction() // shutting donw unnecesary subscribers and publ
   obstacles_sub.shutdown();
   distance_sub_.shutdown();
   speed_publisher.shutdown();
-  received_distance_ = false;
   max_distance_calculated_ = false;
 }

@@ -50,7 +50,6 @@ private:
   float length_of_parking_area_; // length of parking area, when this distance is covered service will be aborted
   float max_distance_;
   float current_distance_;
-  bool received_distance_;
   bool max_distance_calculated_;
 
   float min_spot_lenght;
