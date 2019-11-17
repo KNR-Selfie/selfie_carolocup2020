@@ -45,6 +45,7 @@ private:
   // Two services as switches activating active/passive mode
   ros::ServiceServer passive_mode_service_;
   ros::ServiceServer active_mode_service_;
+  ros::Timer timer_;
   // Polymonial coefficients describing road markings
   float left_line_[4];
   float center_line_[4];
@@ -93,6 +94,7 @@ private:
   void change_lane(float lane);
 
   bool is_on_right_lane(const Point &);
+  void passive_timer_cb(const ros::TimerEvent &);
 
   void visualizeBoxes();
 };

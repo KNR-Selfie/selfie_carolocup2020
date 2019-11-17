@@ -46,6 +46,8 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
                                 Point(ROI_max_x_, ROI_min_y_));
   }
   status_ = PASSIVE;
+  timer_ = nh_.createTimer(ros::Duration(0.5), &Road_obstacle_detector::passive_timer_cb, this);
+
   ROS_INFO("road_obstacle_detector initialized ");
 }
 
@@ -205,9 +207,12 @@ void Road_obstacle_detector::distanceCallback(const std_msgs::Float32 &msg)
   }
 }
 
+void Road_obstacle_detector::passive_timer_cb(const ros::TimerEvent &time) { setpoint_pub_.publish(setpoint_value_); }
+
 bool Road_obstacle_detector::switchToActive(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response)
 {
   markings_sub_ = nh_.subscribe("/road_markings", 1, &Road_obstacle_detector::road_markings_callback, this);
+  timer_.stop();
   status_ = CLEAR;
   return true;
 }
@@ -215,6 +220,8 @@ bool Road_obstacle_detector::switchToActive(std_srvs::Empty::Request &request, s
 bool Road_obstacle_detector::switchToPassive(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response)
 {
   markings_sub_.shutdown();
+  setpoint_value_.data = right_lane_;
+  timer_.start();
   status_ = PASSIVE;
   return true;
 }
