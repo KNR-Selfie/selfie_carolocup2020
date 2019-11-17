@@ -65,10 +65,16 @@ void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &
         change_lane(left_lane_);
         calculate_return_distance();
         status_ = OVERTAKING;
+      } else
+      {
+        setpoint_value_.data = right_lane_;
       }
     } else
+    {
+      setpoint_value_.data = right_lane_;
       speed_message_.data = max_speed_;
-
+    }
+    setpoint_pub_.publish(setpoint_value_);
     break;
   case OVERTAKING:
     if (return_distance_ - current_distance_ <= 0)
@@ -79,9 +85,9 @@ void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &
     } else
     {
       setpoint_value_.data = left_lane_;
-      setpoint_pub_.publish(setpoint_value_);
       speed_message_.data = max_speed_;
     }
+    setpoint_pub_.publish(setpoint_value_);
     break;
   case PASSIVE:
     setpoint_value_.data = right_lane_;
