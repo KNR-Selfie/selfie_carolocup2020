@@ -25,7 +25,6 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
   pnh_.param<float>("point_max_y", point_max_y_, 1.3);
   pnh_.param<float>("right_lane_setpoint", right_lane_, -0.2);
   pnh_.param<float>("left_lane_setpoint", left_lane_, 0.2);
-  pnh_.param<float>("deafult_setpoint", default_setpoint_, -0.2);
   pnh_.param<float>("maximum_speed", max_speed_, 0.3);
   pnh_.param<float>("safe_speed", safe_speed_, 0.1);
   pnh_.param<float>("safety_margin", safety_margin_, 1.15);
@@ -79,11 +78,13 @@ void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &
       status_ = CLEAR;
     } else
     {
+      setpoint_value_.data = left_lane_;
+      setpoint_pub_.publish(setpoint_value_);
       speed_message_.data = max_speed_;
     }
     break;
   case PASSIVE:
-    setpoint_value_.data = default_setpoint_;
+    setpoint_value_.data = right_lane_;
     setpoint_pub_.publish(setpoint_value_);
     break;
   default:

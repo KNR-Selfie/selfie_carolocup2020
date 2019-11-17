@@ -58,7 +58,6 @@ private:
   // Setpoints for lanes
   float right_lane_;
   float left_lane_;
-  float default_setpoint_;
 
   float max_speed_;
   float safe_speed_;
