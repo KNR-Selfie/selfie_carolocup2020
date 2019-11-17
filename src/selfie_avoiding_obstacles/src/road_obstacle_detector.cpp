@@ -19,10 +19,10 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
   active_mode_service_ = nh_.advertiseService("/avoiding_obst_set_active", &Road_obstacle_detector::switchToActive, this);
   setpoint_pub_ = nh_.advertise<std_msgs::Float32>("/setpoint", 1);
   speed_pub_ = nh_.advertise<std_msgs::Float32>("/speed", 1);
-  pnh_.param<float>("point_min_x", point_min_x_, 0.3);
-  pnh_.param<float>("point_max_x", point_max_x_, 1.1);
-  pnh_.param<float>("point_min_y", point_min_y_, -1.3);
-  pnh_.param<float>("point_max_y", point_max_y_, 1.3);
+  pnh_.param<float>("ROI_min_x", ROI_min_x_, 0.3);
+  pnh_.param<float>("ROI_max_x", ROI_max_x_, 1.1);
+  pnh_.param<float>("ROI_min_y", ROI_min_y_, -1.3);
+  pnh_.param<float>("ROI_max_y", ROI_max_y_, 1.3);
   pnh_.param<float>("right_lane_setpoint", right_lane_, -0.2);
   pnh_.param<float>("left_lane_setpoint", left_lane_, 0.2);
   pnh_.param<float>("maximum_speed", max_speed_, 0.3);
@@ -42,8 +42,8 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
     empty_marker_.id = 0;
     empty_marker_.lifetime = ros::Duration();
     // Initializing Box describing area of interest
-    area_of_interest_box_ = Box(Point(point_min_x_, point_max_y_), Point(point_min_x_, point_min_y_),
-                                Point(point_max_x_, point_max_y_), Point(point_max_x_, point_min_y_));
+    area_of_interest_box_ = Box(Point(ROI_min_x_, ROI_max_y_), Point(ROI_min_x_, ROI_min_y_), Point(ROI_max_x_, ROI_max_y_),
+                                Point(ROI_max_x_, ROI_min_y_));
   }
   status_ = PASSIVE;
   ROS_INFO("road_obstacle_detector initialized ");
@@ -112,7 +112,7 @@ void Road_obstacle_detector::filter_boxes(const selfie_msgs::PolygonArray &msg)
     {
       Point p(polygon.points[a]);
 
-      if (is_on_right_lane(p) && p.check_position(point_min_x_, point_max_x_, point_min_y_, point_max_y_))
+      if (is_on_right_lane(p) && p.check_position(ROI_min_x_, ROI_max_x_, ROI_min_y_, ROI_max_y_))
       {
         box_ok = true;
         break;

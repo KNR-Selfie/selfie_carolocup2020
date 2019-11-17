@@ -51,10 +51,10 @@ private:
   float right_line_[4];
 
   // area of interest (camera's field of view)
-  float point_min_x_;
-  float point_max_x_;
-  float point_min_y_;
-  float point_max_y_;
+  float ROI_min_x_;
+  float ROI_max_x_;
+  float ROI_min_y_;
+  float ROI_max_y_;
   // Setpoints for lanes
   float right_lane_;
   float left_lane_;
