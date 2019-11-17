@@ -104,8 +104,8 @@ void Search_server::manager(const selfie_msgs::PolygonArray &msg)
       std::cout << "Place lost\n";
       speed_current.data = default_speed_in_parking_zone;
       publishFeedback(START_SEARCHING_PLACE);
+      speed_publisher.publish(speed_current);
     }
-    speed_publisher.publish(speed_current);
     break;
 
   default:
@@ -155,7 +155,7 @@ bool Search_server::find_free_places()
   for (; iter + 1 != end_iter; ++iter)
   {
     double dist = (*iter).top_left.get_distance((*(iter + 1)).bottom_left);
-    ROS_INFO("dist: %f", dist);
+    // ROS_INFO("dist: %f", dist);
     if (dist > min_space)
     {
 
@@ -223,7 +223,7 @@ void Search_server::display_place(Box &place, const std::string &name, float r, 
   marker.type = visualization_msgs::Marker::LINE_LIST;
   marker.action = visualization_msgs::Marker::ADD;
   marker.id = 0;
-  marker.lifetime = ros::Duration();
+  marker.lifetime = ros::Duration(1);
 
   marker.color.r = r;
   marker.color.g = g;
@@ -277,7 +277,7 @@ void Search_server::display_places(std::vector<Box> &boxes, const std::string &n
   marker.type = visualization_msgs::Marker::LINE_LIST;
   marker.action = visualization_msgs::Marker::ADD;
   marker.id = 0;
-  marker.lifetime = ros::Duration();
+  marker.lifetime = ros::Duration(1);
 
   marker.color.r = 0.0f;
   marker.color.g = 255.0f;
