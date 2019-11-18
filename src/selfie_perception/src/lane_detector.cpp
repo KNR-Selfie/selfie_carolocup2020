@@ -465,6 +465,7 @@ float LaneDetector::getDistance(cv::Point2f p1, cv::Point2f p2)
 
 void LaneDetector::recognizeLinesNew()
 {
+  float checking_length = 0.4;
   float max_cost = 0.05;
   float ratio = 0.4;
   center_line_.clearPoints();
@@ -475,6 +476,8 @@ void LaneDetector::recognizeLinesNew()
     float center_cost = 0;
     float right_cost = 0;
     float left_cost = 0;
+    float start_checking_x = lines_vector_converted_[i][0].x;
+    int count = 0;
     for (int j = 0; j < lines_vector_converted_[i].size(); ++j)
     {
       float weight = 1 - (lines_vector_converted_[i][j].x - TOPVIEW_MIN_X) * ratio;
@@ -483,10 +486,15 @@ void LaneDetector::recognizeLinesNew()
       center_cost += weight * findMinPointToParabola(lines_vector_converted_[i][j], center_line_.getCoeff());
       right_cost += weight * findMinPointToParabola(lines_vector_converted_[i][j], right_line_.getCoeff());
       left_cost += weight * findMinPointToParabola(lines_vector_converted_[i][j], left_line_.getCoeff());
+      ++count;
+      if (lines_vector_converted_[i][j].x - start_checking_x > checking_length)
+      {
+        break;
+      }
     }
-    center_cost /= lines_vector_converted_[i].size();
-    right_cost /= lines_vector_converted_[i].size();
-    left_cost /= lines_vector_converted_[i].size();
+    center_cost /= count;
+    right_cost /= count;
+    left_cost /= count;
 
     center_cost = std::fabs(center_cost);
     right_cost = std::fabs(right_cost);
