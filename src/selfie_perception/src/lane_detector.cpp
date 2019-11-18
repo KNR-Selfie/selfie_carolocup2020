@@ -34,14 +34,20 @@ bool LaneDetector::init()
   aprox_lines_frame_coordinate_.push_back(empty);
   aprox_lines_frame_coordinate_.push_back(empty);
 
+  getParams();
+
   kernel_v_ = cv::Mat(1, 3, CV_32F);
   kernel_v_.at<float>(0, 0) = -1;
   kernel_v_.at<float>(0, 1) = 0;
   kernel_v_.at<float>(0, 2) = 1;
   dilate_element_ = getStructuringElement(2, cv::Size(3, 3), cv::Point(1, 1));
   close_element_ = getStructuringElement(0, cv::Size(15, 15), cv::Point(7, 7));
+  dilate_obst_element_ = getStructuringElement(0, cv::Size(15, 15), cv::Point(7, 7));
 
-  getParams();
+  int obs_el_size = static_cast<int>(TOPVIEW_COLS / (TOPVIEW_MAX_Y - TOPVIEW_MIN_Y) * obstacle_window_size_);
+  if (obs_el_size % 2 == 0)
+    obs_el_size++;
+  obstacle_element_ = getStructuringElement(2, cv::Size(obs_el_size, obs_el_size), cv::Point(obs_el_size / 2, obs_el_size / 2));
 
   treshold_block_size_ = static_cast<int>(TOPVIEW_COLS / (TOPVIEW_MAX_Y - TOPVIEW_MIN_Y) * real_window_size_);
   if (treshold_block_size_ % 2 == 0)
@@ -82,12 +88,15 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
     return;
   }
   homography(current_frame_, homography_frame_);
+  //cv::GaussianBlur(homography_frame_, homography_frame_, cv::Size(5,5), 0);
+  createObstaclesMask();
 
   cv::bitwise_or(hom_cut_mask_, homography_frame_, homography_frame_);
 
   cv::adaptiveThreshold(homography_frame_, binary_frame_, 255, cv::ADAPTIVE_THRESH_MEAN_C,
                         CV_THRESH_BINARY, treshold_block_size_, threshold_c_);
 
+  cv::bitwise_and(binary_frame_, obstacles_mask_, binary_frame_);
   cv::bitwise_and(binary_frame_, hom_cut_mask_inv_, binary_frame_);
 
   cv::medianBlur(binary_frame_, binary_frame_, 3);
@@ -320,6 +329,9 @@ void LaneDetector::getParams()
   pnh_.getParam("pf_num_points_", pf_num_points_);
   pnh_.getParam("pf_std", pf_std_);
   pnh_.getParam("pf_num_samples_vis", pf_num_samples_vis_);
+
+  pnh_.getParam("obstacle_window_size", obstacle_window_size_);
+  pnh_.getParam("obstacles_threshold", obstacles_threshold_);
 }
 
 void LaneDetector::openCVVisualization()
@@ -675,8 +687,8 @@ void LaneDetector::printInfoParams()
 void LaneDetector::dynamicMask(cv::Mat &input_frame, cv::Mat &output_frame)
 {
   dynamic_mask_ = cv::Mat::zeros(cv::Size(input_frame.cols, input_frame.rows), CV_8UC1);
-  float offset_right = -0.09;
-  float offset_left = 0.07;
+  float offset_right = -0.07;
+  float offset_left = 0.05;
   output_frame = input_frame.clone();
   if (!right_line_.isExist())
     offset_right = -0.14;
@@ -1993,4 +2005,28 @@ void LaneDetector::drawParticles(int num)
 
   cv::namedWindow("Particle Filter", cv::WINDOW_NORMAL);
   cv::imshow("Particle Filter", pf_mat);
+}
+
+void LaneDetector::createObstaclesMask()
+{
+  cv::threshold(homography_frame_, obstacles_mask_, obstacles_threshold_, 255, 0);
+
+  cv::Mat erase_obstacles;
+  morphologyEx(obstacles_mask_, erase_obstacles, cv::MORPH_TOPHAT , obstacle_element_);
+
+  cv::bitwise_not(erase_obstacles, erase_obstacles);
+
+  cv::bitwise_and(obstacles_mask_, erase_obstacles, obstacles_mask_);
+
+  //cv::namedWindow("obstacles_mask_", cv::WINDOW_NORMAL);
+  //cv::imshow("obstacles_mask_", obstacles_mask_);
+
+  
+  dilate( obstacles_mask_, obstacles_mask_, dilate_obst_element_ );
+  //cv::namedWindow("obstacles_mask_++", cv::WINDOW_NORMAL);
+  //cv::imshow("obstacles_mask_++", obstacles_mask_);
+
+  cv::bitwise_not(obstacles_mask_, obstacles_mask_);
+
+  
 }

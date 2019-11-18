@@ -10,7 +10,9 @@ detect_markings:
     pf_num_samples_vis: 4,
     pf_std: 0.015,
     real_window_size: 0.1,
-    threshold_c: -15
+    threshold_c: -15,
+    obstacle_window_size: 0.09,
+    obstacles_threshold: 100
   }
 detect_parking_spot: 
   {

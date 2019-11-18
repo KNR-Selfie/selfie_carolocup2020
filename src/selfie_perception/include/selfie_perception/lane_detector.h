@@ -58,6 +58,8 @@ class LaneDetector
   cv::Mat kernel_v_;
   cv::Mat dilate_element_;
   cv::Mat close_element_;
+  cv::Mat obstacle_element_;
+  cv::Mat dilate_obst_element_;
   cv::Mat current_frame_;
   cv::Mat binary_frame_;
   cv::Mat dynamic_mask_;
@@ -70,6 +72,7 @@ class LaneDetector
   cv::Mat debug_frame_;
   cv::Mat hom_cut_mask_;
   cv::Mat hom_cut_mask_inv_;
+  cv::Mat obstacles_mask_;
 
   std::vector<std::vector<cv::Point> > lines_vector_;
   std::vector<std::vector<cv::Point2f> > lines_vector_converted_;
@@ -113,6 +116,7 @@ class LaneDetector
   void recognizeLinesNew();
   void LCRLinesDraw(cv::Mat &visualization_frame);
   float findMinPointToParabola(cv::Point2f p, std::vector<float> coeff);
+  void createObstaclesMask();
 
   // visualization
   sensor_msgs::PointCloud points_cloud_;
@@ -145,6 +149,9 @@ class LaneDetector
   int treshold_block_size_      {3};
   float real_window_size_       {0.1};
   int threshold_c_              {-40};
+
+  float obstacle_window_size_   {0.09};
+  int obstacles_threshold_      {100};
 
   int pf_num_samples_           {50};
   int pf_num_points_            {3};
