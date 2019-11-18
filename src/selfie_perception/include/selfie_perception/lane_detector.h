@@ -73,6 +73,7 @@ class LaneDetector
   cv::Mat hom_cut_mask_;
   cv::Mat hom_cut_mask_inv_;
   cv::Mat obstacles_mask_;
+  cv::Mat pf_vis_mat_;
 
   std::vector<std::vector<cv::Point> > lines_vector_;
   std::vector<std::vector<cv::Point2f> > lines_vector_converted_;
