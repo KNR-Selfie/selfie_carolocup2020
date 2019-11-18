@@ -73,6 +73,11 @@ bool LaneDetector::init()
 
   computeTopView();
   printInfoParams();
+  if (tune_params_mode_)
+  {
+    current_frame_ = cv::Mat::zeros(cv::Size(TOPVIEW_COLS, TOPVIEW_ROWS), CV_8UC1);
+    tune_timer_ = nh_.createTimer(ros::Duration(0.01), &LaneDetector::tuneParams, this);
+  }
   return true;
 }
 
@@ -319,6 +324,7 @@ void LaneDetector::getParams()
   pnh_.getParam("real_window_size", real_window_size_);
   pnh_.getParam("threshold_c", threshold_c_);
   pnh_.getParam("debug_mode", debug_mode_);
+  pnh_.getParam("tune_params_mode", tune_params_mode_);
   pnh_.getParam("max_mid_line_gap", max_mid_line_gap_);
 
   pnh_.getParam("pf_num_samples", pf_num_samples_);
@@ -2042,4 +2048,39 @@ void LaneDetector::createObstaclesMask()
   //cv::imshow("obstacles_mask_++", obstacles_mask_);
 
   cv::bitwise_not(obstacles_mask_, obstacles_mask_);
+}
+
+void LaneDetector::static_thresh_c_trackbar(int v, void *ptr)
+{
+  // resolve 'this':
+  LaneDetector *that = (LaneDetector*)ptr;
+  that->on_thresh_c_trackbar(v);
+}
+
+void LaneDetector::on_thresh_c_trackbar(int v)
+{
+ threshold_c_ = thresh_c_tune_temp_ - 50;
+}
+
+void LaneDetector::tuneParams(const ros::TimerEvent &time)
+{
+  cv::namedWindow("trackbars", cv::WINDOW_NORMAL);
+  cv::createTrackbar("obstacle_thresh ", "trackbars", &obstacles_threshold_, 255);
+  cv::createTrackbar("threshold_c [-50,50]", "trackbars", &thresh_c_tune_temp_, 100, static_thresh_c_trackbar, this);
+
+  cv::Mat homography_gray;
+  homography(current_frame_, homography_gray);
+  cv::Mat test_obstacle_mat;
+  cv::threshold(homography_gray, test_obstacle_mat, obstacles_threshold_, 255, 0);
+  cv::namedWindow("test_obstacle_mat", cv::WINDOW_NORMAL);
+  cv::imshow("test_obstacle_mat", test_obstacle_mat);
+
+  cv::Mat test_threshold_c_mat;
+  cv::adaptiveThreshold(homography_gray, test_threshold_c_mat, 255, cv::ADAPTIVE_THRESH_MEAN_C,
+                        CV_THRESH_BINARY, treshold_block_size_, threshold_c_);
+
+  cv::namedWindow("test_threshold_c_mat", cv::WINDOW_NORMAL);
+  cv::imshow("test_threshold_c_mat", test_threshold_c_mat);
+
+  cv::waitKey(1);
 }

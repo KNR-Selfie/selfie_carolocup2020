@@ -41,6 +41,7 @@ class LaneDetector
   bool init();
 
   private:
+  ros::Timer tune_timer_;
   ros::NodeHandle nh_;
   ros::NodeHandle pnh_;
   image_transport::ImageTransport it_;
@@ -118,6 +119,9 @@ class LaneDetector
   void LCRLinesDraw(cv::Mat &visualization_frame);
   float findMinPointToParabola(cv::Point2f p, std::vector<float> coeff);
   void createObstaclesMask();
+  void tuneParams(const ros::TimerEvent &time);
+  static void static_thresh_c_trackbar(int v, void *ptr);
+  void on_thresh_c_trackbar(int v);
 
   // visualization
   sensor_msgs::PointCloud points_cloud_;
@@ -141,6 +145,8 @@ class LaneDetector
   std::string config_file_      {""};
   std::string hom_cut_file_     {""};
   bool debug_mode_              {false};
+  bool tune_params_mode_        {false};
+  int thresh_c_tune_temp_       {false};
 
   float max_mid_line_distance_  {0.15};
   float max_mid_line_gap_       {0.3};
