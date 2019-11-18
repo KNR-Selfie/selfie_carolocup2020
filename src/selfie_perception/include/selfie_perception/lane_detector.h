@@ -128,7 +128,7 @@ class LaneDetector
 
   int starting_line_timeout_    {0};
   bool init_imageCallback_      {true};
-  float min_length_search_line_ {0.05};
+  float min_length_search_line_ {0.08};
   float max_delta_y_lane_       {0.08};
   float min_length_to_2aprox_   {0.56};
   float left_lane_width_        {0.4};
@@ -141,8 +141,8 @@ class LaneDetector
   std::string hom_cut_file_     {""};
   bool debug_mode_              {false};
 
-  float max_mid_line_distance_  {0.2};
-  float max_mid_line_gap_       {0.5};
+  float max_mid_line_distance_  {0.15};
+  float max_mid_line_gap_       {0.3};
   float nominal_center_line_Y_  {0.2};
   float points_density_         {15};
 

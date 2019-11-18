@@ -2021,12 +2021,9 @@ void LaneDetector::createObstaclesMask()
   //cv::namedWindow("obstacles_mask_", cv::WINDOW_NORMAL);
   //cv::imshow("obstacles_mask_", obstacles_mask_);
 
-  
   dilate( obstacles_mask_, obstacles_mask_, dilate_obst_element_ );
   //cv::namedWindow("obstacles_mask_++", cv::WINDOW_NORMAL);
   //cv::imshow("obstacles_mask_++", obstacles_mask_);
 
   cv::bitwise_not(obstacles_mask_, obstacles_mask_);
-
-  
 }
