@@ -3,6 +3,7 @@
 #include <selfie_scheduler/drive_action_client.h>
 #include <selfie_scheduler/search_action_client.h>
 #include <selfie_scheduler/park_action_client.h>
+#include <selfie_scheduler/intersection_action_client.h>
 #include <std_srvs/Empty.h>
 
 Scheduler::Scheduler() :
@@ -20,6 +21,9 @@ Scheduler::Scheduler() :
     visionReset_ = nh_.serviceClient<std_srvs::Empty>("resetVision");
     cmdCreatorStartPub_ = nh_.serviceClient<std_srvs::Empty>("cmd_start_pub");
     cmdCreatorStopPub_ = nh_.serviceClient<std_srvs::Empty>("cmd_stop_pub");
+    avoidingObstSetPassive_ = nh_.serviceClient<std_srvs::Empty>("avoiding_obst_set_passive");
+    avoidingObstSetActive_ = nh_.serviceClient<std_srvs::Empty>("avoiding_obst_set_active");
+    resetLaneController_ = nh_.serviceClient<std_srvs::Empty>("resetLaneControl");
     switchState_ = nh_.subscribe("switch_state", 10, &Scheduler::switchStateCallback, this);
 
     clients_[STARTING] = new StartingProcedureClient("starting_procedure");
@@ -27,12 +31,6 @@ Scheduler::Scheduler() :
 
     clients_[DRIVING] = new DriveClient("free_drive");
     action_args_[DRIVING] = [](bool x){return x;}(false);
-
-    clients_[PARKING_SEARCH] = new SearchClient("search");
-    action_args_[PARKING_SEARCH] = parking_spot_;
-
-    clients_[PARK] = new ParkClient("park");
-    action_args_[PARK] = [](geometry_msgs::Polygon x){return x;};
 
     previousRcState_ = RC_MANUAL;
     previous_car_state_= SELFIE_IDLE;
@@ -43,6 +41,43 @@ Scheduler::Scheduler() :
 Scheduler::~Scheduler()
 {
     pnh_.deleteParam("begin_action");
+}
+void Scheduler::waitForStart()
+{
+    while(ros::ok)
+    {
+        if(checkIfActionFinished() == SUCCESS)
+        {
+            boost::any result;
+            current_client_ptr_->getActionResult(result);
+
+            DriveClient* drive_client = dynamic_cast<DriveClient*>(clients_[DRIVING]);
+            bool drive_mode = boost::any_cast<bool>(result);
+
+            drive_client->setDriveMode(drive_mode);
+            setupActionClients(drive_mode);
+            break;
+        }
+        else if(checkIfActionFinished()==ABORTED)
+            break;
+    }
+}
+void Scheduler::setupActionClients(bool button_pressed)
+{
+    if(button_pressed == 1) // parking mode
+    {
+        clients_[PARKING_SEARCH] = new SearchClient("search");
+        action_args_[PARKING_SEARCH] = parking_spot_;
+
+        clients_[PARK] = new ParkClient("park");
+        action_args_[PARK] = [](geometry_msgs::Polygon x){return x;};
+    }
+    else // intersection mode
+    {
+        clients_[INTERSECTION] = new IntersectionClient("intersection");
+        action_args_[INTERSECTION] = (int)0; // empty goal
+        setAvoidingObstActive();
+    }
 }
 void Scheduler::init()
 {
@@ -64,6 +99,13 @@ void Scheduler::startAction(action action_to_set)
     current_client_ptr_->waitForServer(200);
     current_client_ptr_->setGoal(action_args_[action_to_set]);
 }
+void Scheduler::startNextAction()
+{
+    action next_action = current_client_ptr_->getNextAction();
+    current_client_ptr_ = clients_[next_action];
+    current_client_ptr_->waitForServer(200);
+    current_client_ptr_->setGoal(action_args_[next_action]);
+}
 int Scheduler::checkIfActionFinished()
 {
     return current_client_ptr_->getClientGoalState();
@@ -77,9 +119,30 @@ void Scheduler::loop()
     }
     else if(checkIfActionFinished() == ABORTED)
     {
-        // action_aborted
+        // abort caused by RC
+        if(currentRcState_ == RC_MANUAL)
+        {
+            // empty state
+        }
+        else // abort caused by server
+        {
+            stopAction();
+            resetVision();
+            startAction(DRIVING);
+            startCmdCreator();
+        }
     }
     stateMachine();
+}
+void Scheduler::setAvoidingObstActive()
+{
+    std_srvs::Empty empty_msg;
+    avoidingObstSetActive_.call(empty_msg);
+}
+void Scheduler::resetLaneControl()
+{
+    std_srvs::Empty empty_msg;
+    resetLaneController_.call(empty_msg);
 }
 void Scheduler::resetVision()
 {
@@ -118,7 +181,7 @@ void Scheduler::shiftAction()
     }
     else if (checkCurrentClientType<DriveClient*>())
     {
-        startAction(PARKING_SEARCH);
+        startNextAction();
     }
     else if (checkCurrentClientType<SearchClient*>())
     {
@@ -180,22 +243,26 @@ void Scheduler::switchStateCallback(const std_msgs::UInt8ConstPtr &msg)
     {
         if (previousRcState_ != msg->data)
         {
-            if ((rc_state)msg->data == RC_MANUAL)
+            currentRcState_ = (rc_state)msg->data;
+
+            if (currentRcState_ == RC_MANUAL)
             {
                 stopAction();
             }
-            else if((rc_state)msg->data == RC_AUTONOMOUS && previousRcState_ == RC_MANUAL)
+            else if(currentRcState_ == RC_AUTONOMOUS && previousRcState_ == RC_MANUAL)
             {
-                resetVision();
-                startAction(DRIVING);
-                startCmdCreator();
 
+                resetVision();
+                startAction(DRIVING);
+                startCmdCreator();
+                resetLaneControl();
             }
-            else if((rc_state)msg->data == RC_HALF_AUTONOMOUS && previousRcState_ == RC_MANUAL)
+            else if(currentRcState_ == RC_HALF_AUTONOMOUS && previousRcState_ == RC_MANUAL)
             {
                 resetVision();
                 startAction(DRIVING);
                 startCmdCreator();
+                resetLaneControl();
             }
         }
     }

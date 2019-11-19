@@ -11,6 +11,9 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "scheduler");
     Scheduler selfie_scheduler;  // action initialization
     selfie_scheduler.init();
+
+// wait for key press
+    selfie_scheduler.waitForStart();
     while (ros::ok())
     {
         ros::spinOnce();

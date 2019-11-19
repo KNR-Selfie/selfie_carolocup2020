@@ -11,11 +11,13 @@ protected:
     actionlib::SimpleActionClient<selfie_msgs::drivingAction> ac_;
     selfie_msgs::drivingGoal goal_;
     bool result_;
+    bool drive_mode_;
 
 public:
     DriveClient(std::string name);
     ~DriveClient();
 
+    void setDriveMode(bool drive_mode);
     void setGoal(boost::any goal);
     bool waitForResult(float timeout);
     void cancelAction();

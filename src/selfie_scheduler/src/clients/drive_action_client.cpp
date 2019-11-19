@@ -3,34 +3,27 @@
 DriveClient::DriveClient(std::string name):
     ac_(name, true)
 {
-    next_action_ = PARKING_SEARCH;
+    next_action_ = DRIVING;
     action_state_ = SELFIE_IDLE;
     result_flag_ = EMPTY;
 }
 DriveClient::~DriveClient()
 {
 }
-void DriveClient::setGoal(boost::any goal)
+void DriveClient::setDriveMode(bool drive_mode)
 {
-    float drive_mode;
+    drive_mode_ = drive_mode;
 
-    try
-    {
-        drive_mode = boost::any_cast<bool>(goal);
-    }
-    catch (boost::bad_any_cast &e)
-    {
-        ROS_ERROR("bad casting %s", e.what());
-        return;
-    }
-
-    // select next action based on button pressed
-    if(drive_mode == false)
+    if(drive_mode_ == false)
         next_action_ = INTERSECTION;
     else
         next_action_ = PARKING_SEARCH;
+}
+void DriveClient::setGoal(boost::any goal)
+{
+    // function goal does not change
 
-    goal_.mode = drive_mode;
+    goal_.mode = drive_mode_;
     ac_.sendGoal(goal_, boost::bind(&DriveClient::doneCb, this, _1, _2),
                 boost::bind(&DriveClient::activeCb, this),
                 boost::bind(&DriveClient::feedbackCb, this, _1));
@@ -49,7 +42,7 @@ void DriveClient::doneCb(const actionlib::SimpleClientGoalState& state,
             const selfie_msgs::drivingResultConstPtr& result)
 {
     ROS_INFO("Finished drive in state [%s]", state.toString().c_str());
-    ROS_INFO("drive result: %d", result->parking_area);
+    ROS_INFO("drive result: %d",  result->event);
 
     if(state == State::ABORTED)
     {
@@ -75,20 +68,7 @@ void DriveClient::cancelAction()
   ROS_INFO("Drive cancel action");
   ac_.cancelAllGoals();
 }
-program_state DriveClient::getActionState()
-{
-    if(action_state_ != SELFIE_IDLE)
-        return action_state_;
-}
-int DriveClient::isActionFinished()
-{
-    return result_flag_;
-}
 void DriveClient::getActionResult(boost::any &result)
 {
     // result = result_;
-}
-action DriveClient::getNextAction()
-{
-    return next_action_;
 }

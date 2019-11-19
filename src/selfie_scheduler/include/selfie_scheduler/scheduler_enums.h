@@ -57,6 +57,7 @@ typedef enum action
     DRIVING,
     PARKING_SEARCH,
     PARK,
+    INTERSECTION,
     ERROR,
 
 }action_variable;
