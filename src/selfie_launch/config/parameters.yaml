@@ -12,7 +12,7 @@ detect_markings:
     real_window_size: 0.05,
     threshold_c: -15,
     obstacle_window_size: 0.09,
-    obstacles_threshold: 100
+    obstacles_threshold: 95
   }
 detect_parking_spot: 
   {
