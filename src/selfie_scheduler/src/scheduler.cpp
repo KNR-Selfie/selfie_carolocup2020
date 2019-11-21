@@ -194,6 +194,10 @@ void Scheduler::shiftAction()
         startAction(DRIVING);
         startCmdCreator();
     }
+    else if (checkCurrentClientType<IntersectionClient*>())
+    {
+        startNextAction();
+    }
     else
     {
         ROS_WARN("No such action client!!");

@@ -4,6 +4,7 @@
 #include <selfie_scheduler/starting_action_client.h>
 #include <selfie_scheduler/park_action_client.h>
 #include <selfie_scheduler/scheduler_enums.h>
+#include <selfie_scheduler/intersection_action_client.h>
 #include <selfie_scheduler/scheduler.h>
 #include <actionlib/server/simple_action_server.h>
 #include <selfie_msgs/PolygonArray.h>
@@ -15,22 +16,26 @@ class ActionMock
     actionlib::SimpleActionServer <selfie_msgs::drivingAction> drive_action_;
     actionlib::SimpleActionServer <selfie_msgs::startingAction> starting_action_;
     actionlib::SimpleActionServer <selfie_msgs::searchAction> search_action_;
+    actionlib::SimpleActionServer <selfie_msgs::intersectionAction> intersection_action_;
 public:
     ActionMock():
         park_action_(nh_,"park",boost::bind(&ActionMock::park_action_goalCB,this,_1),false),
         drive_action_(nh_,"free_drive",boost::bind(&ActionMock::drive_action_goalCB,this,_1),false),
         starting_action_(nh_,"starting_procedure",boost::bind(&ActionMock::starting_action_goalCB,this,_1),false),
-        search_action_(nh_,"search",boost::bind(&ActionMock::search_action_goalCB,this,_1),false)
+        search_action_(nh_,"search",boost::bind(&ActionMock::search_action_goalCB,this,_1),false),
+        intersection_action_(nh_,"intersection",boost::bind(&ActionMock::intersection_action_goalCB,this,_1),false)
     {
         starting_action_.registerPreemptCallback(boost::bind(&ActionMock::starting_action_preemptCB, this));
         drive_action_.registerPreemptCallback(boost::bind(&ActionMock::drive_action_preemptCB, this));
         search_action_.registerPreemptCallback(boost::bind(&ActionMock::search_action_preemptCB, this));
         park_action_.registerPreemptCallback(boost::bind(&ActionMock::park_action_preemptCB, this));
+        intersection_action_.registerPreemptCallback(boost::bind(&ActionMock::intersection_action_preemptCB, this));
 
         starting_action_.start();
         drive_action_.start();
         search_action_.start();
         park_action_.start();
+        intersection_action_.start();
 
     }
     void waitGivenTime(float sec)
@@ -86,6 +91,13 @@ public:
         if (search_action_.isActive())
             search_action_.setSucceeded(this->getMockObstacle());
     }
+    void intersection_action_goalCB(const selfie_msgs::intersectionGoalConstPtr &goal)
+    {
+        ROS_INFO("Intersection goal is empty");
+        waitGivenTime(10);
+        if(intersection_action_.isActive())
+            intersection_action_.setSucceeded([](bool result){selfie_msgs::intersectionResult intersection_result; intersection_result.done = result; return intersection_result;}(true));
+    }
 
     selfie_msgs::searchResult getMockObstacle()
     {
@@ -125,6 +137,11 @@ public:
     {
         ROS_INFO("Starting action aborted");
         starting_action_.setAborted();
+    }
+    void intersection_action_preemptCB()
+    {
+        ROS_INFO("Starting action aborted");
+        intersection_action_.setAborted();
     }
 
 };
