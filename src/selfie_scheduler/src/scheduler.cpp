@@ -32,7 +32,8 @@ Scheduler::Scheduler() :
     clients_[DRIVING] = new DriveClient("free_drive");
     action_args_[DRIVING] = [](bool x){return x;}(false);
 
-    previousRcState_ = RC_MANUAL;
+    previousRcState_ = RC_UNINTIALIZED;
+    currentRcState_ = RC_UNINTIALIZED;
     previous_car_state_= SELFIE_IDLE;
     current_car_state_ = SELFIE_READY;
 
@@ -149,7 +150,6 @@ void Scheduler::resetVision()
     std_srvs::Empty empty_msg;
     visionReset_.call(empty_msg);
 }
-
 void Scheduler::startCmdCreator()
 {
     std_srvs::Empty empty_msg;
@@ -238,24 +238,23 @@ void Scheduler::stateMachine()
 void Scheduler::stopAction()
 {
     current_client_ptr_->cancelAction();
-    ROS_INFO("STOP current action");
+    ROS_WARN("STOP current action");
 }
 void Scheduler::switchStateCallback(const std_msgs::UInt8ConstPtr &msg)
 {
     // prevent from execution on the beginning
     if (current_car_state_ > SELFIE_READY)
     {
-        if (previousRcState_ != msg->data)
-        {
-            currentRcState_ = (rc_state)msg->data;
+        currentRcState_ = (rc_state)msg->data;
 
-            if (currentRcState_ == RC_MANUAL)
+        if (previousRcState_ != currentRcState_)
+        {
+            if (currentRcState_ == RC_MANUAL && (previousRcState_ == RC_AUTONOMOUS || previousRcState_ == RC_HALF_AUTONOMOUS))
             {
                 stopAction();
             }
             else if(currentRcState_ == RC_AUTONOMOUS && previousRcState_ == RC_MANUAL)
             {
-
                 resetVision();
                 startAction(DRIVING);
                 startCmdCreator();
@@ -268,8 +267,8 @@ void Scheduler::switchStateCallback(const std_msgs::UInt8ConstPtr &msg)
                 startCmdCreator();
                 resetLaneControl();
             }
-        }
+            previousRcState_ = currentRcState_;
+        } 
     }
-    previousRcState_ = (rc_state)msg->data;
 }
 

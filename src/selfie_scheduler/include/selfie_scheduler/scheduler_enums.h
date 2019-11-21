@@ -64,6 +64,7 @@ typedef enum action
 
 typedef enum rc_state
 {
+    RC_UNINTIALIZED = -1,
     RC_MANUAL = 0,
     RC_HALF_AUTONOMOUS,
     RC_AUTONOMOUS,

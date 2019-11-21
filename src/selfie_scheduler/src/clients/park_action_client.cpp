@@ -45,7 +45,6 @@ void ParkClient::doneCb(const actionlib::SimpleClientGoalState& state,
     ROS_INFO("Finished park in state [%s]", state.toString().c_str());
     if(state == actionlib::SimpleClientGoalState::StateEnum::ABORTED)
     {
-        ROS_INFO("ABORTED!!");
         result_flag_ = ABORTED;
     }
     else
