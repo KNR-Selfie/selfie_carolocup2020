@@ -73,6 +73,8 @@ private:
   float return_distance_; // after passing this distance car returns on right lane
 
   int proof_overtake_;
+  int num_proof_to_overtake_;
+  int num_corners_to_detect_;
 
   std::list<Box> filtered_boxes_; // boxes are sorted by x valule
   // ascendend (near->far)

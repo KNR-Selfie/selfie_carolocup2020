@@ -44,6 +44,8 @@ lane_controller:
     maximum_length_of_obstacle: 0.8,
     maximum_distance_to_obstacle: 0.5,
     safety_margin: 1.15,
+    num_proof_to_overtake: 3,
+    num_corners_to_detect_: 3,
 
     ROI_min_x: 0.3,
     ROI_max_x: 1.1,

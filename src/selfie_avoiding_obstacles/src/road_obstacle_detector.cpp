@@ -10,6 +10,9 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
     , pnh_(pnh)
     , received_road_markings_(false)
     , maximum_distance_to_obstacle_(0.5)
+    , proof_overtake_(0)
+    , num_proof_to_overtake_(3)
+    , num_corners_to_detect_(3)
 {
   pnh_.param<bool>("visualization", visualization_, false);
   pnh_.param<float>("maximum_length_of_obstacle", maximum_length_of_obstacle_, 0.8);
@@ -23,6 +26,8 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
   pnh_.param<float>("maximum_speed", max_speed_, 0.3);
   pnh_.param<float>("safe_speed", safe_speed_, 0.1);
   pnh_.param<float>("safety_margin", safety_margin_, 1.15);
+  pnh_.param<int>("num_proof_to_overtake", num_proof_to_overtake_, 3);
+  pnh_.param<int>("num_corners_to_detect", num_corners_to_detect_, 3);
   
   passive_mode_service_ = nh_.advertiseService("/avoiding_obst_set_passive", &Road_obstacle_detector::switchToPassive, this);
   active_mode_service_ = nh_.advertiseService("/avoiding_obst_set_active", &Road_obstacle_detector::switchToActive, this);
@@ -70,7 +75,7 @@ void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &
       {
         ++proof_overtake_;
         speed_message_.data = safe_speed_;
-        if (proof_overtake_ >= 3)
+        if (proof_overtake_ >= num_proof_to_overtake_)
         {
           proof_overtake_ = 0;
           change_lane(left_lane_);
@@ -135,7 +140,7 @@ void Road_obstacle_detector::filter_boxes(const selfie_msgs::PolygonArray &msg)
         box_ok = true;
       }
     }
-    if (box_ok >= 3)
+    if (box_ok >= num_corners_to_detect_)
     {
       Box temp_box(polygon);
       filtered_boxes_.insert(filtered_boxes_.begin(), temp_box);
