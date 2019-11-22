@@ -65,22 +65,36 @@ void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &
     filter_boxes(msg);
     if (!filtered_boxes_.empty())
     {
-      speed_message_.data = safe_speed_;
-      if (nearest_box_in_front_of_car_->bottom_left.x <= maximum_distance_to_obstacle_)
+      if (nearest_box_in_front_of_car_->bottom_left.x <= maximum_distance_to_obstacle_ ||
+          nearest_box_in_front_of_car_->bottom_right.x <= maximum_distance_to_obstacle_)
       {
-        change_lane(left_lane_);
-        calculate_return_distance();
-        status_ = OVERTAKING;
+        ++proof_overtake_;
+        speed_message_.data = safe_speed_;
+        if (proof_overtake_ >= 3)
+        {
+          proof_overtake_ = 0;
+          change_lane(left_lane_);
+          calculate_return_distance();
+          status_ = OVERTAKING;
+        }
       } else
       {
+        if (proof_overtake_ > 0)
+        {
+          --proof_overtake_;
+        } else
+        {
+          speed_message_.data = max_speed_;
+        }
         setpoint_value_.data = right_lane_;
       }
     } else
     {
+      proof_overtake_ = 0;
       setpoint_value_.data = right_lane_;
       speed_message_.data = max_speed_;
     }
-    setpoint_pub_.publish(setpoint_value_);
+    speed_pub_.publish(speed_message_);
     break;
   case OVERTAKING:
     if (return_distance_ - current_distance_ <= 0)
@@ -93,17 +107,15 @@ void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &
       setpoint_value_.data = left_lane_;
       speed_message_.data = max_speed_;
     }
-    setpoint_pub_.publish(setpoint_value_);
+    speed_pub_.publish(speed_message_);
     break;
   case PASSIVE:
     setpoint_value_.data = right_lane_;
-    setpoint_pub_.publish(setpoint_value_);
     break;
   default:
     ROS_ERROR("Wrong avoiding_obstacle action status");
   }
-
-  speed_pub_.publish(speed_message_);
+  setpoint_pub_.publish(setpoint_value_);
 }
 
 void Road_obstacle_detector::filter_boxes(const selfie_msgs::PolygonArray &msg)
@@ -121,10 +133,9 @@ void Road_obstacle_detector::filter_boxes(const selfie_msgs::PolygonArray &msg)
       if (is_on_right_lane(p) && p.check_position(ROI_min_x_, ROI_max_x_, ROI_min_y_, ROI_max_y_))
       {
         box_ok = true;
-        break;
       }
     }
-    if (box_ok)
+    if (box_ok >= 3)
     {
       Box temp_box(polygon);
       filtered_boxes_.insert(filtered_boxes_.begin(), temp_box);
@@ -172,6 +183,8 @@ bool Road_obstacle_detector::is_on_right_lane(const Point &point)
 
   if (point.y > right_value && point.y < center_value)
     return true;
+  else
+    return false;
 }
 
 void Road_obstacle_detector::calculate_return_distance()
