@@ -144,27 +144,30 @@ void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &
 void Road_obstacle_detector::filter_boxes(const selfie_msgs::PolygonArray &msg)
 {
   filtered_boxes_.clear();
-  geometry_msgs::Polygon polygon;
-  for (int box_nr = msg.polygons.size() - 1; box_nr >= 0; box_nr--)
+  if (!msg.polygons.empty())
   {
-    polygon = msg.polygons[box_nr];
-    int corners_ok = 0;
-    for (int a = 0; a < 4; ++a)
+    geometry_msgs::Polygon polygon;
+    for (int box_nr = msg.polygons.size() - 1; box_nr >= 0; box_nr--)
     {
-      Point p(polygon.points[a]);
+      polygon = msg.polygons[box_nr];
+      int corners_ok = 0;
+      for (int a = 0; a < 4; ++a)
+      {
+        Point p(polygon.points[a]);
 
-      if (is_on_right_lane(p) && p.check_position(ROI_min_x_, ROI_max_x_, ROI_min_y_, ROI_max_y_))
-      {
-        ++corners_ok;
+        if (is_on_right_lane(p) && p.check_position(ROI_min_x_, ROI_max_x_, ROI_min_y_, ROI_max_y_))
+        {
+          ++corners_ok;
+        }
       }
-    }
-    if (corners_ok >= num_corners_to_detect_)
-    {
-      Box temp_box(polygon);
-      filtered_boxes_.insert(filtered_boxes_.begin(), temp_box);
-      if (temp_box.bottom_left.x > 0)
+      if (corners_ok >= num_corners_to_detect_)
       {
-        nearest_box_in_front_of_car_ = filtered_boxes_.begin();
+        Box temp_box(polygon);
+        filtered_boxes_.insert(filtered_boxes_.begin(), temp_box);
+        if (temp_box.bottom_left.x > 0)
+        {
+          nearest_box_in_front_of_car_ = filtered_boxes_.begin();
+        }
       }
     }
   }
