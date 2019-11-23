@@ -177,6 +177,8 @@ void ParkService::goalCB()
 void ParkService::preemptCB()
 {
   ROS_INFO("parkService preempted");
+  blinkLeft(false);
+  blinkRight(false);
   parking_state_ = not_parking;
   move_state_ = first_phase;
   as_.setAborted();
