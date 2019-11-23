@@ -269,6 +269,8 @@ bool Road_obstacle_detector::switchToActive(std_srvs::Empty::Request &request, s
   pos_offset_sub_ = nh_.subscribe("/position_offset", 1, &Road_obstacle_detector::posOffsetCallback, this);
   blinkLeft(false);
   blinkRight(false);
+  return_distance_calculated_ = false;
+  proof_overtake_ = 0;
   timer_.stop();
   status_ = ON_RIGHT;
   return true;
