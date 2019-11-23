@@ -13,6 +13,7 @@ ObstaclesGenerator::ObstaclesGenerator(const ros::NodeHandle &nh, const ros::Nod
   lidar_offset_(0),
   segment_threshold_(0.03),
   min_segment_size_(0.04),
+  max_segment_size_(0.5),
   min_to_divide_(0.03),
   upside_down_(false)
 {
@@ -37,6 +38,7 @@ bool ObstaclesGenerator::init()
 
   pnh_.getParam("segment_threshold", segment_threshold_);
   pnh_.getParam("min_segment_size", min_segment_size_);
+  pnh_.getParam("max_segment_size", max_segment_size_);
   pnh_.getParam("min_to_divide", min_to_divide_);
 
   pnh_.getParam("lidar_offset", lidar_offset_);
@@ -188,6 +190,7 @@ void ObstaclesGenerator::printInfoParams()
 
   ROS_INFO("segment_threshold: %.3f", segment_threshold_);
   ROS_INFO("min_segment_size: %.3f", min_segment_size_);
+  ROS_INFO("max_segment_size: %.3f", max_segment_size_);
   ROS_INFO("min_to_divide: %.3f\n", min_to_divide_);
 
   ROS_INFO("lidar_offset: %.3f", lidar_offset_);
@@ -381,7 +384,7 @@ void ObstaclesGenerator::divideIntoSegments()
       if(!segment.empty())
       {
         float segment_size = getDistance(segment[0], segment[segment.size() - 1]);
-        if(segment_size > min_segment_size_)
+        if(segment_size > min_segment_size_ && segment_size < max_segment_size_)
         {
           segments_.push_back(segment);
           segment.clear();
