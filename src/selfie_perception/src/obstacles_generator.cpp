@@ -59,10 +59,18 @@ void ObstaclesGenerator::laserScanCallback(const sensor_msgs::LaserScan &msg)
   scan = msg;
   divideIntoSegments();
   if(segments_.empty())
-    return;
-  generateLines();
-  generateObstacles();
-
+  {
+    obstacle_array_.polygons.clear();
+    obstacle_array_.header.stamp = ros::Time::now();
+    obstacle_array_.header.frame_id = obstacles_frame_;
+    obstacles_pub_.publish(obstacle_array_);
+    line_array_.clear();
+  }
+  else
+  {
+    generateLines();
+    generateObstacles();
+  }
   if (visualize_)
   {
     visualizeLines();
@@ -165,16 +173,18 @@ void ObstaclesGenerator::visualizeLines()
 
   geometry_msgs::Point marker_point;
   marker_point.z = 0;
-
-  for (int i = 0; i < line_array_.size(); i++)
+  if (!line_array_.empty())
   {
-    marker_point.x = line_array_[i].start_point.x + lidar_offset_;
-    marker_point.y = line_array_[i].start_point.y * 1;
-    marker.points.push_back(marker_point);
+    for (int i = 0; i < line_array_.size(); i++)
+    {
+      marker_point.x = line_array_[i].start_point.x + lidar_offset_;
+      marker_point.y = line_array_[i].start_point.y * 1;
+      marker.points.push_back(marker_point);
 
-    marker_point.x = line_array_[i].end_point.x + lidar_offset_;
-    marker_point.y = line_array_[i].end_point.y * 1;
-    marker.points.push_back(marker_point);
+      marker_point.x = line_array_[i].end_point.x + lidar_offset_;
+      marker_point.y = line_array_[i].end_point.y * 1;
+      marker.points.push_back(marker_point);
+    }
   }
   visualization_lines_pub_.publish(marker);
 }
@@ -292,7 +302,7 @@ void ObstaclesGenerator::visualizeObstacles()
 
   marker.header.frame_id = visualization_frame_;
   marker.header.stamp = ros::Time::now();
-  marker.ns = "line";
+  marker.ns = "obstacles";
   marker.type = visualization_msgs::Marker::LINE_LIST;
   marker.action = visualization_msgs::Marker::ADD;
   marker.id = 0;
@@ -309,49 +319,50 @@ void ObstaclesGenerator::visualizeObstacles()
   geometry_msgs::Point marker_point;
   marker_point.z = 0;
 
-  int i = 0;
-  for (int i = 0; i < obstacle_array_.polygons.size(); i++)
+  if (!obstacle_array_.polygons.empty())
   {
-
-    marker_point.x = obstacle_array_.polygons[i].points[0].x;
-    marker_point.y = obstacle_array_.polygons[i].points[0].y;
-
-    marker.points.push_back(marker_point);
-
-    marker_point.x = obstacle_array_.polygons[i].points[1].x;
-    marker_point.y = obstacle_array_.polygons[i].points[1].y;
-
-    marker.points.push_back(marker_point);
-
-    marker_point.x = obstacle_array_.polygons[i].points[1].x;
-    marker_point.y = obstacle_array_.polygons[i].points[1].y;
-
-    marker.points.push_back(marker_point);
-
-    marker_point.x = obstacle_array_.polygons[i].points[2].x;
-    marker_point.y = obstacle_array_.polygons[i].points[2].y;
-
-    marker.points.push_back(marker_point);
-
-    marker_point.x = obstacle_array_.polygons[i].points[2].x;
-    marker_point.y = obstacle_array_.polygons[i].points[2].y;
-
-    marker.points.push_back(marker_point);
-
-    marker_point.x = obstacle_array_.polygons[i].points[3].x;
-    marker_point.y = obstacle_array_.polygons[i].points[3].y;
-
-    marker.points.push_back(marker_point);
-
-    marker_point.x = obstacle_array_.polygons[i].points[3].x;
-    marker_point.y = obstacle_array_.polygons[i].points[3].y;
-
-    marker.points.push_back(marker_point);
-
-    marker_point.x = obstacle_array_.polygons[i].points[0].x;
-    marker_point.y = obstacle_array_.polygons[i].points[0].y;
-
-    marker.points.push_back(marker_point);
+    for (int i = 0; i < obstacle_array_.polygons.size(); i++)
+    {
+      marker_point.x = obstacle_array_.polygons[i].points[0].x;
+      marker_point.y = obstacle_array_.polygons[i].points[0].y;
+  
+      marker.points.push_back(marker_point);
+  
+      marker_point.x = obstacle_array_.polygons[i].points[1].x;
+      marker_point.y = obstacle_array_.polygons[i].points[1].y;
+  
+      marker.points.push_back(marker_point);
+  
+      marker_point.x = obstacle_array_.polygons[i].points[1].x;
+      marker_point.y = obstacle_array_.polygons[i].points[1].y;
+  
+      marker.points.push_back(marker_point);
+  
+      marker_point.x = obstacle_array_.polygons[i].points[2].x;
+      marker_point.y = obstacle_array_.polygons[i].points[2].y;
+  
+      marker.points.push_back(marker_point);
+  
+      marker_point.x = obstacle_array_.polygons[i].points[2].x;
+      marker_point.y = obstacle_array_.polygons[i].points[2].y;
+  
+      marker.points.push_back(marker_point);
+  
+      marker_point.x = obstacle_array_.polygons[i].points[3].x;
+      marker_point.y = obstacle_array_.polygons[i].points[3].y;
+  
+      marker.points.push_back(marker_point);
+  
+      marker_point.x = obstacle_array_.polygons[i].points[3].x;
+      marker_point.y = obstacle_array_.polygons[i].points[3].y;
+  
+      marker.points.push_back(marker_point);
+  
+      marker_point.x = obstacle_array_.polygons[i].points[0].x;
+      marker_point.y = obstacle_array_.polygons[i].points[0].y;
+  
+      marker.points.push_back(marker_point);
+    }
   }
   visualization_obstacles_pub_.publish(marker);
 }
