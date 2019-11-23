@@ -12,6 +12,8 @@
 #include <selfie_msgs/PolygonArray.h>
 #include <selfie_msgs/RoadMarkings.h>
 #include <std_msgs/Float32.h>
+#include <std_msgs/Float64.h>
+#include <std_msgs/Bool.h>
 #include <std_srvs/Empty.h>
 #include <visualization_msgs/Marker.h>
 
@@ -30,8 +32,10 @@ public:
 private:
   enum status
   {
-    CLEAR,
-    OVERTAKING,
+    ON_RIGHT,
+    OVERTAKE,
+    ON_LEFT,
+    RETURN,
     PASSIVE,
   };
   ros::NodeHandle nh_;
@@ -39,9 +43,12 @@ private:
   ros::Subscriber obstacles_sub_;
   ros::Subscriber markings_sub_;
   ros::Subscriber distance_sub_;
+  ros::Subscriber pos_offset_sub_;
   ros::Publisher speed_pub_;
   ros::Publisher visualizer_;
   ros::Publisher setpoint_pub_;
+  ros::Publisher right_indicator_pub_;
+  ros::Publisher left_indicator_pub_;
   // Two services as switches activating active/passive mode
   ros::ServiceServer passive_mode_service_;
   ros::ServiceServer active_mode_service_;
@@ -70,6 +77,8 @@ private:
 
   float safety_margin_; // safety margin considering inaccurations in measuring distance etc..
   float current_distance_;
+  float current_offset_;
+  float pos_tolerance_;
   float return_distance_; // after passing this distance car returns on right lane
 
   int proof_overtake_;
@@ -85,19 +94,22 @@ private:
   visualization_msgs::Marker empty_marker_;
   Box area_of_interest_box_;
   bool received_road_markings_;
+  bool return_distance_calculated_;
   status status_;
 
   void filter_boxes(const selfie_msgs::PolygonArray &);           // filters boxes and saves in filtered_boxes_
   void road_markings_callback(const selfie_msgs::RoadMarkings &); // checks if boxes from filtered_boxes_ are on right lane
   void obstacle_callback(const selfie_msgs::PolygonArray &);
   void distanceCallback(const std_msgs::Float32 &);
+  void posOffsetCallback(const std_msgs::Float64 &);
   void calculate_return_distance();
 
   bool switchToActive(std_srvs::Empty::Request &, std_srvs::Empty::Response &);
   bool switchToPassive(std_srvs::Empty::Request &, std_srvs::Empty::Response &);
   bool reset_node(std_srvs::Empty::Request &, std_srvs::Empty::Response &);
 
-  void change_lane(float lane);
+  void blinkLeft(bool on);
+  void blinkRight(bool on);
 
   bool is_on_right_lane(const Point &);
   void passive_timer_cb(const ros::TimerEvent &);

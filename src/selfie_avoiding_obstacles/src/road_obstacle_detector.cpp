@@ -13,6 +13,10 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
     , proof_overtake_(0)
     , num_proof_to_overtake_(3)
     , num_corners_to_detect_(3)
+    , current_distance_(0)
+    , current_offset_(0)
+    , return_distance_calculated_(false)
+    , pos_tolerance_(0.01)
 {
   pnh_.param<bool>("visualization", visualization_, false);
   pnh_.param<float>("maximum_length_of_obstacle", maximum_length_of_obstacle_, 0.8);
@@ -26,6 +30,7 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
   pnh_.param<float>("maximum_speed", max_speed_, 0.3);
   pnh_.param<float>("safe_speed", safe_speed_, 0.1);
   pnh_.param<float>("safety_margin", safety_margin_, 1.15);
+  pnh_.param<float>("pos_tolerance", pos_tolerance_, 0.01);
   pnh_.param<int>("num_proof_to_overtake", num_proof_to_overtake_, 3);
   pnh_.param<int>("num_corners_to_detect", num_corners_to_detect_, 3);
   
@@ -34,6 +39,8 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
   reset_node_service_ = nh_.advertiseService("/resetLaneControl", &Road_obstacle_detector::reset_node, this);
   setpoint_pub_ = nh_.advertise<std_msgs::Float64>("/setpoint", 1);
   speed_pub_ = nh_.advertise<std_msgs::Float64>("/max_speed", 1);
+  right_indicator_pub_ = nh_.advertise<std_msgs::Bool>("right_turn_indicator", 20);
+  left_indicator_pub_ = nh_.advertise<std_msgs::Bool>("left_turn_indicator", 20);
   
   speed_message_.data = max_speed_;
 
@@ -64,9 +71,8 @@ Road_obstacle_detector::~Road_obstacle_detector() {}
 
 void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &msg)
 {
-  switch (status_)
+  if (status_ != OVERTAKE)
   {
-  case CLEAR:
     filter_boxes(msg);
     if (!filtered_boxes_.empty())
     {
@@ -74,53 +80,65 @@ void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &
           nearest_box_in_front_of_car_->bottom_right.x <= maximum_distance_to_obstacle_)
       {
         ++proof_overtake_;
-        speed_message_.data = safe_speed_;
         if (proof_overtake_ >= num_proof_to_overtake_)
         {
           proof_overtake_ = 0;
-          change_lane(left_lane_);
           calculate_return_distance();
-          status_ = OVERTAKING;
+          status_ = OVERTAKE;
         }
       } else
       {
         if (proof_overtake_ > 0)
         {
           --proof_overtake_;
-        } else
-        {
-          speed_message_.data = max_speed_;
         }
-        setpoint_value_.data = right_lane_;
       }
     } else
     {
-      proof_overtake_ = 0;
-      setpoint_value_.data = right_lane_;
-      speed_message_.data = max_speed_;
+      if (proof_overtake_ > 0)
+      {
+        --proof_overtake_;
+      }
     }
-    speed_pub_.publish(speed_message_);
-    break;
-  case OVERTAKING:
-    if (return_distance_ - current_distance_ <= 0)
-    {
-      speed_message_.data = safe_speed_;
-      change_lane(right_lane_);
-      status_ = CLEAR;
-    } else
-    {
-      setpoint_value_.data = left_lane_;
-      speed_message_.data = max_speed_;
-    }
-    speed_pub_.publish(speed_message_);
-    break;
-  case PASSIVE:
+  }
+  switch (status_)
+  {
+  case ON_RIGHT:
     setpoint_value_.data = right_lane_;
+
+    if (proof_overtake_ == 0)
+      speed_message_.data = max_speed_;
+    else
+      speed_message_.data = safe_speed_;
+
     break;
+  case OVERTAKE:
+    blinkRight(false);
+    blinkLeft(true);
+    setpoint_value_.data = left_lane_;
+    speed_message_.data = safe_speed_;
+    break;
+  case ON_LEFT:
+    setpoint_value_.data = left_lane_;
+
+    if (proof_overtake_ == 0)
+      speed_message_.data = max_speed_;
+    else
+      speed_message_.data = safe_speed_;
+
+    break;
+  case RETURN:
+    blinkRight(true);
+    blinkLeft(false);
+    setpoint_value_.data = right_lane_;
+    speed_message_.data = safe_speed_;
+  case PASSIVE:
+    return;
   default:
     ROS_ERROR("Wrong avoiding_obstacle action status");
   }
   setpoint_pub_.publish(setpoint_value_);
+  speed_pub_.publish(speed_message_);
 }
 
 void Road_obstacle_detector::filter_boxes(const selfie_msgs::PolygonArray &msg)
@@ -194,18 +212,9 @@ bool Road_obstacle_detector::is_on_right_lane(const Point &point)
 
 void Road_obstacle_detector::calculate_return_distance()
 {
+  return_distance_calculated_ = true;
   return_distance_ =
       safety_margin_ * (maximum_length_of_obstacle_ + nearest_box_in_front_of_car_->bottom_left.x) + current_distance_;
-}
-
-void Road_obstacle_detector::change_lane(float lane)
-{
-  setpoint_value_.data = lane;
-  setpoint_pub_.publish(setpoint_value_);
-  if (lane == left_lane_)
-    ROS_INFO("Lane changed to left");
-  else
-    ROS_INFO("Lane changed to right");
 }
 
 void Road_obstacle_detector::visualizeBoxes()
@@ -222,8 +231,29 @@ void Road_obstacle_detector::visualizeBoxes()
 void Road_obstacle_detector::distanceCallback(const std_msgs::Float32 &msg)
 {
   current_distance_ = msg.data;
-  if (status_ == OVERTAKING && current_distance_ > return_distance_)
+  if (return_distance_calculated_ && status_ != ON_RIGHT && current_distance_ > return_distance_)
   {
+    status_ = RETURN;
+    return_distance_calculated_ = false;
+    selfie_msgs::PolygonArray temp;
+    obstacle_callback(temp);
+  }
+}
+
+void Road_obstacle_detector::posOffsetCallback(const std_msgs::Float64 &msg)
+{
+  current_offset_ = msg.data;
+  if (status_ == OVERTAKE && current_offset_ > left_lane_ - pos_tolerance_)
+  {
+    status_ = ON_LEFT;
+    blinkLeft(false);
+    selfie_msgs::PolygonArray temp;
+    obstacle_callback(temp);
+  }
+  else if (status_ == RETURN && current_offset_ < right_lane_ + pos_tolerance_)
+  {
+    status_ = ON_RIGHT;
+    blinkRight(false);
     selfie_msgs::PolygonArray temp;
     obstacle_callback(temp);
   }
@@ -236,8 +266,11 @@ bool Road_obstacle_detector::switchToActive(std_srvs::Empty::Request &request, s
   obstacles_sub_ = nh_.subscribe("/obstacles", 1, &Road_obstacle_detector::obstacle_callback, this);
   markings_sub_ = nh_.subscribe("/road_markings", 1, &Road_obstacle_detector::road_markings_callback, this);
   distance_sub_ = nh_.subscribe("/distance", 1, &Road_obstacle_detector::distanceCallback, this);
+  pos_offset_sub_ = nh_.subscribe("/position_offset", 1, &Road_obstacle_detector::posOffsetCallback, this);
+  blinkLeft(false);
+  blinkRight(false);
   timer_.stop();
-  status_ = CLEAR;
+  status_ = ON_RIGHT;
   return true;
 }
 
@@ -246,6 +279,7 @@ bool Road_obstacle_detector::switchToPassive(std_srvs::Empty::Request &request, 
   markings_sub_.shutdown();
   obstacles_sub_.shutdown();
   distance_sub_.shutdown();
+  pos_offset_sub_.shutdown();
   setpoint_value_.data = right_lane_;
   status_ = PASSIVE;
   timer_.start();
@@ -258,4 +292,20 @@ bool Road_obstacle_detector::reset_node(std_srvs::Empty::Request &request, std_s
     switchToActive(request, response);
 
   return true;
+}
+
+void Road_obstacle_detector::blinkLeft(bool on)
+{
+  std_msgs::Bool msg;
+  msg.data = on;
+  left_indicator_pub_.publish(msg);
+  return;
+}
+
+void Road_obstacle_detector::blinkRight(bool on)
+{
+  std_msgs::Bool msg;
+  msg.data = on;
+  right_indicator_pub_.publish(msg);
+  return;
 }
