@@ -12,7 +12,7 @@ typedef enum program_state
     SELFIE_NO_ACTION,
 
     //starting_procedure
-    BUTTON_FREE_DRIVE_PRESSED, // button starting Free Drive and Parking
+    BUTTON_PARKING_DRIVE_PRESSED, // button starting Free Drive and Parking
     BUTTON_OBSTACLE_DRIVE_PRESSED, // button starting Obstacle Evasion Course
     START_DRIVE, // car started to move
     END_DRIVE, // car drove given distance

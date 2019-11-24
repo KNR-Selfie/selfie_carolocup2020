@@ -217,9 +217,9 @@ void Scheduler::stateMachine()
             ROS_INFO("STATE_SELFIE_READY");
             previous_car_state_ = SELFIE_READY;
             break;
-        case BUTTON_FREE_DRIVE_PRESSED:
-            ROS_INFO("BUTTON_FREE_DRIVE_PRESSED");
-            previous_car_state_ = BUTTON_FREE_DRIVE_PRESSED;
+        case BUTTON_PARKING_DRIVE_PRESSED:
+            ROS_INFO("BUTTON_PARKING_DRIVE_PRESSED");
+            previous_car_state_ = BUTTON_PARKING_DRIVE_PRESSED;
             break;
         case BUTTON_OBSTACLE_DRIVE_PRESSED:
             ROS_INFO("BUTTON_OBSTACLE_DRIVE_PRESSED");

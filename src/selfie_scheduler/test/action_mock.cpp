@@ -64,7 +64,7 @@ public:
 
         waitGivenTime(1);
         selfie_msgs::startingFeedback starting_feedback;
-        starting_feedback.action_status = BUTTON_FREE_DRIVE_PRESSED;
+        starting_feedback.action_status = BUTTON_PARKING_DRIVE_PRESSED;
         waitGivenTime(action_time_);
 
         starting_action_.publishFeedback(starting_feedback);
