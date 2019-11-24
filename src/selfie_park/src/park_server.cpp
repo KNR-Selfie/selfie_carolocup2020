@@ -28,7 +28,6 @@ as_(nh_, "park", false)
   as_.registerGoalCallback(boost::bind(&ParkService::goalCB, this));
   as_.registerPreemptCallback(boost::bind(&ParkService::preemptCB, this));
   as_.start();
-  odom_sub_ = nh_.subscribe(odom_topic_, 10, &ParkService::odomCallback, this);
   ackermann_pub_ = nh_.advertise<ackermann_msgs::AckermannDriveStamped>(ackermann_topic_, 10);
   right_indicator_pub_ = nh_.advertise<std_msgs::Bool>("right_turn_indicator", 20);
   left_indicator_pub_ = nh_.advertise<std_msgs::Bool>("left_turn_indicator", 20);
@@ -56,13 +55,13 @@ void ParkService::odomCallback(const nav_msgs::Odometry &msg)
           parking_state_ = going_in;
           leaving_target_ = actual_parking_position_.y_;
         }
-        if (state_msgs_) ROS_INFO("go_to_parking_spot");
+        if (state_msgs_) ROS_INFO_THROTTLE(5, "go_to_parking_spot");
         blinkRight(true);
         blinkLeft(false);
         break;
 
       case going_in:
-        if (state_msgs_) ROS_INFO("get_in");
+        if (state_msgs_) ROS_INFO_THROTTLE(5, "get_in");
         if (park()) parking_state_ = parked;
         blinkRight(true);
         blinkLeft(false);
@@ -70,7 +69,7 @@ void ParkService::odomCallback(const nav_msgs::Odometry &msg)
 
       case parked:
         action_status_ = IN_PLACE;
-        if (state_msgs_) ROS_INFO("parked");
+        if (state_msgs_) ROS_INFO_THROTTLE(5, "parked");
         drive(0, -max_turn_);
         blinkLeft(true);
         blinkRight(true);
@@ -82,7 +81,7 @@ void ParkService::odomCallback(const nav_msgs::Odometry &msg)
         action_status_ = OUT_PLACE;
         blinkLeft(false);
         blinkRight(false);
-        if (state_msgs_) ROS_INFO("get_straight");
+        if (state_msgs_) ROS_INFO_THROTTLE(5, "get_straight");
         if (actual_parking_position_.rot_ < 0.0)
         {
           drive(-parking_speed_, -max_turn_);
@@ -91,7 +90,7 @@ void ParkService::odomCallback(const nav_msgs::Odometry &msg)
         break;
 
       case go_back:
-        if (state_msgs_) ROS_INFO("go_back");
+        if (state_msgs_) ROS_INFO_THROTTLE(5, "go_back");
         blinkLeft(false);
         blinkRight(false);
         drive(-parking_speed_, 0);
@@ -105,7 +104,7 @@ void ParkService::odomCallback(const nav_msgs::Odometry &msg)
       case going_out:
         blinkLeft(true);
         blinkRight(false);
-        if (state_msgs_) ROS_INFO("get_out");
+        if (state_msgs_) ROS_INFO_THROTTLE(5, "get_out");
         if (leave()) parking_state_ = out;
         break;
 
@@ -113,12 +112,13 @@ void ParkService::odomCallback(const nav_msgs::Odometry &msg)
         action_status_ = READY_TO_DRIVE;
         blinkLeft(false);
         blinkRight(false);
-        if (state_msgs_) ROS_INFO("out");
+        if (state_msgs_) ROS_INFO_THROTTLE(5, "out");
         drive(parking_speed_, 0);
         selfie_msgs::parkResult result;
         result.done = true;
         as_.setSucceeded(result);
         parking_state_ = not_parking;
+        odom_sub_.shutdown();
         break;
     }
 
@@ -127,7 +127,7 @@ void ParkService::odomCallback(const nav_msgs::Odometry &msg)
   }
   else
   {
-    if (state_msgs_) ROS_INFO("not_parking");
+    if (state_msgs_) ROS_INFO_THROTTLE(5, "not_parking");
   }
 }
 
@@ -171,12 +171,16 @@ void ParkService::goalCB()
 {
   selfie_msgs::parkGoal goal = *as_.acceptNewGoal();
   initParkingSpot(goal.parking_spot);
+  odom_sub_ = nh_.subscribe(odom_topic_, 10, &ParkService::odomCallback, this);
   parking_state_ = go_to_parking_spot;
 }
 
 void ParkService::preemptCB()
 {
   ROS_INFO("parkService preempted");
+  odom_sub_.shutdown();
+  blinkLeft(false);
+  blinkRight(false);
   parking_state_ = not_parking;
   move_state_ = first_phase;
   as_.setAborted();
@@ -209,7 +213,7 @@ bool ParkService::park()
   switch (move_state_)
   {
     case first_phase:
-      if (state_msgs_) ROS_INFO("  1st phase");
+      if (state_msgs_) ROS_INFO_THROTTLE(5, "  1st phase");
       drive(parking_speed_, -max_turn_);
       if (actual_parking_position_.rot_ < -max_rot_)
       {
@@ -222,7 +226,7 @@ bool ParkService::park()
       break;
 
     case straight:
-      if (state_msgs_) ROS_INFO("  straight");
+      if (state_msgs_) ROS_INFO_THROTTLE(5, "  straight");
       drive(parking_speed_, 0.0);
       if (actual_parking_position_.y_ < dist_turn_ + middle_of_parking_spot_y_)
       {
@@ -231,7 +235,7 @@ bool ParkService::park()
       break;
 
     case second_phase:
-      if (state_msgs_) ROS_INFO("  2nd phase");
+      if (state_msgs_) ROS_INFO_THROTTLE(5, "  2nd phase");
       drive(parking_speed_, max_turn_);
       if (actual_parking_position_.rot_ > 0.0 ||
           (actual_front_parking_position_.x_ > front_wall_ - max_distance_to_wall_))
@@ -249,7 +253,7 @@ bool ParkService::leave()
   switch (move_state_)
   {
     case first_phase:
-      if (state_msgs_) ROS_INFO("  1st phase");
+      if (state_msgs_) ROS_INFO_THROTTLE(5, "  1st phase");
       drive(parking_speed_, max_turn_);
       if (actual_parking_position_.rot_ > max_rot_)
       {
@@ -262,7 +266,7 @@ bool ParkService::leave()
       break;
 
     case straight:
-      if (state_msgs_) ROS_INFO("  straight");
+      if (state_msgs_) ROS_INFO_THROTTLE(5, "  straight");
       drive(parking_speed_, 0.0);
       if (actual_parking_position_.y_ > leaving_target_ - dist_turn_)
       {
@@ -271,7 +275,7 @@ bool ParkService::leave()
       break;
 
     case second_phase:
-      if (state_msgs_) ROS_INFO("  2nd phase");
+      if (state_msgs_) ROS_INFO_THROTTLE(5, "  2nd phase");
       drive(parking_speed_, -max_turn_);
       if (actual_parking_position_.rot_ < 0.0)
       {

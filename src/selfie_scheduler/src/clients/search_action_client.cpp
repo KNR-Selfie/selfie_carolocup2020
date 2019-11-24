@@ -4,7 +4,7 @@ SearchClient::SearchClient(std::string name):
     ac_(name, true)
 {
     next_action_ = PARK;
-    result_flag_ = false;
+    result_flag_ = EMPTY;
     action_state_ = SELFIE_IDLE;
 }
 SearchClient::~SearchClient()
@@ -34,7 +34,7 @@ bool SearchClient::waitForResult(float timeout)
 }
 bool SearchClient::waitForServer(float timeout)
 {
-    result_flag_ = false;
+    result_flag_ = EMPTY;
     ROS_INFO("Wait for search action server");
     return ac_.waitForServer(ros::Duration(timeout));
 }
@@ -45,13 +45,12 @@ void SearchClient::doneCb(const actionlib::SimpleClientGoalState& state,
 
     if(state == actionlib::SimpleClientGoalState::StateEnum::ABORTED)
     {
-        ROS_INFO("SEARCH ABORTED!!");
-        result_flag_ = 2;
+        result_flag_ = ABORTED;
     }
     else
     {
         result_ = result->parking_spot;
-        result_flag_ = 1;
+        result_flag_ = SUCCESS;
     }
 }
 void SearchClient::activeCb()
@@ -67,20 +66,7 @@ void SearchClient::cancelAction()
 {
   ac_.cancelAllGoals();
 }
-program_state SearchClient::getActionState()
-{
-    if(action_state_ != SELFIE_IDLE)
-        return action_state_;
-}
-int SearchClient::isActionFinished()
-{
-    return result_flag_;
-}
 void SearchClient::getActionResult(boost::any &goal)
 {
     goal = result_;
-}
-action SearchClient::getNextAction()
-{
-    return next_action_;
 }

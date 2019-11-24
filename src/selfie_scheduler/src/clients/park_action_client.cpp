@@ -4,7 +4,7 @@ ParkClient::ParkClient(std::string name):
     ac_(name, true)
 {
     next_action_ = DRIVING;
-    result_flag_ = false;
+    result_flag_ = EMPTY;
     action_state_ = SELFIE_IDLE;
 }
 
@@ -35,7 +35,7 @@ bool ParkClient::waitForResult(float timeout)
 }
 bool ParkClient::waitForServer(float timeout)
 {
-    result_flag_ = false;
+    result_flag_ = EMPTY;
     ROS_INFO("Wait for park action server");
     return ac_.waitForServer(ros::Duration(timeout));
 }
@@ -45,13 +45,12 @@ void ParkClient::doneCb(const actionlib::SimpleClientGoalState& state,
     ROS_INFO("Finished park in state [%s]", state.toString().c_str());
     if(state == actionlib::SimpleClientGoalState::StateEnum::ABORTED)
     {
-        ROS_INFO("ABORTED!!");
-        result_flag_ = 2;
+        result_flag_ = ABORTED;
     }
     else
     {
         result_ = result->done;
-        result_flag_ = 1;
+        result_flag_ = SUCCESS;
     }
 
 }
@@ -68,20 +67,8 @@ void ParkClient::cancelAction()
 {
   ac_.cancelAllGoals();
 }
-program_state ParkClient::getActionState()
-{
-    if(action_state_ != SELFIE_IDLE)
-        return action_state_;
-}
-int ParkClient::isActionFinished()
-{
-    return result_flag_;
-}
 void ParkClient::getActionResult(boost::any &result)
 {
     result = result_;
 }
-action ParkClient::getNextAction()
-{
-    return next_action_;
-}
+

@@ -1,0 +1,12 @@
+<launch>
+        <node pkg="selfie_scheduler" type="action_mock" name="action_mock" output="screen">
+            <param name="button" value="true"/>
+            <param name="search_abort" value="false"/>
+            <param name="action_time" value="5"/>
+        </node>
+        <node pkg="selfie_scheduler" type="scheduler" name="scheduler" output="screen"/>
+        <node pkg="selfie_scheduler" type="rc_mock" name="rc_mock" output="screen">
+            <param name="action_time" value="5"/>
+            <param name ="rc_reset_time" value="21"/>
+        </node>
+</launch>

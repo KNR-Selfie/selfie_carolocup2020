@@ -3,7 +3,11 @@
 
 int main(int argc, char **argv)
 {
-    ros::init(argc, argv, "starting_procedure_action");
-    StartingProcedureAction StartingProcedure("starting_procedure");
-    ros::spin();
+  ros::init(argc, argv, "starting_procedure");
+  ros::NodeHandle nh;
+  ros::NodeHandle pnh("~");
+  StartingProcedureAction s_p(nh, pnh);
+
+  ros::spin();
+  return 0;
 }
