@@ -69,6 +69,7 @@ private:
     std::string obstacles_frame_;
     float segment_threshold_;
     float min_segment_size_;
+    float max_segment_size_;
     float min_to_divide_;
 };
 
