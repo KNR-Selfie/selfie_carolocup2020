@@ -34,14 +34,20 @@ bool LaneDetector::init()
   aprox_lines_frame_coordinate_.push_back(empty);
   aprox_lines_frame_coordinate_.push_back(empty);
 
+  getParams();
+
   kernel_v_ = cv::Mat(1, 3, CV_32F);
   kernel_v_.at<float>(0, 0) = -1;
   kernel_v_.at<float>(0, 1) = 0;
   kernel_v_.at<float>(0, 2) = 1;
   dilate_element_ = getStructuringElement(2, cv::Size(3, 3), cv::Point(1, 1));
   close_element_ = getStructuringElement(0, cv::Size(15, 15), cv::Point(7, 7));
+  dilate_obst_element_ = getStructuringElement(0, cv::Size(15, 15), cv::Point(7, 7));
 
-  getParams();
+  int obs_el_size = static_cast<int>(TOPVIEW_COLS / (TOPVIEW_MAX_Y - TOPVIEW_MIN_Y) * obstacle_window_size_);
+  if (obs_el_size % 2 == 0)
+    obs_el_size++;
+  obstacle_element_ = getStructuringElement(2, cv::Size(obs_el_size, obs_el_size), cv::Point(obs_el_size / 2, obs_el_size / 2));
 
   treshold_block_size_ = static_cast<int>(TOPVIEW_COLS / (TOPVIEW_MAX_Y - TOPVIEW_MIN_Y) * real_window_size_);
   if (treshold_block_size_ % 2 == 0)
@@ -67,6 +73,11 @@ bool LaneDetector::init()
 
   computeTopView();
   printInfoParams();
+  if (tune_params_mode_)
+  {
+    current_frame_ = cv::Mat::zeros(cv::Size(TOPVIEW_COLS, TOPVIEW_ROWS), CV_8UC1);
+    tune_timer_ = nh_.createTimer(ros::Duration(0.01), &LaneDetector::tuneParams, this);
+  }
   return true;
 }
 
@@ -82,15 +93,19 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
     return;
   }
   homography(current_frame_, homography_frame_);
+  //cv::GaussianBlur(homography_frame_, homography_frame_, cv::Size(5,5), 0);
+  createObstaclesMask();
 
   cv::bitwise_or(hom_cut_mask_, homography_frame_, homography_frame_);
 
   cv::adaptiveThreshold(homography_frame_, binary_frame_, 255, cv::ADAPTIVE_THRESH_MEAN_C,
                         CV_THRESH_BINARY, treshold_block_size_, threshold_c_);
 
+  cv::bitwise_and(binary_frame_, obstacles_mask_, binary_frame_);
   cv::bitwise_and(binary_frame_, hom_cut_mask_inv_, binary_frame_);
 
   cv::medianBlur(binary_frame_, binary_frame_, 3);
+  removeCar(binary_frame_);
 
   if (!init_imageCallback_)
   {
@@ -182,12 +197,8 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
     debug_frame_.rows = homography_frame_.rows;
     debug_frame_.cols = homography_frame_.cols;
     lanesVectorVisualization(debug_frame_);
-    cv::Mat LCRLines;
-    LCRLines = cv::Mat::zeros(homography_frame_.size(), CV_8UC3);
-    LCRLinesDraw(LCRLines);
+    
     drawParticles(pf_num_samples_vis_);
-    cv::namedWindow("LCRLines", cv::WINDOW_NORMAL);
-    cv::imshow("LCRLines", LCRLines);
 
     convertApproxToFrameCoordinate();
     drawAproxOnHomography();
@@ -314,12 +325,16 @@ void LaneDetector::getParams()
   pnh_.getParam("real_window_size", real_window_size_);
   pnh_.getParam("threshold_c", threshold_c_);
   pnh_.getParam("debug_mode", debug_mode_);
+  pnh_.getParam("tune_params_mode", tune_params_mode_);
   pnh_.getParam("max_mid_line_gap", max_mid_line_gap_);
 
   pnh_.getParam("pf_num_samples", pf_num_samples_);
   pnh_.getParam("pf_num_points_", pf_num_points_);
   pnh_.getParam("pf_std", pf_std_);
   pnh_.getParam("pf_num_samples_vis", pf_num_samples_vis_);
+
+  pnh_.getParam("obstacle_window_size", obstacle_window_size_);
+  pnh_.getParam("obstacles_threshold", obstacles_threshold_);
 }
 
 void LaneDetector::openCVVisualization()
@@ -332,6 +347,22 @@ void LaneDetector::openCVVisualization()
   cv::vconcat(m_binary, m_std, m_four);
 
   cv::imshow("STD_DEBUG", m_four);
+
+  cv::namedWindow("ADV_DEBUG", cv::WINDOW_NORMAL);
+  cv::Mat m_pf, m_obs, m_all;
+
+  cv::Mat LCRLines;
+  LCRLines = cv::Mat::zeros(homography_frame_.size(), CV_8UC3);
+  LCRLinesDraw(LCRLines);
+
+  cv::hconcat(LCRLines, pf_vis_mat_, m_pf);
+  cv::bitwise_not(obstacles_mask_, obstacles_mask_);
+  cv::cvtColor(obstacles_mask_, obstacles_mask_, CV_GRAY2BGR);
+  cv::Mat zero = cv::Mat::zeros(homography_frame_.size(), CV_8UC3);
+  cv::hconcat(obstacles_mask_, zero, m_obs);
+  cv::vconcat(m_pf, m_obs, m_all);
+  cv::imshow("ADV_DEBUG", m_all);
+
   cv::waitKey(1);
 }
 
@@ -453,6 +484,7 @@ float LaneDetector::getDistance(cv::Point2f p1, cv::Point2f p2)
 
 void LaneDetector::recognizeLinesNew()
 {
+  float checking_length = 0.4;
   float max_cost = 0.05;
   float ratio = 0.4;
   center_line_.clearPoints();
@@ -463,6 +495,8 @@ void LaneDetector::recognizeLinesNew()
     float center_cost = 0;
     float right_cost = 0;
     float left_cost = 0;
+    float start_checking_x = lines_vector_converted_[i][0].x;
+    int count = 0;
     for (int j = 0; j < lines_vector_converted_[i].size(); ++j)
     {
       float weight = 1 - (lines_vector_converted_[i][j].x - TOPVIEW_MIN_X) * ratio;
@@ -471,10 +505,15 @@ void LaneDetector::recognizeLinesNew()
       center_cost += weight * findMinPointToParabola(lines_vector_converted_[i][j], center_line_.getCoeff());
       right_cost += weight * findMinPointToParabola(lines_vector_converted_[i][j], right_line_.getCoeff());
       left_cost += weight * findMinPointToParabola(lines_vector_converted_[i][j], left_line_.getCoeff());
+      ++count;
+      if (lines_vector_converted_[i][j].x - start_checking_x > checking_length)
+      {
+        break;
+      }
     }
-    center_cost /= lines_vector_converted_[i].size();
-    right_cost /= lines_vector_converted_[i].size();
-    left_cost /= lines_vector_converted_[i].size();
+    center_cost /= count;
+    right_cost /= count;
+    left_cost /= count;
 
     center_cost = std::fabs(center_cost);
     right_cost = std::fabs(right_cost);
@@ -675,8 +714,8 @@ void LaneDetector::printInfoParams()
 void LaneDetector::dynamicMask(cv::Mat &input_frame, cv::Mat &output_frame)
 {
   dynamic_mask_ = cv::Mat::zeros(cv::Size(input_frame.cols, input_frame.rows), CV_8UC1);
-  float offset_right = -0.09;
-  float offset_left = 0.07;
+  float offset_right = -0.07;
+  float offset_left = 0.05;
   output_frame = input_frame.clone();
   if (!right_line_.isExist())
     offset_right = -0.14;
@@ -1500,10 +1539,10 @@ void LaneDetector::removeCar(cv::Mat &frame)
 {
   cv::Mat car_mask = cv::Mat::zeros(cv::Size(frame.cols, frame.rows), CV_8UC1);
   cv::Point points[4];
-  points[0] = cv::Point(265, 480);
-  points[1] = cv::Point(370, 480);
-  points[2] = cv::Point(370, 280);
-  points[3] = cv::Point(265, 280);
+  points[0] = cv::Point(300, 197);
+  points[1] = cv::Point(345, 197);
+  points[2] = cv::Point(345, 150);
+  points[3] = cv::Point(300, 150);
 
   cv::fillConvexPoly(car_mask, points, 4, cv::Scalar(255, 255, 255));
   cv::bitwise_not(car_mask, car_mask);
@@ -1909,8 +1948,7 @@ void LaneDetector::drawParticles(int num)
 {
   if(num > 19)
     num = 19;
-  cv::Mat pf_mat;
-  pf_mat = cv::Mat::zeros(homography_frame_.size(), CV_8UC3);
+  pf_vis_mat_ = cv::Mat::zeros(homography_frame_.size(), CV_8UC3);
 
   std::vector<float> pf_coeff;
   std::vector<cv::Point2f> pf_cp;
@@ -1934,11 +1972,11 @@ void LaneDetector::drawParticles(int num)
       cv::transform(pf_cp, pf_cp, world2topview_.rowRange(0, 2));
       for (int j = 0; j < pf_line.size(); ++j)
       {
-        cv::circle(pf_mat, pf_line[j], 1, cv::Scalar(color_set[i][0], color_set[i][1], color_set[i][2]), CV_FILLED);
+        cv::circle(pf_vis_mat_, pf_line[j], 1, cv::Scalar(color_set[i][0], color_set[i][1], color_set[i][2]), CV_FILLED);
       }
       for (int j = 0; j < pf_cp.size(); ++j)
       {
-        cv::circle(pf_mat, pf_cp[j], 3, cv::Scalar(color_set[i][0], color_set[i][1], color_set[i][2]), CV_FILLED);
+        cv::circle(pf_vis_mat_, pf_cp[j], 3, cv::Scalar(color_set[i][0], color_set[i][1], color_set[i][2]), CV_FILLED);
       }
     }
 
@@ -1958,11 +1996,11 @@ void LaneDetector::drawParticles(int num)
       cv::transform(pf_cp, pf_cp, world2topview_.rowRange(0, 2));
       for (int j = 0; j < pf_line.size(); ++j)
       {
-        cv::circle(pf_mat, pf_line[j], 1, cv::Scalar(color_set[i][0], color_set[i][1], color_set[i][2]), CV_FILLED);
+        cv::circle(pf_vis_mat_, pf_line[j], 1, cv::Scalar(color_set[i][0], color_set[i][1], color_set[i][2]), CV_FILLED);
       }
       for (int j = 0; j < pf_cp.size(); ++j)
       {
-        cv::circle(pf_mat, pf_cp[j], 3, cv::Scalar(color_set[i][0], color_set[i][1], color_set[i][2]), CV_FILLED);
+        cv::circle(pf_vis_mat_, pf_cp[j], 3, cv::Scalar(color_set[i][0], color_set[i][1], color_set[i][2]), CV_FILLED);
       }
     }
 
@@ -1982,15 +2020,68 @@ void LaneDetector::drawParticles(int num)
       cv::transform(pf_cp, pf_cp, world2topview_.rowRange(0, 2));
       for (int j = 0; j < pf_line.size(); ++j)
       {
-        cv::circle(pf_mat, pf_line[j], 1, cv::Scalar(color_set[i][0], color_set[i][1], color_set[i][2]), CV_FILLED);
+        cv::circle(pf_vis_mat_, pf_line[j], 1, cv::Scalar(color_set[i][0], color_set[i][1], color_set[i][2]), CV_FILLED);
       }
       for (int j = 0; j < pf_cp.size(); ++j)
       {
-        cv::circle(pf_mat, pf_cp[j], 3, cv::Scalar(color_set[i][0], color_set[i][1], color_set[i][2]), CV_FILLED);
+        cv::circle(pf_vis_mat_, pf_cp[j], 3, cv::Scalar(color_set[i][0], color_set[i][1], color_set[i][2]), CV_FILLED);
       }
     }
   }
+}
 
-  cv::namedWindow("Particle Filter", cv::WINDOW_NORMAL);
-  cv::imshow("Particle Filter", pf_mat);
+void LaneDetector::createObstaclesMask()
+{
+  cv::threshold(homography_frame_, obstacles_mask_, obstacles_threshold_, 255, 0);
+
+  cv::Mat erase_obstacles;
+  morphologyEx(obstacles_mask_, erase_obstacles, cv::MORPH_TOPHAT , obstacle_element_);
+
+  cv::bitwise_not(erase_obstacles, erase_obstacles);
+
+  cv::bitwise_and(obstacles_mask_, erase_obstacles, obstacles_mask_);
+
+  //cv::namedWindow("obstacles_mask_", cv::WINDOW_NORMAL);
+  //cv::imshow("obstacles_mask_", obstacles_mask_);
+
+  dilate( obstacles_mask_, obstacles_mask_, dilate_obst_element_ );
+  //cv::namedWindow("obstacles_mask_++", cv::WINDOW_NORMAL);
+  //cv::imshow("obstacles_mask_++", obstacles_mask_);
+
+  cv::bitwise_not(obstacles_mask_, obstacles_mask_);
+}
+
+void LaneDetector::static_thresh_c_trackbar(int v, void *ptr)
+{
+  // resolve 'this':
+  LaneDetector *that = (LaneDetector*)ptr;
+  that->on_thresh_c_trackbar(v);
+}
+
+void LaneDetector::on_thresh_c_trackbar(int v)
+{
+ threshold_c_ = thresh_c_tune_temp_ - 50;
+}
+
+void LaneDetector::tuneParams(const ros::TimerEvent &time)
+{
+  cv::namedWindow("trackbars", cv::WINDOW_NORMAL);
+  cv::createTrackbar("obstacle_thresh ", "trackbars", &obstacles_threshold_, 255);
+  cv::createTrackbar("threshold_c [-50,50]", "trackbars", &thresh_c_tune_temp_, 100, static_thresh_c_trackbar, this);
+
+  cv::Mat homography_gray;
+  homography(current_frame_, homography_gray);
+  cv::Mat test_obstacle_mat;
+  cv::threshold(homography_gray, test_obstacle_mat, obstacles_threshold_, 255, 0);
+  cv::namedWindow("test_obstacle_mat", cv::WINDOW_NORMAL);
+  cv::imshow("test_obstacle_mat", test_obstacle_mat);
+
+  cv::Mat test_threshold_c_mat;
+  cv::adaptiveThreshold(homography_gray, test_threshold_c_mat, 255, cv::ADAPTIVE_THRESH_MEAN_C,
+                        CV_THRESH_BINARY, treshold_block_size_, threshold_c_);
+
+  cv::namedWindow("test_threshold_c_mat", cv::WINDOW_NORMAL);
+  cv::imshow("test_threshold_c_mat", test_threshold_c_mat);
+
+  cv::waitKey(1);
 }
