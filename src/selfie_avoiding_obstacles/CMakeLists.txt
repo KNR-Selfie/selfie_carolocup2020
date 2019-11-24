@@ -203,12 +203,12 @@ include_directories(
 # catkin_add_nosetests(test)
 
 
-add_executable(detect_road_obstacle
+add_executable(lane_controller
   include/selfie_avoiding_obstacles/road_obstacle_detector.h
   src/road_obstacle_detector.cpp
-  src/detect_road_obstacle.cpp
+  src/lane_controller.cpp
 )
-add_dependencies(detect_road_obstacle ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(detect_road_obstacle
+add_dependencies(lane_controller ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(lane_controller
   ${catkin_LIBRARIES}
 )
