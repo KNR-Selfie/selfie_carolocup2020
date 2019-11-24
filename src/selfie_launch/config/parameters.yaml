@@ -56,7 +56,7 @@ park_server:
     minimal_start_parking_x_: -0.16,
     odom_to_back: -0.33,
     odom_to_front: 0.18,
-    odom_to_laser: 0.2,
+    odom_to_laser: 0.0,
     parking_speed: 0.4,
   }
 pid_controller: 
