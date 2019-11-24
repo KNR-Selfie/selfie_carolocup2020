@@ -41,6 +41,7 @@ class LaneDetector
   bool init();
 
   private:
+  ros::Timer tune_timer_;
   ros::NodeHandle nh_;
   ros::NodeHandle pnh_;
   image_transport::ImageTransport it_;
@@ -58,6 +59,8 @@ class LaneDetector
   cv::Mat kernel_v_;
   cv::Mat dilate_element_;
   cv::Mat close_element_;
+  cv::Mat obstacle_element_;
+  cv::Mat dilate_obst_element_;
   cv::Mat current_frame_;
   cv::Mat binary_frame_;
   cv::Mat dynamic_mask_;
@@ -70,6 +73,8 @@ class LaneDetector
   cv::Mat debug_frame_;
   cv::Mat hom_cut_mask_;
   cv::Mat hom_cut_mask_inv_;
+  cv::Mat obstacles_mask_;
+  cv::Mat pf_vis_mat_;
 
   std::vector<std::vector<cv::Point> > lines_vector_;
   std::vector<std::vector<cv::Point2f> > lines_vector_converted_;
@@ -113,6 +118,10 @@ class LaneDetector
   void recognizeLinesNew();
   void LCRLinesDraw(cv::Mat &visualization_frame);
   float findMinPointToParabola(cv::Point2f p, std::vector<float> coeff);
+  void createObstaclesMask();
+  void tuneParams(const ros::TimerEvent &time);
+  static void static_thresh_c_trackbar(int v, void *ptr);
+  void on_thresh_c_trackbar(int v);
 
   // visualization
   sensor_msgs::PointCloud points_cloud_;
@@ -124,7 +133,7 @@ class LaneDetector
 
   int starting_line_timeout_    {0};
   bool init_imageCallback_      {true};
-  float min_length_search_line_ {0.05};
+  float min_length_search_line_ {0.08};
   float max_delta_y_lane_       {0.08};
   float min_length_to_2aprox_   {0.56};
   float left_lane_width_        {0.4};
@@ -136,15 +145,20 @@ class LaneDetector
   std::string config_file_      {""};
   std::string hom_cut_file_     {""};
   bool debug_mode_              {false};
+  bool tune_params_mode_        {false};
+  int thresh_c_tune_temp_       {false};
 
-  float max_mid_line_distance_  {0.2};
-  float max_mid_line_gap_       {0.5};
+  float max_mid_line_distance_  {0.15};
+  float max_mid_line_gap_       {0.3};
   float nominal_center_line_Y_  {0.2};
   float points_density_         {15};
 
   int treshold_block_size_      {3};
   float real_window_size_       {0.1};
   int threshold_c_              {-40};
+
+  float obstacle_window_size_   {0.09};
+  int obstacles_threshold_      {100};
 
   int pf_num_samples_           {50};
   int pf_num_points_            {3};
