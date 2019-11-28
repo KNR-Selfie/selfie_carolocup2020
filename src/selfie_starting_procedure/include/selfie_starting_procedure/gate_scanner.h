@@ -6,5 +6,6 @@
 class GateScanner
 {
    ros::NodeHandle nh_,pnh_; 
+   void start_scanning();
 };
 #endif

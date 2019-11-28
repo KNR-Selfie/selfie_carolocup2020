@@ -7,11 +7,13 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <boost/algorithm/cxx11/any_of.hpp>
+#include <std_srvs/Empty.h>
 
 class QrDecoder
 {
     ros::NodeHandle nh_,pnh_;
     ros::Subscriber imageSub_; 
+    ros::ServiceServer startServ_;
 
     zbar::ImageScanner zbarScanner_;
     zbar::Image zbarImage_;
@@ -22,7 +24,7 @@ class QrDecoder
     ros::Timer timer_;
     cv_bridge::CvImagePtr cv_ptr;
 
-    void startSearching();
+    bool startSearching(std_srvs::Empty::Request &rq, std_srvs::Empty::Response &rp);
     void imageRectCallback(const sensor_msgs::Image::ConstPtr msg);
     void decodeImage(const cv_bridge::CvImagePtr img);
     void timerCallback(const ros::TimerEvent &e);

@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   selfie_msgs
   selfie_scheduler
   cv_bridge
+  std_srvs
 )
 
 ## System dependencies are found with CMake's conventions

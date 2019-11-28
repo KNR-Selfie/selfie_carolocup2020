@@ -7,11 +7,13 @@ QrDecoder::QrDecoder(const ros::NodeHandle &nh,const ros::NodeHandle &pnh):nh_(n
 
     pnh_.param<float>("qr_invisible_time_thresh",qrInvisibleTimeThresh_,1.f);
     timer_ = nh_.createTimer(ros::Duration(qrInvisibleTimeThresh_) ,&QrDecoder::timerCallback, this, true, false);//oneshot, autostart
+    startServ_ = nh_.advertiseService("startQrSearch", &QrDecoder::startSearching, this);
 }
-void QrDecoder::startSearching()
+bool QrDecoder::startSearching(std_srvs::Empty::Request &rq, std_srvs::Empty::Response &rp)
 {
     imageSub_ = nh_.subscribe("image_rect",1, &QrDecoder::imageRectCallback, this);
     timer_.start();
+    return true;
 }
 
 void QrDecoder::timerCallback(const ros::TimerEvent &e)
