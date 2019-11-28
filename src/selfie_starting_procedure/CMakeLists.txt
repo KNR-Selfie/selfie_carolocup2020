@@ -14,11 +14,12 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   selfie_msgs
   selfie_scheduler
+  cv_bridge
 )
 
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS system)
-
+find_package(OpenCV 3.3.1 REQUIRED)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -206,3 +207,13 @@ install(DIRECTORY include/${PROJECT_NAME}/
 add_executable(starting_procedure src/starting_procedure_action.cpp src/starting_procedure.cpp)
 target_link_libraries(starting_procedure ${catkin_LIBRARIES})
 add_dependencies(starting_procedure ${catkin_EXPORTED_TARGETS})
+
+add_executable(qr_decoder  src/qr_decoder.cpp src/decoder.cpp)
+target_link_libraries(qr_decoder ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${ZBAR_LIBRARIES}zbar)
+add_dependencies(qr_decoder ${catkin_EXPORTED_TARGETS})
+
+add_executable(gate_scanner src/gate_scanner.cpp)
+target_link_libraries(gate_scanner ${catkin_LIBRARIES})
+add_dependencies(gate_scanner ${catkin_EXPORTED_TARGETS})
+
+
