@@ -22,9 +22,9 @@ protected:
   actionlib::SimpleActionServer<selfie_msgs::startingAction> as_;
 
   //params
-  float startingSpeed_;
-  bool useScan_;
-  bool useQr_;
+  float starting_speed_;
+  bool use_scan_;
+  bool use_qr_;
 
   //create messages that are used to published feedback/result
   selfie_msgs::startingGoal goal_;
@@ -32,17 +32,17 @@ protected:
   selfie_msgs::startingResult result_;
 
   //subscribers
-  ros::Subscriber parkingButtonSub_;
-  ros::Subscriber obstacleButtonSub_;
-  ros::Subscriber distanceSub_;
-  ros::Subscriber qrSub_;
-  ros::Subscriber gateScanSub_;
-  ros::ServiceClient qrClient_;
-  ros::ServiceClient scanClient_;
+  ros::Subscriber parking_button_sub_;
+  ros::Subscriber obstacle_button_sub_;
+  ros::Subscriber distance_sub_;
+  ros::Subscriber qr_sub_;
+  ros::Subscriber gate_scan_sub_;
+  ros::ServiceClient qr_client_;
+  ros::ServiceClient scan_client_;
   //publishers
-  ros::Publisher drivePub_;
+  ros::Publisher drive_pub_;
 
-  feedback_variable buttonStatus_;
+  feedback_variable button_status_;
 private:
   enum class State
   {
@@ -53,12 +53,12 @@ private:
     END_MOVE
   } state_;
 
-  float distanceGoal_;
-  float startingDistance_;
-  float distanceRead_;
+  float distance_goal_;
+  float starting_distance_;
+  float distance_read_;
 
-  ros::Time minSecondPressTime_;
-  ros::Duration debounceDuration_;
+  ros::Time min_second_press_time_;
+  ros::Duration debounce_duration_;
 
   void publishFeedback(feedback_variable program_state);
 

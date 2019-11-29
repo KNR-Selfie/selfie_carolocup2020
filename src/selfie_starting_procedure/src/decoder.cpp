@@ -2,24 +2,24 @@
 
 QrDecoder::QrDecoder(const ros::NodeHandle &nh, const ros::NodeHandle &pnh): nh_(nh), pnh_(pnh)
 {
-    zbarScanner_.set_config(zbar::ZBAR_NONE, zbar::ZBAR_CFG_ENABLE, 1);
-    gateOpenPub_ = nh_.advertise<std_msgs::Empty>("qr_gate_open", 1);
-    pnh_.param<float>("qr_invisible_time_thresh", qrInvisibleTimeThresh_, 1.f);
+    zbar_scanner_.set_config(zbar::ZBAR_NONE, zbar::ZBAR_CFG_ENABLE, 1);
+    gate_open_pub_ = nh_.advertise<std_msgs::Empty>("qr_gate_open", 1);
+    pnh_.param<float>("qr_invisible_time_thresh", qr_invisible_time_thresh_, 1.f);
     // oneshot on, autostart off
-    timer_ = nh_.createTimer(ros::Duration(qrInvisibleTimeThresh_), &QrDecoder::timerCallback, this, true, false);
-    startServ_ = nh_.advertiseService("startQrSearch", &QrDecoder::startSearching, this);
+    timer_ = nh_.createTimer(ros::Duration(qr_invisible_time_thresh_), &QrDecoder::timerCallback, this, true, false);
+    start_serv_ = nh_.advertiseService("startQrSearch", &QrDecoder::startSearching, this);
 }
 bool QrDecoder::startSearching(std_srvs::Empty::Request &rq, std_srvs::Empty::Response &rp)
 {
-    imageSub_ = nh_.subscribe("image_rect", 1, &QrDecoder::imageRectCallback, this);
+    image_sub_ = nh_.subscribe("image_rect", 1, &QrDecoder::imageRectCallback, this);
     timer_.start();
     return true;
 }
 
 void QrDecoder::timerCallback(const ros::TimerEvent &e)
 {
-    gateOpenPub_.publish(std_msgs::Empty());
-    imageSub_.shutdown();
+    gate_open_pub_.publish(std_msgs::Empty());
+    image_sub_.shutdown();
 }
 
 void QrDecoder::imageRectCallback(const sensor_msgs::Image::ConstPtr img)
@@ -39,7 +39,7 @@ void QrDecoder::decodeImage(const cv_bridge::CvImagePtr raw_img)
 
     zbar::Image img(width, height, "Y800", raw, width * height);
 
-    zbarScanner_.scan(img);
+    zbar_scanner_.scan(img);
     if (boost::algorithm::any_of(img.symbol_begin(), img.symbol_end(),
      [](zbar::Symbol sym){return sym.get_data() == "STOP";}))
     {
@@ -49,6 +49,6 @@ void QrDecoder::decodeImage(const cv_bridge::CvImagePtr raw_img)
 
 void QrDecoder::resetTimer()
 {
-    timer_.setPeriod(ros::Duration(qrInvisibleTimeThresh_), true);  // reset
+    timer_.setPeriod(ros::Duration(qr_invisible_time_thresh_), true);  // reset
     ROS_INFO("timer reset");
 }

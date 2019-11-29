@@ -8,7 +8,7 @@ int main(int argc, char** argv)
     ros::init(argc, argv, "qr_decoder");
     ros::NodeHandle nh;
     ros::NodeHandle pnh("~");
-    QrDecoder qrDecoder(nh, pnh);
+    QrDecoder qr_decoder(nh, pnh);
     ros::spin();
     return 0;
 }

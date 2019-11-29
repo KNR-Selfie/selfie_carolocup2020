@@ -12,16 +12,16 @@ class GateScanner
 
 
     ros::NodeHandle nh_,pnh_;
-    ros::Subscriber scanSub_; 
-    ros::ServiceServer startServ_;
-    ros::Publisher gateOpenPub_;
+    ros::Subscriber scan_sub_; 
+    ros::ServiceServer start_serv_;
+    ros::Publisher gate_open_pub_;
 
 
 
-    float noObstacleTimeThresh_;
-    float minWidth_;
-    float minDistance_;
-    float maxDistance_;
+    float no_obstacle_time_thresh_;
+    float min_width_;
+    float min_distance_;
+    float max_distance_;
 
     ros::Timer timer_;
 

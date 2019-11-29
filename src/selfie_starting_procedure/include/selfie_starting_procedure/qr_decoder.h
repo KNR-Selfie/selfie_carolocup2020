@@ -13,15 +13,15 @@
 class QrDecoder
 {
     ros::NodeHandle nh_,pnh_;
-    ros::Subscriber imageSub_; 
-    ros::ServiceServer startServ_;
-    ros::Publisher gateOpenPub_;
+    ros::Subscriber image_sub_; 
+    ros::ServiceServer start_serv_;
+    ros::Publisher gate_open_pub_;
 
-    zbar::ImageScanner zbarScanner_;
-    zbar::Image zbarImage_;
+    zbar::ImageScanner zbar_scanner_;
+    zbar::Image zbar_image_;
 
 
-    float qrInvisibleTimeThresh_;
+    float qr_invisible_time_thresh_;
 
     ros::Timer timer_;
     cv_bridge::CvImagePtr cv_ptr;

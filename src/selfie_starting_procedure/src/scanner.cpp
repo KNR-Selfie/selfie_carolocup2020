@@ -3,13 +3,13 @@
 GateScanner::GateScanner(const ros::NodeHandle &nh, const ros::NodeHandle &pnh):
 nh_(nh), pnh_(pnh)
 {
-    pnh_.param<float>("no_obstacle_time_thresh", noObstacleTimeThresh_, 1.5f);
-    pnh_.param<float>("min_distance", minDistance_, 0.1);
-    pnh_.param<float>("max_distance", maxDistance_, 0.5);
-    pnh_.param<float>("min_width", minWidth_, 0.4);
-    timer_ = nh_.createTimer(ros::Duration(noObstacleTimeThresh_), &GateScanner::timerCallback, this, true, false);
-    startServ_ = nh_.advertiseService("startGateScan", &GateScanner::startSearching, this);
-    gateOpenPub_ = nh_.advertise<std_msgs::Empty>("scan_gate_open", 1);
+    pnh_.param<float>("no_obstacle_time_thresh", no_obstacle_time_thresh_, 1.5f);
+    pnh_.param<float>("min_distance", min_distance_, 0.1);
+    pnh_.param<float>("max_distance", max_distance_, 0.5);
+    pnh_.param<float>("min_width", min_width_, 0.4);
+    timer_ = nh_.createTimer(ros::Duration(no_obstacle_time_thresh_), &GateScanner::timerCallback, this, true, false);
+    start_serv_ = nh_.advertiseService("startGateScan", &GateScanner::startSearching, this);
+    gate_open_pub_ = nh_.advertise<std_msgs::Empty>("scan_gate_open", 1);
 }
 
 void GateScanner::laserScanCB(const sensor_msgs::LaserScan &msg)
@@ -21,7 +21,7 @@ void GateScanner::laserScanCB(const sensor_msgs::LaserScan &msg)
         if (*it > msg.range_max || *it < msg.range_min) continue;
         Point point(angle, *it);
         {
-            if (point.x > minDistance_ && point.x < maxDistance_ && std::abs(point.y) < minWidth_ / 2.f)
+            if (point.x > min_distance_ && point.x < max_distance_ && std::abs(point.y) < min_width_ / 2.f)
             {
                 resetTimer();
                 return;
@@ -32,20 +32,20 @@ void GateScanner::laserScanCB(const sensor_msgs::LaserScan &msg)
 
 void GateScanner::timerCallback(const ros::TimerEvent &e)
 {
-    gateOpenPub_.publish(std_msgs::Empty());
+    gate_open_pub_.publish(std_msgs::Empty());
     ROS_INFO("timer callback");
-    scanSub_.shutdown();
+    scan_sub_.shutdown();
 }
 
 void GateScanner::resetTimer()
 {
-    timer_.setPeriod(ros::Duration(noObstacleTimeThresh_), true);  // reset
+    timer_.setPeriod(ros::Duration(no_obstacle_time_thresh_), true);  // reset
     ROS_INFO("timer reset");
 }
 
 bool GateScanner::startSearching(std_srvs::Empty::Request &rq, std_srvs::Empty::Response &rp)
 {
-    scanSub_ = nh_.subscribe("scan", 10, &GateScanner::laserScanCB, this);
+    scan_sub_ = nh_.subscribe("scan", 10, &GateScanner::laserScanCB, this);
     timer_.start();
     return true;
 }
