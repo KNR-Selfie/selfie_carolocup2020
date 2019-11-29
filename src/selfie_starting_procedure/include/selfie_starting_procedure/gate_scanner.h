@@ -11,33 +11,33 @@ class GateScanner
 {
 
 
-    ros::NodeHandle nh_,pnh_;
-    ros::Subscriber scan_sub_; 
-    ros::ServiceServer start_serv_;
-    ros::Publisher gate_open_pub_;
+  ros::NodeHandle nh_,pnh_;
+  ros::Subscriber scan_sub_; 
+  ros::ServiceServer start_serv_;
+  ros::Publisher gate_open_pub_;
 
 
 
-    float no_obstacle_time_thresh_;
-    float min_width_;
-    float min_distance_;
-    float max_distance_;
+  float no_obstacle_time_thresh_;
+  float min_width_;
+  float min_distance_;
+  float max_distance_;
 
-    ros::Timer timer_;
+  ros::Timer timer_;
 
-    bool startSearching(std_srvs::Empty::Request &rq, std_srvs::Empty::Response &rp);
-    void laserScanCB(const sensor_msgs::LaserScan &msg);
-    void timerCallback(const ros::TimerEvent &e);
-    void resetTimer();
+  bool startSearching(std_srvs::Empty::Request &rq, std_srvs::Empty::Response &rp);
+  void laserScanCB(const sensor_msgs::LaserScan &msg);
+  void timerCallback(const ros::TimerEvent &e);
+  void resetTimer();
 
-    struct Point
-    {
-       float x;
-       float y;
-       Point(float ang, float range);
-    };
+  struct Point
+  {
+    float x;
+    float y;
+    Point(float ang, float range);
+  };
 public:
-    GateScanner(const ros::NodeHandle &nh, const ros::NodeHandle &pnh);
+  GateScanner(const ros::NodeHandle &nh, const ros::NodeHandle &pnh);
 
 };
 #endif

@@ -1,3 +1,7 @@
+/***Copyright ( c) 2019, KNR Selfie*
+ * This code is licensed under BSD license (see LICENSE for details)
+ **/
+
 #include <selfie_starting_procedure/starting_procedure_action.h>
 
 StartingProcedureAction::StartingProcedureAction(const ros::NodeHandle &nh, const ros::NodeHandle &pnh) :
@@ -94,12 +98,12 @@ void StartingProcedureAction::obstacleButtonCB(const std_msgs::Empty &msg)
   {
     if (ros::Time::now() > min_second_press_time_)
     {
-        publishFeedback(BUTTON_OBSTACLE_DRIVE_PRESSED);
-        distance_goal_ = distance_read_ + distance_goal_;
-        starting_distance_ = distance_read_;
-        ROS_INFO("start obstacle");
-        state_ = State::START_MOVE;
-        publishFeedback(START_DRIVE);
+      publishFeedback(BUTTON_OBSTACLE_DRIVE_PRESSED);
+      distance_goal_ = distance_read_ + distance_goal_;
+      starting_distance_ = distance_read_;
+      ROS_INFO("start obstacle");
+      state_ = State::START_MOVE;
+      publishFeedback(START_DRIVE);
     }
   }
 }
@@ -133,14 +137,14 @@ void StartingProcedureAction::distanceCB(const std_msgs::Float32ConstPtr &msg)
   distance_read_ = msg->data;
   if (state_ == State::START_MOVE )
   {
-      driveBoxOut(starting_speed_);
-      if (distance_read_ > distance_goal_)
-      {
-        state_ = State::IDLE;
-        ROS_INFO("end start procedure");
-        publishFeedback(END_DRIVE);
-        as_.setSucceeded(result_);
-      }
+    driveBoxOut(starting_speed_);
+    if (distance_read_ > distance_goal_)
+    {
+      state_ = State::IDLE;
+      ROS_INFO("end start procedure");
+      publishFeedback(END_DRIVE);
+      as_.setSucceeded(result_);
+    }
   }
 }
 
@@ -152,8 +156,8 @@ void StartingProcedureAction::publishFeedback(feedback_variable program_state)
 
 void StartingProcedureAction::driveBoxOut(float speed)
 {
-    ackermann_msgs::AckermannDriveStamped cmd;
-    cmd.drive.speed = speed;
-    cmd.drive.steering_angle = 0;
-    drive_pub_.publish(cmd);
+  ackermann_msgs::AckermannDriveStamped cmd;
+  cmd.drive.speed = speed;
+  cmd.drive.steering_angle = 0;
+  drive_pub_.publish(cmd);
 }
