@@ -6,8 +6,8 @@ detect_markings:
     pf_num_points: 3,
     pf_num_samples: 40,
     pf_num_samples_vis: 4,
-    pf_std_min: 0.01,
-    pf_std_max: 0.03,
+    pf_std_min: 0.003,
+    pf_std_max: 0.02,
     obstacle_window_size: 0.09,
     obstacles_threshold: 180,
 
@@ -35,7 +35,7 @@ extract_road_features:
     max_acceleration: 100.0,
     max_deceleration: 100.0,
     max_curvature: 1.8,
-    average_window_size: 200
+    average_window_size: 50
   }
 free_drive: 
   {
@@ -79,7 +79,8 @@ lidar:
   }
 offset_combiner: 
   {
-    L: 0.25
+    L: 0.25,
+    set_point: -0.2
   }
 park_server: 
   {

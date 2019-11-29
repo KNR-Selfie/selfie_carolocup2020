@@ -15,7 +15,11 @@ def config_callback(config, level):
     global L
     L = config['L']
 
+    global set_point
+    set_point = config['set_point']
+
     rospy.loginfo("Reconfigure request: L=" + str(L) + "m")
+    rospy.loginfo("Reconfigure request: set_point=" + str(set_point))
 
     return config
 
@@ -33,7 +37,9 @@ if __name__ == '__main__':
     srv = Server(HeadingCoeffConfig, config_callback)
 
     L = rospy.get_param('~L', 0.3)
+    set_point = rospy.get_param('~set_point', -0.2)
     print("L set to: " + str(L))
+    print("set_point set to: " + str(set_point))
 
     position_offset_sub = rospy.Subscriber('position_offset',
                                             Float64,
@@ -49,6 +55,6 @@ if __name__ == '__main__':
 
     rate = rospy.Rate(UPDATE_RATE)
     while not rospy.is_shutdown():
-        combined_offset = position_offset + L*heading_offset
+        combined_offset = position_offset + L*heading_offset - set_point
         combined_offset_pub.publish(combined_offset)
         rate.sleep()

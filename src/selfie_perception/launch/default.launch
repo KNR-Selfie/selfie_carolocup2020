@@ -9,7 +9,7 @@
     <param name="config_file" value="$(arg homography_file)" />
     <param name="hom_cut_file" value="$(arg hom_cut_file)" />
 
-    <param name="debug_mode" value="true"/>
+    <param name="debug_mode" value="false"/>
     <param name="tune_params_mode" value="false"/>
   </node>
 </launch>
