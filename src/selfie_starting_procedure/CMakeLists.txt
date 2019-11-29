@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
   selfie_scheduler
   cv_bridge
   std_srvs
+  roslint
 )
 
 ## System dependencies are found with CMake's conventions
@@ -218,3 +219,5 @@ target_link_libraries(gate_scanner ${catkin_LIBRARIES})
 add_dependencies(gate_scanner ${catkin_EXPORTED_TARGETS})
 
 
+roslint_cpp(src/starting_procedure.cpp src/starting_procedure_action.cpp
+src/decoder.cpp src/qr_decoder.cpp src/gate_scanner.cpp src/scanner.cpp)

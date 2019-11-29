@@ -5,10 +5,10 @@
 
 int main(int argc, char** argv)
 {
-    ros::init(argc,argv,"qr_decoder");
+    ros::init(argc, argv, "qr_decoder");
     ros::NodeHandle nh;
     ros::NodeHandle pnh("~");
-    GateScanner gateScanner(nh,pnh);
+    GateScanner gateScanner(nh, pnh);
     ros::spin();
     return 0;
 }

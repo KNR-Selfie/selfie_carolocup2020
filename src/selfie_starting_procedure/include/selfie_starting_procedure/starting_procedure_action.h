@@ -22,9 +22,9 @@ protected:
   actionlib::SimpleActionServer<selfie_msgs::startingAction> as_;
 
   //params
-  float starting_speed_;
-  bool use_scan_;
-  bool use_qr_;
+  float startingSpeed_;
+  bool useScan_;
+  bool useQr_;
 
   //create messages that are used to published feedback/result
   selfie_msgs::startingGoal goal_;
@@ -32,16 +32,17 @@ protected:
   selfie_msgs::startingResult result_;
 
   //subscribers
-  ros::Subscriber parking_button_sub_;
-  ros::Subscriber obstacle_button_sub_;
-  ros::Subscriber distance_sub_;
+  ros::Subscriber parkingButtonSub_;
+  ros::Subscriber obstacleButtonSub_;
+  ros::Subscriber distanceSub_;
   ros::Subscriber qrSub_;
+  ros::Subscriber gateScanSub_;
   ros::ServiceClient qrClient_;
-
+  ros::ServiceClient scanClient_;
   //publishers
-  ros::Publisher drive_pub_;
+  ros::Publisher drivePub_;
 
-  feedback_variable button_status_;
+  feedback_variable buttonStatus_;
 private:
   enum class State
   {
@@ -64,8 +65,8 @@ private:
   void executeCB();
   void preemptCB();
   void driveBoxOut(float speed);
-  void parking_buttonCB(const std_msgs::Empty &msg);
-  void obstacle_buttonCB(const std_msgs::Empty &msg);
+  void parkingButtonCB(const std_msgs::Empty &msg);
+  void obstacleButtonCB(const std_msgs::Empty &msg);
   void distanceCB(const std_msgs::Float32ConstPtr &msg);
   void gateOpenCB(const std_msgs::Empty &msg);
 
@@ -73,7 +74,6 @@ private:
 public:
 
   StartingProcedureAction(const ros::NodeHandle &nh, const ros::NodeHandle &pnh);
-  ~StartingProcedureAction(void);
 
 };
 #endif // STARTING_PROCEDURE_ACTION_H
