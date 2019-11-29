@@ -1,5 +1,4 @@
 #include "selfie_starting_procedure/qr_decoder.h"
-#include <iostream>
 
 QrDecoder::QrDecoder(const ros::NodeHandle &nh,const ros::NodeHandle &pnh):nh_(nh),pnh_(pnh)
 {
