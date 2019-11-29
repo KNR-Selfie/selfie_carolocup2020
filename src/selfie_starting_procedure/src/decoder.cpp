@@ -4,6 +4,7 @@
 QrDecoder::QrDecoder(const ros::NodeHandle &nh,const ros::NodeHandle &pnh):nh_(nh),pnh_(pnh)
 {
     zbarScanner_.set_config(zbar::ZBAR_NONE, zbar::ZBAR_CFG_ENABLE, 1 );
+    gateOpenPub_ = nh_.advertise<std_msgs::Empty>("qr_gate_open",1);
 
     pnh_.param<float>("qr_invisible_time_thresh",qrInvisibleTimeThresh_,1.f);
     timer_ = nh_.createTimer(ros::Duration(qrInvisibleTimeThresh_) ,&QrDecoder::timerCallback, this, true, false);//oneshot, autostart
@@ -18,7 +19,7 @@ bool QrDecoder::startSearching(std_srvs::Empty::Request &rq, std_srvs::Empty::Re
 
 void QrDecoder::timerCallback(const ros::TimerEvent &e)
 {
-    std::cout<<"timercallback"<<std::endl;
+    gateOpenPub_.publish(std_msgs::Empty());
     imageSub_.shutdown();
 }
 

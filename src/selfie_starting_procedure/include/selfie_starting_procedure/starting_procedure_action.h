@@ -7,6 +7,9 @@
 #include <string>
 #include <std_msgs/Bool.h>
 #include <std_msgs/Float32.h>
+#include <std_msgs/Empty.h>
+#include <std_srvs/Empty.h>
+
 #include <selfie_scheduler/scheduler_enums.h>
 #include <ackermann_msgs/AckermannDriveStamped.h>
 
@@ -16,10 +19,12 @@ protected:
 
   ros::NodeHandle nh_;
   ros::NodeHandle pnh_;
-  actionlib::SimpleActionServer<selfie_msgs::startingAction> as_; // NodeHandle instance must be created before this line. Otherwise strange error occurs.
+  actionlib::SimpleActionServer<selfie_msgs::startingAction> as_;
 
   //params
   float starting_speed_;
+  bool use_scan_;
+  bool use_qr_;
 
   //create messages that are used to published feedback/result
   selfie_msgs::startingGoal goal_;
@@ -27,31 +32,48 @@ protected:
   selfie_msgs::startingResult result_;
 
   //subscribers
-  ros::Subscriber button1_sub_;
-  ros::Subscriber button2_sub_;
+  ros::Subscriber parking_button_sub_;
+  ros::Subscriber obstacle_button_sub_;
   ros::Subscriber distance_sub_;
+  ros::Subscriber qrSub_;
+  ros::ServiceClient qrClient_;
 
   //publishers
   ros::Publisher drive_pub_;
 
-  int button_status_{SELFIE_IDLE};
-  bool base_distance_initialized{false};
-  float covered_distance_{0.0};
-  float base_distance_{0.0};
+  feedback_variable button_status_;
+private:
+  enum class State
+  {
+    IDLE,
+    WAIT_BUTTON,
+    WAIT_START,
+    START_MOVE,
+    END_MOVE
+  } state_;
+
+  float distanceGoal_;
+  float startingDistance_;
+  float distanceRead_;
+
+  ros::Time minSecondPressTime_;
+  ros::Duration debounceDuration_;
+
+  void publishFeedback(feedback_variable program_state);
+
+  void executeCB();
+  void preemptCB();
+  void driveBoxOut(float speed);
+  void parking_buttonCB(const std_msgs::Empty &msg);
+  void obstacle_buttonCB(const std_msgs::Empty &msg);
+  void distanceCB(const std_msgs::Float32ConstPtr &msg);
+  void gateOpenCB(const std_msgs::Empty &msg);
+
 
 public:
 
   StartingProcedureAction(const ros::NodeHandle &nh, const ros::NodeHandle &pnh);
   ~StartingProcedureAction(void);
 
-  void publishFeedback(feedback_variable program_state);
-
-  void registerGoal();
-  void executeLoop();
-  void preemptCB();
-  void driveBoxOut(float speed);
-  void button1CB(const std_msgs::BoolConstPtr &msg);
-  void button2CB(const std_msgs::BoolConstPtr &msg);
-  void distanceCB(const std_msgs::Float32ConstPtr &msg);
 };
 #endif // STARTING_PROCEDURE_ACTION_H

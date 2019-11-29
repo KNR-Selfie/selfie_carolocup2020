@@ -1,0 +1,6 @@
+<launch>
+  <node pkg="selfie_starting_procedure" type="starting_procedure" name="starting_procedure" output="screen"/>
+  <node pkg="selfie_starting_procedure" type="qr_decoder" name="qr_decoder" output="screen">
+    <param name="qr_invisible_time_thresh" type="double" value="5.0"/>
+  </node>
+</launch>

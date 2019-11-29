@@ -8,12 +8,14 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <boost/algorithm/cxx11/any_of.hpp>
 #include <std_srvs/Empty.h>
+#include <std_msgs/Empty.h>
 
 class QrDecoder
 {
     ros::NodeHandle nh_,pnh_;
     ros::Subscriber imageSub_; 
     ros::ServiceServer startServ_;
+    ros::Publisher gateOpenPub_;
 
     zbar::ImageScanner zbarScanner_;
     zbar::Image zbarImage_;
