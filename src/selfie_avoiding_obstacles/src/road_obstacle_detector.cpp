@@ -281,6 +281,7 @@ bool Road_obstacle_detector::switchToActive(std_srvs::Empty::Request &request, s
   proof_overtake_ = 0;
   timer_.stop();
   status_ = ON_RIGHT;
+  ROS_INFO("Lane control active mode");
   return true;
 }
 
@@ -293,11 +294,13 @@ bool Road_obstacle_detector::switchToPassive(std_srvs::Empty::Request &request, 
   setpoint_value_.data = right_lane_;
   status_ = PASSIVE;
   timer_.start();
+  ROS_INFO("Lane control passive mode");
   return true;
 }
 
 bool Road_obstacle_detector::reset_node(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response)
 {
+  ROS_INFO("Lane control reset");
   if (status_ != PASSIVE)
     switchToActive(request, response);
 
