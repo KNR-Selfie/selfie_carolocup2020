@@ -714,8 +714,8 @@ void LaneDetector::printInfoParams()
 void LaneDetector::dynamicMask(cv::Mat &input_frame, cv::Mat &output_frame)
 {
   dynamic_mask_ = cv::Mat::zeros(cv::Size(input_frame.cols, input_frame.rows), CV_8UC1);
-  float offset_right = -0.07;
-  float offset_left = 0.05;
+  float offset_right = -0.045;
+  float offset_left = 0.025;
   output_frame = input_frame.clone();
   if (!right_line_.isExist())
     offset_right = -0.14;
