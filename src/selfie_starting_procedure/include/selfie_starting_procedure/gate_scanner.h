@@ -22,6 +22,8 @@ class GateScanner
   float min_width_;
   float min_distance_;
   float max_distance_;
+  int min_gate_seen_count_;
+  int gate_seen_count_;
 
   ros::Timer timer_;
 
