@@ -7,6 +7,6 @@
         <node pkg="selfie_scheduler" type="scheduler" name="scheduler" output="screen"/>
         <node pkg="selfie_scheduler" type="rc_mock" name="rc_mock" output="screen">
             <param name="action_time" value="5"/>
-            <param name ="rc_reset_time" value="21"/>
+            <param name ="rc_reset_time" value="0"/>
         </node>
 </launch>

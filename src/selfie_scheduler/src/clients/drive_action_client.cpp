@@ -15,9 +15,9 @@ void DriveClient::setDriveMode(bool drive_mode)
     drive_mode_ = drive_mode;
 
     if(drive_mode_ == false)
-        next_action_ = INTERSECTION;
-    else
         next_action_ = PARKING_SEARCH;
+    else
+        next_action_ = INTERSECTION;
 }
 void DriveClient::setGoal(boost::any goal)
 {
