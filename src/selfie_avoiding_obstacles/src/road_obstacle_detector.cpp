@@ -133,6 +133,7 @@ void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &
     blinkLeft(false);
     setpoint_value_.data = right_lane_;
     speed_message_.data = safe_speed_;
+    break;
   case PASSIVE:
     return;
   default:
