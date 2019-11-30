@@ -1,22 +1,20 @@
 detect_markings: 
   {
-    threshold_c: -15,
-    real_window_size: 0.1,
+    threshold_c: -25,
+    real_window_size: 0.05,
 
     pf_num_points: 3,
     pf_num_samples: 30,
     pf_num_samples_vis: 4,
     pf_std: 0.02,
-    real_window_size: 0.05,
-    threshold_c: -15,
     obstacle_window_size: 0.09,
-    obstacles_threshold: 95
+    obstacles_threshold: 195
   }
 detect_parking_spot: 
   {
-    default_speed_in_parking_zone: 0.8,
-    max_distance_to_free_place: 0.8,
-    speed_when_found_place: 0.3,
+    default_speed_in_parking_zone: 1.5,
+    max_distance_to_free_place: 0.7,
+    speed_when_found_place: 1.0,
 
     point_max_x: 2,
     point_max_y: 0.2,
@@ -25,8 +23,8 @@ detect_parking_spot:
   }
 extract_road_features: 
   {
-    lookahead: 0.55,
-    min_speed: 1.5,
+    lookahead: 0.5,
+    min_speed: 2.0,
     max_acceleration: 1.0,
     max_deceleration: 1.5,
     max_curvature: 1.8,
@@ -34,20 +32,20 @@ extract_road_features:
   }
 free_drive: 
   {
-    max_speed: 3.0,
-    starting_line_distance_to_end: 0.45,
-    intersection_distance_to_end: 0.8
+    max_speed: 5.0,
+    starting_line_distance_to_end: 0.6,
+    intersection_distance_to_end: 0.008
   }
 lane_controller:
   {
-    right_lane_setpoint: -0.2,
-    left_lane_setpoint: 0.2,
+    right_lane_setpoint: -0.22,
+    left_lane_setpoint: 0.18,
 
     maximum_speed: 2.0,
     safe_speed: 0.8,
-    maximum_length_of_obstacle: 0.8,
-    maximum_distance_to_obstacle: 0.5,
-    safety_margin: 1.15,
+    maximum_length_of_obstacle: 0.4,
+    maximum_distance_to_obstacle: 0.8,
+    safety_margin: 1.0,
     pos_tolerance: 0.01,
     num_proof_to_overtake: 3,
     num_corners_to_detect_: 3,
