@@ -22,6 +22,8 @@ class QrDecoder
 
 
   float qr_invisible_time_thresh_;
+  int min_qr_find_count_;
+  int qr_find_count_;
 
   ros::Timer timer_;
   cv_bridge::CvImagePtr cv_ptr;

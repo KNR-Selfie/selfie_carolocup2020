@@ -8,14 +8,16 @@ QrDecoder::QrDecoder(const ros::NodeHandle &nh, const ros::NodeHandle &pnh): nh_
   zbar_scanner_.set_config(zbar::ZBAR_NONE, zbar::ZBAR_CFG_ENABLE, 1);
   gate_open_pub_ = nh_.advertise<std_msgs::Empty>("qr_gate_open", 1);
   pnh_.param<float>("qr_invisible_time_thresh", qr_invisible_time_thresh_, 1.f);
+  pnh_.param<int>("min_qr_find_count",min_qr_find_count_,5);
   // oneshot on, autostart off
   timer_ = nh_.createTimer(ros::Duration(qr_invisible_time_thresh_), &QrDecoder::timerCallback, this, true, false);
   start_serv_ = nh_.advertiseService("startQrSearch", &QrDecoder::startSearching, this);
+  qr_find_count_ = 0;
+  if(min_qr_find_count_<1){min_qr_find_count_ = 1;}
 }
 bool QrDecoder::startSearching(std_srvs::Empty::Request &rq, std_srvs::Empty::Response &rp)
 {
   image_sub_ = nh_.subscribe("image_rect", 1, &QrDecoder::imageRectCallback, this);
-  timer_.start();
   return true;
 }
 
@@ -46,7 +48,15 @@ void QrDecoder::decodeImage(const cv_bridge::CvImagePtr raw_img)
   if (boost::algorithm::any_of(img.symbol_begin(), img.symbol_end(),
    [](zbar::Symbol sym){return sym.get_data() == "STOP";}))
   {
-    resetTimer();
+    if(++qr_find_count_ == min_qr_find_count_)
+    {
+      timer_.start();
+    }
+    else if(qr_find_count_ > min_qr_find_count_)
+    {
+      resetTimer();
+    }
+    
   }
 }
 
