@@ -84,6 +84,7 @@ void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &
         {
           proof_overtake_ = 0;
           calculate_return_distance();
+          ROS_INFO("LC: OVERTAKE");
           status_ = OVERTAKE;
         }
       } else
@@ -218,6 +219,7 @@ void Road_obstacle_detector::calculate_return_distance()
   return_distance_calculated_ = true;
   return_distance_ =
       safety_margin_ * (maximum_length_of_obstacle_ + nearest_box_in_front_of_car_->bottom_left.x) + current_distance_;
+  ROS_INFO("LC: return_distance_: %f", return_distance_);
 }
 
 void Road_obstacle_detector::visualizeBoxes()
@@ -237,6 +239,7 @@ void Road_obstacle_detector::distanceCallback(const std_msgs::Float32 &msg)
   if (return_distance_calculated_ && status_ != ON_RIGHT && current_distance_ > return_distance_)
   {
     status_ = RETURN;
+    ROS_INFO("LC: RETURN");
     return_distance_calculated_ = false;
     selfie_msgs::PolygonArray temp;
     obstacle_callback(temp);
@@ -249,6 +252,7 @@ void Road_obstacle_detector::posOffsetCallback(const std_msgs::Float64 &msg)
   if (status_ == OVERTAKE && current_offset_ > left_lane_ - pos_tolerance_)
   {
     status_ = ON_LEFT;
+    ROS_INFO("LC: ON_LEFT");
     blinkLeft(false);
     selfie_msgs::PolygonArray temp;
     obstacle_callback(temp);
@@ -256,6 +260,7 @@ void Road_obstacle_detector::posOffsetCallback(const std_msgs::Float64 &msg)
   else if (status_ == RETURN && current_offset_ < right_lane_ + pos_tolerance_)
   {
     status_ = ON_RIGHT;
+    ROS_INFO("LC: ON_RIGHT");
     blinkRight(false);
     selfie_msgs::PolygonArray temp;
     obstacle_callback(temp);
