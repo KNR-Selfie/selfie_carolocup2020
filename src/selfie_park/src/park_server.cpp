@@ -39,8 +39,6 @@ void ParkService::odomCallback(const nav_msgs::Odometry &msg)
   actual_odom_position_ = Position(msg);
   actual_laser_odom_position_ = Position(actual_odom_position_, odom_to_laser_);
 
-  selfie_msgs::parkFeedback feedback;
-
   if (parking_state_ > not_parking)
   {
     actual_parking_position_ = Position(parking_spot_position_.transform_.inverse() * actual_odom_position_.transform_);
@@ -115,7 +113,9 @@ void ParkService::odomCallback(const nav_msgs::Odometry &msg)
         blinkRight(false);
         if (state_msgs_) ROS_INFO_THROTTLE(5, "out");
         drive(parking_speed_, 0);
-        as_.publishFeedback(OUT_PLACE);
+        selfie_msgs::parkFeedback feedback;
+        feedback.action_status = READY_TO_DRIVE;
+        as_.publishFeedback(feedback);
         selfie_msgs::parkResult result;
         result.done = true;
         as_.setSucceeded(result);
@@ -166,7 +166,9 @@ void ParkService::goalCB()
 {
   selfie_msgs::parkGoal goal = *as_.acceptNewGoal();
   initParkingSpot(goal.parking_spot);
-  as_.publishFeedback(START_PARK);
+  selfie_msgs::parkFeedback feedback;
+  feedback.action_status = START_PARK;
+  as_.publishFeedback(feedback);
   parking_state_ = go_to_parking_spot;
 }
 
