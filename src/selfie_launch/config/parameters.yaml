@@ -19,7 +19,7 @@ detect_parking_spot:
     point_max_x: 2,
     point_max_y: 0.2,
     point_min_x: 0.01,
-    point_min_y: -1
+    point_min_y: -0.6
   }
 extract_road_features: 
   {
@@ -51,7 +51,7 @@ lane_controller:
     num_corners_to_detect_: 3,
 
     ROI_min_x: 0.0,
-    ROI_max_x: 0.9,
+    ROI_max_x: 1.1,
     ROI_min_y: -1.0,
     ROI_max_y: 1.0
   }
