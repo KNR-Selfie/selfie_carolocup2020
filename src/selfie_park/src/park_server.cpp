@@ -28,6 +28,7 @@ as_(nh_, "park", false)
   as_.registerGoalCallback(boost::bind(&ParkService::goalCB, this));
   as_.registerPreemptCallback(boost::bind(&ParkService::preemptCB, this));
   as_.start();
+  odom_sub_ = nh_.subscribe(odom_topic_, 10, &ParkService::odomCallback, this);
   ackermann_pub_ = nh_.advertise<ackermann_msgs::AckermannDriveStamped>(ackermann_topic_, 10);
   right_indicator_pub_ = nh_.advertise<std_msgs::Bool>("right_turn_indicator", 20);
   left_indicator_pub_ = nh_.advertise<std_msgs::Bool>("left_turn_indicator", 20);
@@ -114,6 +115,7 @@ void ParkService::odomCallback(const nav_msgs::Odometry &msg)
         blinkRight(false);
         if (state_msgs_) ROS_INFO_THROTTLE(5, "out");
         drive(parking_speed_, 0);
+        as_.publishFeedback(OUT_PLACE);
         selfie_msgs::parkResult result;
         result.done = true;
         as_.setSucceeded(result);
@@ -121,13 +123,6 @@ void ParkService::odomCallback(const nav_msgs::Odometry &msg)
         odom_sub_.shutdown();
         break;
     }
-
-    feedback.action_status = action_status_;
-    as_.publishFeedback(feedback);
-  }
-  else
-  {
-    if (state_msgs_) ROS_INFO_THROTTLE(5, "not_parking");
   }
 }
 
@@ -171,14 +166,13 @@ void ParkService::goalCB()
 {
   selfie_msgs::parkGoal goal = *as_.acceptNewGoal();
   initParkingSpot(goal.parking_spot);
-  odom_sub_ = nh_.subscribe(odom_topic_, 10, &ParkService::odomCallback, this);
+  as_.publishFeedback(START_PARK);
   parking_state_ = go_to_parking_spot;
 }
 
 void ParkService::preemptCB()
 {
   ROS_INFO("parkService preempted");
-  odom_sub_.shutdown();
   blinkLeft(false);
   blinkRight(false);
   parking_state_ = not_parking;
