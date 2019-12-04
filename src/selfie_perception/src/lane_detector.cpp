@@ -130,6 +130,7 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
     left_line_.setExist(false);
     center_line_.setExist(false);
     right_line_.setExist(false);
+    publishMarkings();
     return;
   }
   convertCoordinates();
@@ -139,6 +140,7 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
     left_line_.setExist(false);
     center_line_.setExist(false);
     right_line_.setExist(false);
+    publishMarkings();
     return;
   }
 
@@ -189,8 +191,8 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
     left_line_.generateForDensity();
 
     linesApproximation();
-    publishMarkings();
   }
+  publishMarkings();
 
   if (debug_mode_)
   {
