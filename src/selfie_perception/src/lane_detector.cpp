@@ -328,6 +328,7 @@ void LaneDetector::getParams()
   pnh_.getParam("threshold_c", threshold_c_);
   pnh_.getParam("debug_mode", debug_mode_);
   pnh_.getParam("tune_params_mode", tune_params_mode_);
+  pnh_.getParam("max_mid_line_distance", max_mid_line_distance_);
   pnh_.getParam("max_mid_line_gap", max_mid_line_gap_);
 
   pnh_.getParam("pf_num_samples", pf_num_samples_);

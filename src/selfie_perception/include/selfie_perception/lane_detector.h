@@ -149,7 +149,7 @@ class LaneDetector
   int thresh_c_tune_temp_       {false};
 
   float max_mid_line_distance_  {0.15};
-  float max_mid_line_gap_       {0.3};
+  float max_mid_line_gap_       {0.38};
   float nominal_center_line_Y_  {0.2};
   float points_density_         {15};
 
