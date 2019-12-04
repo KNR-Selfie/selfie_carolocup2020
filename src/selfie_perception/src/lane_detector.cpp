@@ -719,6 +719,7 @@ void LaneDetector::printInfoParams()
   ROS_INFO("treshold_block_size: %d", treshold_block_size_);
   ROS_INFO("threshold_c: %d", threshold_c_);
   ROS_INFO("max_mid_line_gap: %.3f", max_mid_line_gap_);
+  ROS_INFO("max_mid_line_distance: %.3f", max_mid_line_distance_);
 
   ROS_INFO("debug_mode: %d\n", debug_mode_);
 
@@ -2215,6 +2216,9 @@ bool LaneDetector::isIntersection()
     center_line_.aprox();
     adjust(center_line_, right_line_, false);
     adjust(center_line_, left_line_, true);
+    center_line_.pfReset();
+    right_line_.pfReset();
+    left_line_.pfReset();
     return true;
   }
   else
@@ -2228,7 +2232,8 @@ bool LaneDetector::isIntersection()
 
 void LaneDetector::drawIntersection()
 {
-  cv::cvtColor(outside_road_, outside_road_, CV_GRAY2BGR);
+  if(outside_road_.type() == 0)
+    cv::cvtColor(outside_road_, outside_road_, CV_GRAY2BGR);
   for (size_t i = 0; i < lines_out_h_.size(); ++i)
   {
     cv::Vec4i l = lines_out_h_[i];
