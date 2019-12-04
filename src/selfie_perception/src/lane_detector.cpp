@@ -40,6 +40,11 @@ bool LaneDetector::init()
   kernel_v_.at<float>(0, 0) = -1;
   kernel_v_.at<float>(0, 1) = 0;
   kernel_v_.at<float>(0, 2) = 1;
+
+  kernel_h_ = cv::Mat(3, 1, CV_32F);
+  kernel_h_.at<float>(0, 0) = -1;
+  kernel_h_.at<float>(1, 0) = 0;
+  kernel_h_.at<float>(2, 0) = 1;
   dilate_element_ = getStructuringElement(2, cv::Size(3, 3), cv::Point(1, 1));
   close_element_ = getStructuringElement(0, cv::Size(15, 15), cv::Point(7, 7));
   dilate_obst_element_ = getStructuringElement(0, cv::Size(15, 15), cv::Point(7, 7));
@@ -78,6 +83,7 @@ bool LaneDetector::init()
     current_frame_ = cv::Mat::zeros(cv::Size(TOPVIEW_COLS, TOPVIEW_ROWS), CV_8UC1);
     tune_timer_ = nh_.createTimer(ros::Duration(0.01), &LaneDetector::tuneParams, this);
   }
+  outside_road_ = cv::Mat::zeros(cv::Size(TOPVIEW_COLS, TOPVIEW_ROWS), CV_8UC1);
   return true;
 }
 
@@ -117,6 +123,12 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
     ROILaneRight(masked_frame_, masked_frame_);
     ROILaneLeft(masked_frame_, masked_frame_);
     detectStartAndIntersectionLine();
+
+    cv::bitwise_not(dynamic_mask_, dynamic_mask_);
+    cv::bitwise_and(binary_frame_, dynamic_mask_, outside_road_);
+    cv::filter2D(outside_road_, outside_road_, -1, kernel_h_, cv::Point(-1, -1), 0, cv::BORDER_DEFAULT);
+    cv::HoughLinesP(outside_road_, lines_out_h_, isec_HL_dist_res_, isec_HL_angle_res_,
+                    isec_HL_thresh_, isec_HL_min_length_, isec_HL_max_gap_);
   }
   else
     masked_frame_=  binary_frame_.clone();
@@ -352,7 +364,7 @@ void LaneDetector::openCVVisualization()
   cv::imshow("STD_DEBUG", m_four);
 
   cv::namedWindow("ADV_DEBUG", cv::WINDOW_NORMAL);
-  cv::Mat m_pf, m_obs, m_all;
+  cv::Mat m_pf, m_obs_inter, m_all;
 
   cv::Mat LCRLines;
   LCRLines = cv::Mat::zeros(homography_frame_.size(), CV_8UC3);
@@ -361,9 +373,14 @@ void LaneDetector::openCVVisualization()
   cv::hconcat(LCRLines, pf_vis_mat_, m_pf);
   cv::bitwise_not(obstacles_mask_, obstacles_mask_);
   cv::cvtColor(obstacles_mask_, obstacles_mask_, CV_GRAY2BGR);
-  cv::Mat zero = cv::Mat::zeros(homography_frame_.size(), CV_8UC3);
-  cv::hconcat(obstacles_mask_, zero, m_obs);
-  cv::vconcat(m_pf, m_obs, m_all);
+  cv::cvtColor(outside_road_, outside_road_, CV_GRAY2BGR);
+  for (size_t i = 0; i < lines_out_h_.size(); ++i)
+  {
+    cv::Vec4i l = lines_out_h_[i];
+    cv::line(outside_road_, cv::Point(l[0], l[1]), cv::Point(l[2], l[3]), cv::Scalar(0,0,255), 3, CV_AA);
+  }
+  cv::hconcat(obstacles_mask_, outside_road_, m_obs_inter);
+  cv::vconcat(m_pf, m_obs_inter, m_all);
   cv::imshow("ADV_DEBUG", m_all);
 
   cv::waitKey(1);
