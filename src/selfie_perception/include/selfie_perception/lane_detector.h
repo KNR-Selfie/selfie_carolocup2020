@@ -82,8 +82,10 @@ class LaneDetector
   std::vector<std::vector<cv::Point2f> > lines_vector_converted_;
   std::vector<std::vector<cv::Point2f> > aprox_lines_frame_coordinate_;
   std::vector<cv::Vec4i> lines_out_h_;
+  std::vector<cv::Point2f> lines_out_h_world_;
 
   std::vector<cv::Point2f> debug_points_;
+  std::vector<cv::Point2f> isec_debug_points_;
 
   RoadLine left_line_;
   RoadLine center_line_;
@@ -125,6 +127,8 @@ class LaneDetector
   void tuneParams(const ros::TimerEvent &time);
   static void static_thresh_c_trackbar(int v, void *ptr);
   void on_thresh_c_trackbar(int v);
+  bool isIntersection();
+  void drawIntersection();
 
   // visualization
   sensor_msgs::PointCloud points_cloud_;
@@ -172,7 +176,7 @@ class LaneDetector
   double isec_HL_angle_res_     {CV_PI / 180};
   int isec_HL_thresh_           {25};
   double isec_HL_min_length_    {25};
-  int isec_HL_max_gap_          {10};
+  int isec_HL_max_gap_          {40};
 
   int color_set[20][3] =
   {

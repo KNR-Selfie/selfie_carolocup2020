@@ -202,7 +202,8 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
     center_line_.generateForDensity();
     left_line_.generateForDensity();
 
-    linesApproximation();
+    if(!isIntersection())
+      linesApproximation();
   }
   publishMarkings();
 
@@ -373,12 +374,7 @@ void LaneDetector::openCVVisualization()
   cv::hconcat(LCRLines, pf_vis_mat_, m_pf);
   cv::bitwise_not(obstacles_mask_, obstacles_mask_);
   cv::cvtColor(obstacles_mask_, obstacles_mask_, CV_GRAY2BGR);
-  cv::cvtColor(outside_road_, outside_road_, CV_GRAY2BGR);
-  for (size_t i = 0; i < lines_out_h_.size(); ++i)
-  {
-    cv::Vec4i l = lines_out_h_[i];
-    cv::line(outside_road_, cv::Point(l[0], l[1]), cv::Point(l[2], l[3]), cv::Scalar(0,0,255), 3, CV_AA);
-  }
+  drawIntersection();
   cv::hconcat(obstacles_mask_, outside_road_, m_obs_inter);
   cv::vconcat(m_pf, m_obs_inter, m_all);
   cv::imshow("ADV_DEBUG", m_all);
@@ -454,8 +450,8 @@ void LaneDetector::mergeMiddleLines()
   {
     if (!init_imageCallback_)
     {
-        if (lines_vector_converted_[i][0].y < getPolyY(right_line_.getCoeff(), lines_vector_converted_[i][0].x) + 0.03 ||
-            lines_vector_converted_[i][0].y > getPolyY(left_line_.getCoeff(), lines_vector_converted_[i][0].x) - 0.03)
+        if (lines_vector_converted_[i][0].y < getPolyY(right_line_.getCoeff(), lines_vector_converted_[i][0].x) + 0.05 ||
+            lines_vector_converted_[i][0].y > getPolyY(left_line_.getCoeff(), lines_vector_converted_[i][0].x) - 0.05)
             {
               continue;
             }
@@ -465,8 +461,8 @@ void LaneDetector::mergeMiddleLines()
     {
       if (!init_imageCallback_)
       {
-        if (lines_vector_converted_[j][0].y < getPolyY(right_line_.getCoeff(), lines_vector_converted_[j][0].x) + 0.03 ||
-            lines_vector_converted_[j][0].y > getPolyY(left_line_.getCoeff(), lines_vector_converted_[j][0].x) - 0.03) 
+        if (lines_vector_converted_[j][0].y < getPolyY(right_line_.getCoeff(), lines_vector_converted_[j][0].x) + 0.05 ||
+            lines_vector_converted_[j][0].y > getPolyY(left_line_.getCoeff(), lines_vector_converted_[j][0].x) - 0.05) 
             {
               continue;
             }
@@ -893,6 +889,19 @@ void LaneDetector::convertCoordinates()
 
     lines_vector_converted_.push_back(line);
   }
+
+  lines_out_h_world_.clear();
+  if (lines_out_h_.empty())
+    return;
+
+  for (int i = 0; i < lines_out_h_.size(); ++i)
+  {
+    cv::Point2f p = cv::Point2f(lines_out_h_[i][0], lines_out_h_[i][1]);
+    lines_out_h_world_.push_back(p);
+    p = cv::Point2f(lines_out_h_[i][2], lines_out_h_[i][3]);
+    lines_out_h_world_.push_back(p);
+  }
+  cv::transform(lines_out_h_world_, lines_out_h_world_, topview2world_.rowRange(0, 2));
 }
 
 void LaneDetector::convertApproxToFrameCoordinate()
@@ -2104,4 +2113,136 @@ void LaneDetector::tuneParams(const ros::TimerEvent &time)
   cv::imshow("test_threshold_c_mat", test_threshold_c_mat);
 
   cv::waitKey(1);
+}
+
+bool LaneDetector::isIntersection()
+{
+  float close_dist = 0.08;
+  float angle_diff = 8;
+  if (lines_out_h_world_.empty())
+    return false;
+
+  bool left_intersection = false;
+  bool right_intersection = false;
+  // check right line
+  if (right_line_.isExist())
+  {
+    for (int i = 0; i < lines_out_h_world_.size(); i += 2)
+    {
+      for (int j = 0; j < right_line_.pointsSize(); ++j)
+      {
+        float dist1 = getDistance(lines_out_h_world_[i], right_line_.getPoints()[j]);
+        float dist2 = getDistance(lines_out_h_world_[i + 1], right_line_.getPoints()[j]);
+
+        if (dist1 < close_dist || dist2 < close_dist)
+        {
+          float a1 = atan2(lines_out_h_world_[i].y - lines_out_h_world_[i + 1].y,
+                           lines_out_h_world_[i].x - lines_out_h_world_[i + 1].x);
+
+          float a2 = atan2(right_line_.getPoints()[j / 2].y - right_line_.getPoints()[0].y,
+                           right_line_.getPoints()[j / 2].x - right_line_.getPoints()[0].x);
+
+          float a = abs(std::abs(a1 - a2) * 57.2957795 - 90);
+          if (a > angle_diff)
+            continue;
+          ROS_INFO("diff_right: %f", a);
+
+          if (debug_mode_)
+          {
+            cv::Point2f p = cv::Point2f(right_line_.getPoints()[j].x, right_line_.getPoints()[j / 2].y);
+            isec_debug_points_.push_back(p);
+            isec_debug_points_.push_back(right_line_.getPoints()[0]);
+            isec_debug_points_.push_back(lines_out_h_world_[i]);
+            isec_debug_points_.push_back(lines_out_h_world_[i + 1]);
+          }
+
+          right_intersection = true;
+          break;
+        }
+        if (right_intersection)
+          break;
+      }
+    }
+  }
+
+  if (left_line_.isExist())
+  {
+    for (int i = 0; i < lines_out_h_world_.size(); i += 2)
+    {
+      for (int j = 0; j < left_line_.pointsSize(); ++j)
+      {
+        float dist1 = getDistance(lines_out_h_world_[i], left_line_.getPoints()[j]);
+        float dist2 = getDistance(lines_out_h_world_[i + 1], left_line_.getPoints()[j]);
+
+        if (dist1 < close_dist || dist2 < close_dist)
+        {
+          float a1 = atan2(lines_out_h_world_[i].y - lines_out_h_world_[i + 1].y,
+                           lines_out_h_world_[i].x - lines_out_h_world_[i + 1].x);
+
+          float a2 = atan2(left_line_.getPoints()[j / 2].y - left_line_.getPoints()[0].y,
+                           left_line_.getPoints()[j / 2].x - left_line_.getPoints()[0].x);
+
+          float a = abs(std::abs(a1 - a2) * 57.2957795 - 90);
+          if (a > angle_diff)
+            continue;
+          ROS_INFO("diff_left: %f", a);
+
+          if (debug_mode_)
+          {
+            cv::Point2f p = cv::Point2f(left_line_.getPoints()[j].x, left_line_.getPoints()[j / 2].y);
+            isec_debug_points_.push_back(p);
+            isec_debug_points_.push_back(left_line_.getPoints()[0]);
+            isec_debug_points_.push_back(lines_out_h_world_[i]);
+            isec_debug_points_.push_back(lines_out_h_world_[i + 1]);
+          }
+
+          left_intersection = true;
+          break;
+        }
+        if (left_intersection)
+          break;
+      }
+    }
+  }
+
+  if(left_intersection && right_intersection && center_line_.isExist())
+  {
+    std::cout << "INTERSECTION !!" << std::endl;
+
+    center_line_.setDegree(1);
+    right_line_.setDegree(1);
+    left_line_.setDegree(1);
+    center_line_.aprox();
+    adjust(center_line_, right_line_, false);
+    adjust(center_line_, left_line_, true);
+    return true;
+  }
+  else
+  {
+    center_line_.setDegree(2);
+    right_line_.setDegree(2);
+    left_line_.setDegree(2);
+    return false;
+  }
+}
+
+void LaneDetector::drawIntersection()
+{
+  cv::cvtColor(outside_road_, outside_road_, CV_GRAY2BGR);
+  for (size_t i = 0; i < lines_out_h_.size(); ++i)
+  {
+    cv::Vec4i l = lines_out_h_[i];
+    cv::line(outside_road_, cv::Point(l[0], l[1]), cv::Point(l[2], l[3]), cv::Scalar(0,0,255), 1.5, CV_AA);
+  }
+
+  if (isec_debug_points_.empty())
+    return;
+
+  cv::transform(isec_debug_points_, isec_debug_points_, world2topview_.rowRange(0, 2));
+  for (size_t i = 0; i < isec_debug_points_.size(); i += 2)
+  {
+    cv::Vec4i l = lines_out_h_[i];
+    cv::line(outside_road_, isec_debug_points_[i], isec_debug_points_[i + 1], cv::Scalar(0,255,0), 1, CV_AA);
+  }
+  isec_debug_points_.clear();
 }
