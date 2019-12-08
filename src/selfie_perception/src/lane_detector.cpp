@@ -130,6 +130,7 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
     left_line_.setExist(false);
     center_line_.setExist(false);
     right_line_.setExist(false);
+    publishMarkings();
     return;
   }
   convertCoordinates();
@@ -139,6 +140,7 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
     left_line_.setExist(false);
     center_line_.setExist(false);
     right_line_.setExist(false);
+    publishMarkings();
     return;
   }
 
@@ -189,8 +191,8 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
     left_line_.generateForDensity();
 
     linesApproximation();
-    publishMarkings();
   }
+  publishMarkings();
 
   if (debug_mode_)
   {
@@ -326,6 +328,7 @@ void LaneDetector::getParams()
   pnh_.getParam("threshold_c", threshold_c_);
   pnh_.getParam("debug_mode", debug_mode_);
   pnh_.getParam("tune_params_mode", tune_params_mode_);
+  pnh_.getParam("max_mid_line_distance", max_mid_line_distance_);
   pnh_.getParam("max_mid_line_gap", max_mid_line_gap_);
 
   pnh_.getParam("pf_num_samples", pf_num_samples_);
@@ -714,8 +717,8 @@ void LaneDetector::printInfoParams()
 void LaneDetector::dynamicMask(cv::Mat &input_frame, cv::Mat &output_frame)
 {
   dynamic_mask_ = cv::Mat::zeros(cv::Size(input_frame.cols, input_frame.rows), CV_8UC1);
-  float offset_right = -0.07;
-  float offset_left = 0.05;
+  float offset_right = -0.05;
+  float offset_left = 0.03;
   output_frame = input_frame.clone();
   if (!right_line_.isExist())
     offset_right = -0.14;
@@ -1539,10 +1542,10 @@ void LaneDetector::removeCar(cv::Mat &frame)
 {
   cv::Mat car_mask = cv::Mat::zeros(cv::Size(frame.cols, frame.rows), CV_8UC1);
   cv::Point points[4];
-  points[0] = cv::Point(300, 197);
-  points[1] = cv::Point(345, 197);
-  points[2] = cv::Point(345, 150);
-  points[3] = cv::Point(300, 150);
+  points[0] = cv::Point(305, 197);
+  points[1] = cv::Point(335, 197);
+  points[2] = cv::Point(335, 160);
+  points[3] = cv::Point(305, 160);
 
   cv::fillConvexPoly(car_mask, points, 4, cv::Scalar(255, 255, 255));
   cv::bitwise_not(car_mask, car_mask);

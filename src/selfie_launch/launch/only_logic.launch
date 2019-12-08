@@ -24,7 +24,7 @@
   <node name="extract_road_features" type="extract_road_features" pkg="selfie_path_planner" respawn="true" output="screen">
   </node>
 
-  <node pkg="selfie_perception" type="detect_obstacles" name="selfie_obstacle_detector" respawn="true" output="screen">
+  <node pkg="selfie_perception" type="detect_obstacles" name="detect_obstacles" respawn="true" output="screen">
     <param name="visualize" value="$(arg obstacles_detector_visualisation)" />
   </node>
 

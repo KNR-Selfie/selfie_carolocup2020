@@ -65,7 +65,7 @@ void Scheduler::waitForStart()
 }
 void Scheduler::setupActionClients(bool button_pressed)
 {
-    if(button_pressed == 1) // parking mode
+    if(button_pressed == 0) // parking mode
     {
         clients_[PARKING_SEARCH] = new SearchClient("search");
         action_args_[PARKING_SEARCH] = parking_spot_;

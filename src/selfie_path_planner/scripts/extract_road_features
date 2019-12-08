@@ -17,7 +17,6 @@ from std_msgs.msg import Float64
 from std_msgs.msg import Float32
 
 max_speed = 3.0
-pub_speed = 0.0
 act_speed = 0.0
 
 time_last_speed = time.time()
@@ -37,7 +36,6 @@ class StreamingMovingAverage:
 
 def road_markings_callback(msg):
     global sma
-    global pub_speed
     global time_last_speed
     global act_speed
     c_poly = Polynomial(msg.center_line)
@@ -65,13 +63,14 @@ def road_markings_callback(msg):
 
     speed_diff = act_speed - pred_speed
     time_diff = time.time() - time_last_speed
+    pub_speed = act_speed
     if speed_diff > 0:
-        if speed_diff / time_diff > max_deceleration:
+        if abs(speed_diff / time_diff) > max_deceleration:
             pub_speed -= max_deceleration * time_diff
         else:
             pub_speed = pred_speed
     else:
-        if speed_diff / time_diff > max_acceleration:
+        if abs(speed_diff / time_diff) > max_acceleration:
             pub_speed += max_acceleration * time_diff
         else:
             pub_speed = pred_speed

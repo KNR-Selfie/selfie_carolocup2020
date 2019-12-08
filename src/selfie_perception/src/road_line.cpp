@@ -2,11 +2,11 @@
 
 RoadLine::RoadLine()
 {
+  // init straight line with 0.2 offset
   coeff_.clear();
-  float empty_coeff = 0;
-  coeff_.push_back(empty_coeff);
-  coeff_.push_back(empty_coeff);
-  coeff_.push_back(empty_coeff);
+  coeff_.push_back(0.2);
+  coeff_.push_back(0);
+  coeff_.push_back(0);
 }
 
 void RoadLine::pfSetup(int num_particles, int num_control_points, float std)
@@ -172,6 +172,11 @@ void RoadLine::reset()
   length_ = 0;
   is_short_ = true;
   points_.clear();
-  coeff_.clear();
   pf_.reset();
+
+  // init straight line with 0.2 offset
+  coeff_.clear();
+  coeff_.push_back(0.2);
+  coeff_.push_back(0);
+  coeff_.push_back(0);
 }
