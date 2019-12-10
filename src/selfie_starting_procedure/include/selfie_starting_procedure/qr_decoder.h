@@ -9,6 +9,7 @@
 #include <boost/algorithm/cxx11/any_of.hpp>
 #include <std_srvs/Empty.h>
 #include <std_msgs/Empty.h>
+#include <list>
 
 class QrDecoder
 {
@@ -22,8 +23,12 @@ class QrDecoder
 
 
   float qr_invisible_time_thresh_;
-  int min_qr_find_count_;
-  int qr_find_count_;
+  int detect_samples_length_;
+  bool visualize_;
+  float min_detect_rate_;
+  bool timer_running_;
+  std::list<float> detect_list_;
+  float detect_rate_;
 
   ros::Timer timer_;
   cv_bridge::CvImagePtr cv_ptr;
