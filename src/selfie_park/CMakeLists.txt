@@ -7,7 +7,7 @@ add_compile_options(-std=c++11)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS geometry_msgs roscpp rospy selfie_msgs std_msgs visualization_msgs ackermann_msgs actionlib actionlib_msgs nav_msgs ackermann_msgs tf selfie_scheduler)
+find_package(catkin REQUIRED COMPONENTS geometry_msgs roscpp rospy selfie_msgs std_msgs visualization_msgs ackermann_msgs actionlib actionlib_msgs nav_msgs ackermann_msgs tf selfie_scheduler dynamic_reconfigure)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -83,10 +83,9 @@ find_package(catkin REQUIRED COMPONENTS geometry_msgs roscpp rospy selfie_msgs s
 ##     and list every .cfg file to be processed
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
-# generate_dynamic_reconfigure_options(
-#   cfg/DynReconf1.cfg
-#   cfg/DynReconf2.cfg
-# )
+generate_dynamic_reconfigure_options(
+   cfg/detect_parking_spot.cfg
+)
 
 ###################################
 ## catkin specific configuration ##
@@ -210,7 +209,7 @@ add_executable(detect_parking_spot
   include/selfie_park/Search_server.h
   src/detect_parking_spot.cpp
 )
-add_dependencies(detect_parking_spot ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(detect_parking_spot ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencfg)
 target_link_libraries(detect_parking_spot
   ${catkin_LIBRARIES}
 )

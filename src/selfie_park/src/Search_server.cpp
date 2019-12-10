@@ -9,15 +9,18 @@ Search_server::Search_server(const ros::NodeHandle &nh, const ros::NodeHandle &p
     : nh_(nh)
     , pnh_(pnh)
     , search_server_(nh_, "search", false)
+    , dr_server_CB_(boost::bind(&Search_server::reconfigureCB, this, _1, _2))
 {
   search_server_.registerGoalCallback(boost::bind(&Search_server::init, this));
   search_server_.registerPreemptCallback(boost::bind(&Search_server::preemptCB, this));
+  dr_server_.setCallback(dr_server_CB_);
+
   search_server_.start();
   pnh_.param<float>("point_min_x", point_min_x, 0.01);
   pnh_.param<float>("point_max_x", point_max_x, 2);
   pnh_.param<float>("point_min_y", point_min_y, -1);
   pnh_.param<float>("point_max_y", point_max_y, 0.2);
-  pnh_.param<float>("default_speed_in_parking_zone", default_speed_in_parking_zone, 0.8);
+  pnh_.param<float>("default_speed_in_parking_zone", default_speed_in_parking_zone, 0.9);
   pnh_.param<float>("speed_when_found_place", speed_when_found_place, 0.3);
   pnh_.param<bool>("visualization_in_searching", visualization, true);
   pnh_.param<float>("max_distance_to_free_place", max_distance_to_free_place_, 0.8);
@@ -338,4 +341,21 @@ void Search_server::endAction() // shutting donw unnecesary subscribers and publ
   distance_sub_.shutdown();
   speed_publisher.shutdown();
   max_distance_calculated_ = false;
+}
+void Search_server::reconfigureCB(selfie_park::DetectParkingSpotConfig& config, uint32_t level){
+    if(default_speed_in_parking_zone != (float)config.default_speed_in_parking_zone)
+    {
+        default_speed_in_parking_zone = config.default_speed_in_parking_zone;
+        ROS_INFO("default_speed in parking_zone new value: %f",default_speed_in_parking_zone);
+    }
+    if(max_distance_to_free_place_ != (float)config.max_distance_to_free_place)
+    {
+        max_distance_to_free_place_ = config.max_distance_to_free_place;
+        ROS_INFO("max_distance_to_free_place_ new value: %f", max_distance_to_free_place_);
+    }
+    if(speed_when_found_place != (float)config.speed_when_found_place)
+    {
+        speed_when_found_place = config.speed_when_found_place;
+        ROS_INFO("speed_when_found_place new value: %f", speed_when_found_place);
+    }
 }
