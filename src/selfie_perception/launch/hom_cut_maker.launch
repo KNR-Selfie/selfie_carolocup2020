@@ -1,0 +1,11 @@
+<launch>
+  <arg name="config_file" default="/home/$(env USER)/.ros/homography_export.yaml" />
+  <arg name="yaml_output_file" default="/home/$(env USER)/.ros/hom_cut.yaml" />
+  <arg name="jpg_output_file" default="/home/$(env USER)/.ros/hom_cut.jpg" />
+
+  <node name="make_hom_cut_file" type="make_hom_cut_file" pkg="selfie_perception" respawn="true" output="screen">
+    <param name="config_file" value="$(arg config_file)" />
+    <param name="yaml_output_file" value="$(arg yaml_output_file)" />
+    <param name="jpg_output_file" value="$(arg jpg_output_file)" />
+  </node>
+</launch>

@@ -2,11 +2,11 @@
 
 RoadLine::RoadLine()
 {
+  // init straight line with 0.2 offset
   coeff_.clear();
-  float empty_coeff = 0;
-  coeff_.push_back(empty_coeff);
-  coeff_.push_back(empty_coeff);
-  coeff_.push_back(empty_coeff);
+  coeff_.push_back(0.2);
+  coeff_.push_back(0);
+  coeff_.push_back(0);
 }
 
 void RoadLine::pfSetup(int num_particles, int num_control_points, float std)
@@ -64,7 +64,6 @@ bool RoadLine::pfExecute()
   }
   else
   {
-    pf_.setPolyDegree_(3);
     pf_.prediction(pf_std_);
   }
   
@@ -116,11 +115,11 @@ void RoadLine::addBottomPoint()
   if (!exist_)
     return;
 
-  if (points_[0].x < ((TOPVIEW_MIN_X + TOPVIEW_MAX_X) / 2))
+  if (points_[0].x < ((TOPVIEW_MIN_X + TOPVIEW_MAX_X) / 3))
   {
     cv::Point2f p;
     p.x = TOPVIEW_MIN_X;
-    p.y = getPolyY(coeff_, p.x);
+    p.y = points_[0].y;
     points_.insert(points_.begin(), p);
   }
 }
@@ -173,6 +172,11 @@ void RoadLine::reset()
   length_ = 0;
   is_short_ = true;
   points_.clear();
-  coeff_.clear();
   pf_.reset();
+
+  // init straight line with 0.2 offset
+  coeff_.clear();
+  coeff_.push_back(0.2);
+  coeff_.push_back(0);
+  coeff_.push_back(0);
 }

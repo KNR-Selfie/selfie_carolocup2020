@@ -8,32 +8,26 @@
 class DriveClient : public ClientInterface
 {
 protected:
-    ros::NodeHandle nh_;
     actionlib::SimpleActionClient<selfie_msgs::drivingAction> ac_;
     selfie_msgs::drivingGoal goal_;
-    program_state action_state_;
     bool result_;
-    int result_flag_;
-    action next_action_;
+    bool drive_mode_;
 
 public:
     DriveClient(std::string name);
     ~DriveClient();
 
+    void setDriveMode(bool drive_mode);
     void setGoal(boost::any goal);
     bool waitForResult(float timeout);
     void cancelAction();
     bool waitForServer(float timeout);
 
-    program_state getActionState();
     void doneCb(const actionlib::SimpleClientGoalState& state,
                     const selfie_msgs::drivingResultConstPtr& result);
     void activeCb();
     void feedbackCb(const selfie_msgs::drivingFeedbackConstPtr& feedback);
     void getActionResult(boost::any &result);
-    int isActionFinished();
-    action getNextAction();
-
 };
 
 

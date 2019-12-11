@@ -212,3 +212,7 @@ add_dependencies(scheduler ${catkin_EXPORTED_TARGETS})
 add_executable(action_mock test/action_mock.cpp)
 target_link_libraries(action_mock ${catkin_LIBRARIES})
 add_dependencies(action_mock ${catkin_EXPORTED_TARGETS})
+
+add_executable(rc_mock test/rc_mock.cpp)
+target_link_libraries(rc_mock ${catkin_LIBRARIES})
+add_dependencies(rc_mock ${catkin_EXPORTED_TARGETS})

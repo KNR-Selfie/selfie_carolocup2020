@@ -2,6 +2,8 @@
 #define SCHEDULER_ENUMS_H
 
 //#include <map>
+#include <actionlib/client/simple_action_client.h>
+typedef actionlib::SimpleClientGoalState::StateEnum State;
 typedef enum program_state
 {
     //generic states
@@ -10,7 +12,7 @@ typedef enum program_state
     SELFIE_NO_ACTION,
 
     //starting_procedure
-    BUTTON_FREE_DRIVE_PRESSED, // button starting Free Drive and Parking
+    BUTTON_PARKING_DRIVE_PRESSED, // button starting Free Drive and Parking
     BUTTON_OBSTACLE_DRIVE_PRESSED, // button starting Obstacle Evasion Course
     START_DRIVE, // car started to move
     END_DRIVE, // car drove given distance
@@ -55,17 +57,25 @@ typedef enum action
     DRIVING,
     PARKING_SEARCH,
     PARK,
+    INTERSECTION,
     ERROR,
 
 }action_variable;
 
 typedef enum rc_state
 {
+    RC_UNINTIALIZED = -1,
     RC_MANUAL = 0,
     RC_HALF_AUTONOMOUS,
     RC_AUTONOMOUS,
 
 }rc_state_variable;
 
+typedef enum client_goal_state
+{
+    EMPTY,
+    ABORTED,
+    SUCCESS,
 
+}client_goal_state_variable;
 #endif // SCHEDULER_ENUMS_H

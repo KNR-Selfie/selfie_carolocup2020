@@ -20,7 +20,7 @@ class Scheduler
     ros::NodeHandle nh_;
     ros::NodeHandle pnh_;
 
-    //params
+    // params
     int begin_action_;
     float start_distance_;
     float parking_spot_;
@@ -36,15 +36,26 @@ class Scheduler
     ros::ServiceClient visionReset_ ;
     ros::ServiceClient cmdCreatorStartPub_;
     ros::ServiceClient cmdCreatorStopPub_;
+    ros::ServiceClient avoidingObstSetPassive_;
+    ros::ServiceClient avoidingObstSetActive_;
+    ros::ServiceClient resetLaneController_;
 
     ros::Subscriber switchState_;
     rc_state previousRcState_;
+    rc_state currentRcState_;
     void switchStateCallback(const std_msgs::UInt8ConstPtr &msg);
 
     template <typename T> bool checkCurrentClientType();
     void stateMachine();
     void startAction(action action_to_set);
+    void startNextAction();
     void stopAction();
+
+    void setAvoidingObstActive();
+    void resetLaneControl();
+    void resetVision();
+    void stopCmdCreator();
+    void startCmdCreator();
 
 public:
     Scheduler();
@@ -58,9 +69,8 @@ public:
     void logFeedback();
     void feedbackStateMachine();
 
-    void resetVision();
-    void stopCmdCreator();
-    void startCmdCreator();
+    void setupActionClients(bool button_pressed);
+    void waitForStart();
 
     action getBeginAction(); //get first action from argument
     void shiftAction();

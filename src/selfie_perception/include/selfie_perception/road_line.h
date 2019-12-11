@@ -59,11 +59,6 @@ public:
     degree_ = degree;
   }
 
-  void setPoints(std::vector<cv::Point2f> points)
-  {
-    points_ = points;
-  }
-
   void setCoeff(std::vector<float> coeff)
   {
     coeff_ = coeff;
@@ -79,6 +74,18 @@ public:
       length_ = 0;
     }
     exist_ = exist;
+  }
+
+  void addPoints(std::vector<cv::Point2f> points)
+  {
+    points_.insert(points_.end(), std::begin(points), std::end(points));
+    exist_ = true;
+  }
+
+  void clearPoints()
+  {
+    points_.clear();
+    exist_ = false;
   }
 
 private:

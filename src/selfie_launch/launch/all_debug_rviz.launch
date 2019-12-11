@@ -1,38 +1,21 @@
 <launch>
-  <!-- COMMON PARAMS -->
-  <arg name="lookahead" default="0.5" />
-  <arg name="max_curvature" default="1.0" />
-  <arg name="min_speed" default="0.5" />
-  <arg name="max_speed" default="2.5" />
+  <!-- PARAMS FROM YAML -->
+  <arg name="yaml_parameters" default="$(find selfie_launch)/config/parameters.yaml"/>
+  <rosparam command="load" file="$(arg yaml_parameters)"/>
 
-  <arg name="Kp" default="0.9" />
-  <arg name="Kd" default="0.01" />
-  <arg name="Ki" default="0.0" />
-  <arg name="L" default="0.3" />
-
-  <arg name="homography_file" default="/home/$(env USER)/.ros/homography_export.yaml" />
-  <arg name="threshold_c" default="-15" />
-
-  <arg name="parking_spot_dim" default="0.6" />
-  <arg name="default_speed_in_parking_zone" default="0.8" />
-  <arg name="speed_when_found_place" default="0.3" />
-  <arg name="max_distance_to_free_place" default="0.8" />
+  <!-- LAUNCH DEPENDENT PARAMS -->
   <arg name="visualization_in_searching" default="true" />
-
-  <arg name="parking_speed" default="0.4" />
-  <arg name="parking_idle_time" default="2.0" />
   <arg name="parking_msgs_output" default="true" />
+  <arg name="detect_obstacles_visualization" default="true" />
+  <arg name="lane_controller_visualization" default="true" />
+  <arg name="debug_mode" value="false"/>
 
-  <arg name="starting_speed" default="2.0" />
-  <arg name="starting_distance" default="1.0" />
+  <!-- PLATFORM DEPENDENT PARAMS -->
+  <arg name="homography_file" default="/home/$(env USER)/.ros/homography_export.yaml" />
+  <arg name="hom_cut_file" default="/home/$(env USER)/.ros/hom_cut.yaml" />
 
-  <arg name="begin_action" default="1" />
-
-
-  <!-- NODE LAUNCH -->
-  <node pkg="urg_node" type="urg_node" name="lidar" respawn="true" output="screen">
-    <param name="serial_port" value="/dev/sensors/hokuyo_H1312790" />
-  </node>
+  <!-- NODES -->
+  <node pkg="urg_node" type="urg_node" name="lidar" respawn="true" output="screen"/>
 
   <node name="stm32_bridge" type="selfie_stm32_bridge" pkg="selfie_stm32_bridge" respawn="true" output="screen">
     <remap from="/speed" to="/stm32/speed" />
@@ -40,72 +23,31 @@
 
   <node name="detect_markings" type="detect_markings" pkg="selfie_perception" respawn="true" output="screen">
     <param name="config_file" value="$(arg homography_file)" />
-    <param name="threshold_c" value="$(arg threshold_c)" />
-    <param name="real_window_size" value="0.15" />
-
-    <param name="debug_mode" value="false"/>
-    <param name="hom_cut_tune_mode" value="false"/>
-
-    <param name="hom_cut_l_x" value="0"/>
-    <param name="hom_cut_l_y" value="0"/>
-    <param name="hom_cut_r_x" value="0"/>
-    <param name="hom_cut_r_y" value="0"/>
-
-    <param name="pf_num_samples" value="50"/>
-    <param name="pf_num_points" value="3"/>
-    <param name="pf_std" value="0.015"/>
-    <param name="pf_num_samples_vis" value="4"/>
+    <param name="hom_cut_file" value="$(arg hom_cut_file)" />
+    <param name="debug_mode" value="$(arg debug_mode)"/>
   </node>
 
-  <node name="extract_road_features" type="extract_road_features" pkg="selfie_path_planner" respawn="true" output="screen">
-    <param name="lookahead" value="$(arg lookahead)" />
-    <param name="min_speed" value="$(arg min_speed)" />
+  <node name="extract_road_features" type="extract_road_features" pkg="selfie_path_planner" respawn="true" output="screen" />
+
+  <node pkg="selfie_perception" type="detect_obstacles" name="detect_obstacles" respawn="true" output="screen">
+    <param name="visualize" value="$(arg detect_obstacles_visualization)" />
   </node>
 
-  <node pkg="selfie_perception" type="detect_obstacles" name="selfie_obstacle_detector" respawn="true" output="screen">
-    <param name="upside_down" value="false"/>
-    <param name="visualize" value="true" />
-    <param name="max_range" value="2.0"/>
-    <param name="min_range" value="0.03"/>
-    <param name="lidar_offset" value="0.0"/>
-    <param name="segment_threshold" value="0.07"/>
-    <param name="min_segment_size" value="0.04"/>
-    <param name="min_to_divide" value="0.03"/>
+  <node pkg="selfie_avoiding_obstacles" type="lane_controller" name="lane_controller" respawn="true" output="screen">
+    <param name="visualization" value="$(arg lane_controller_visualization)" />
   </node>
 
   <node name="odometry" type="selfie_odometry" pkg="selfie_odometry" respawn="true" output="screen"/>
-
-  <node name="scheduler" type="scheduler" pkg="selfie_scheduler" respawn="true" output="screen" >
-    <param name="begin_action" value="$(arg begin_action)" />
-    <param name="starting_distance" value="$(arg starting_distance)" />
-    <param name="parking_spot" value="$(arg parking_spot_dim)" />
-  </node>
+  <node name="scheduler" type="scheduler" pkg="selfie_scheduler" respawn="true" output="screen" />
 
   <!--  INCLUDES -->
   <include file="$(find selfie_launch)/launch/subsystems/transforms.launch"/>
-
   <include file="$(find selfie_launch)/launch/subsystems/basler.launch"/>
-
-  <include file="$(find selfie_launch)/launch/subsystems/control.launch">
-    <arg name="i_Kp" value="$(arg Kp)" />
-    <arg name="i_Kd" value="$(arg Kd)" />
-    <arg name="i_Ki" value="$(arg Ki)" />
-    <arg name="i_L" value="$(arg L)" />
-  </include>
-
+  <include file="$(find selfie_launch)/launch/subsystems/control.launch"/>
   <include file="$(find selfie_launch)/launch/subsystems/action_servers.launch">
-    <arg name="i_max_speed" value="$(arg max_speed)" />
-
-    <arg name="i_speed_when_found_place" value="$(arg speed_when_found_place)" />
-    <arg name="i_default_speed_in_parking_zone" value="$(arg default_speed_in_parking_zone)" />
-    <arg name="i_max_distance_to_free_place" value="$(arg max_distance_to_free_place)" />
     <arg name="i_visualization_in_searching" value="$(arg visualization_in_searching)" />
-
     <arg name="i_parking_msgs_output" value="$(arg parking_msgs_output)" />
-    <arg name="i_parking_speed" value="$(arg parking_speed)" />
-    <arg name="i_parking_idle_time" value="$(arg parking_idle_time)" />
-
-    <arg name="i_starting_speed" value="$(arg starting_speed)" />
   </include>
+
 
 </launch>

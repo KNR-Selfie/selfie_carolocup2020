@@ -1,0 +1,20 @@
+<launch>
+  <arg name="homography_file" default="/home/$(env USER)/.ros/homography_export.yaml" />
+  <arg name="hom_cut_file" default="/home/$(env USER)/.ros/hom_cut.yaml" />
+
+  <node name="detect_markings" type="detect_markings" pkg="selfie_perception" respawn="true" output="screen">
+    <param name="config_file" value="$(arg homography_file)" />
+    <param name="hom_cut_file" value="$(arg hom_cut_file)" />
+    <param name="threshold_c" value="-40"/>
+    <param name="real_window_size_" value="0.05"/>
+
+    <param name="obstacles_threshold" value="170"/>
+    <param name="obstacle_window_size" value="0.09"/>
+
+    <param name="pf_num_samples" value="30"/>
+    <param name="pf_std" value="0.02"/>
+
+    <param name="debug_mode" value="false"/>
+    <param name="tune_params_mode" value="true"/>
+  </node>
+</launch>
