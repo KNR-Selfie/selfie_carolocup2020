@@ -17,6 +17,7 @@ public:
   void calcParams();
   void addBottomPoint();
   void generateForDensity();
+  void reduceTopPoints(float ratio);
   void reset();
 
   void pfSetup(int num_particles, int num_control_points, float std);

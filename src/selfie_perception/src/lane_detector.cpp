@@ -228,6 +228,10 @@ bool LaneDetector::resetVisionCallback(std_srvs::Empty::Request &request, std_sr
   left_line_.reset();
   center_line_.reset();
   right_line_.reset();
+  intersection_line_dist_ = -1;
+  proof_intersection_ = 0;
+  proof_start_line_ = 0;
+  intersection_ = false;
   ROS_INFO("RESET VISION");
   return true;
 }
@@ -502,6 +506,8 @@ void LaneDetector::recognizeLinesNew()
 {
   float checking_length = 0.4;
   float max_cost = 0.05;
+  if (intersection_)
+    max_cost = 0.1;
   float ratio = 0.4;
   center_line_.clearPoints();
   right_line_.clearPoints();
@@ -735,13 +741,13 @@ void LaneDetector::dynamicMask(cv::Mat &input_frame, cv::Mat &output_frame)
   float offset_left = 0.03;
   output_frame = input_frame.clone();
   if (!right_line_.isExist())
-    offset_right = -0.14;
+    offset_right = -0.10;
   else if (right_line_.getPoints()[right_line_.getPoints().size() - 1].x < ((TOPVIEW_MIN_X + TOPVIEW_MAX_X) / 4))
-    offset_right = -0.14;
+    offset_right = -0.10;
   if (!left_line_.isExist())
-    offset_left = 0.12;
+    offset_left = 0.08;
   else if (left_line_.getPoints()[left_line_.getPoints().size() - 1].x < ((TOPVIEW_MIN_X + TOPVIEW_MAX_X) / 4))
-    offset_left = 0.12;
+    offset_left = 0.08;
 
   std::vector<cv::Point2f> left_line_offset = createOffsetLine(left_line_.getCoeff(), left_line_.getDegree(), offset_left);
   std::vector<cv::Point2f> right_line_offset = createOffsetLine(right_line_.getCoeff(), right_line_.getDegree(), offset_right);
@@ -1641,9 +1647,11 @@ void LaneDetector::calcRoadWidth()
     deriative = 3 * center_line_.getCoeff()[3] * pow(p_ahead.x, 2)
               + 2 * center_line_.getCoeff()[2] * p_ahead.x
               + center_line_.getCoeff()[1];
-  else
+  else if(center_line_.getDegree() == 2)
     deriative = 2 * center_line_.getCoeff()[2] * p_ahead.x
               + center_line_.getCoeff()[1];
+  else
+    deriative = center_line_.getCoeff()[1];
 
   double a_param_orthg = -1 / deriative;
   double b_param_orthg = p_ahead.y - a_param_orthg * p_ahead.x;
@@ -1957,12 +1965,11 @@ void LaneDetector::detectStartAndIntersectionLine()
       --proof_start_line_;
     if (proof_intersection_ == 3)
     {
-      std_msgs::Float32 msg;
-      msg.data = right_distance;
-      intersection_pub_.publish(msg);
+      intersection_line_dist_ = right_distance;
     }
     else
     {
+      intersection_line_dist_ = -1;
       ++proof_intersection_;
     }
     
@@ -2118,7 +2125,8 @@ void LaneDetector::tuneParams(const ros::TimerEvent &time)
 
 bool LaneDetector::isIntersection()
 {
-  float close_dist = 0.08;
+  intersection_ = false;
+  float close_dist = 0.15;
   float angle_diff = 8;
   if (lines_out_h_world_.empty())
     return false;
@@ -2146,7 +2154,6 @@ bool LaneDetector::isIntersection()
           float a = abs(std::abs(a1 - a2) * 57.2957795 - 90);
           if (a > angle_diff)
             continue;
-          ROS_INFO("diff_right: %f", a);
 
           if (debug_mode_)
           {
@@ -2186,7 +2193,6 @@ bool LaneDetector::isIntersection()
           float a = abs(std::abs(a1 - a2) * 57.2957795 - 90);
           if (a > angle_diff)
             continue;
-          ROS_INFO("diff_left: %f", a);
 
           if (debug_mode_)
           {
@@ -2208,12 +2214,21 @@ bool LaneDetector::isIntersection()
 
   if(left_intersection && right_intersection && center_line_.isExist())
   {
-    std::cout << "INTERSECTION !!" << std::endl;
+    intersection_ = true;
+    ROS_INFO_THROTTLE(2, "INTERSECTION");
+    if (intersection_line_dist_ != -1)
+    {
+      std_msgs::Float32 msg;
+      msg.data = intersection_line_dist_;
+      intersection_pub_.publish(msg);
+    }
 
     center_line_.setDegree(1);
     right_line_.setDegree(1);
     left_line_.setDegree(1);
     center_line_.aprox();
+    right_line_.reduceTopPoints(0.5);
+    left_line_.reduceTopPoints(0.5);
     adjust(center_line_, right_line_, false);
     adjust(center_line_, left_line_, true);
     center_line_.pfReset();

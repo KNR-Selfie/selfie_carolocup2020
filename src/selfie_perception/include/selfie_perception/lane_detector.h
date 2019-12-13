@@ -147,6 +147,8 @@ class LaneDetector
   float right_lane_width_       {0.4};
   int proof_intersection_       {0};
   int proof_start_line_         {0};
+  float intersection_line_dist_ {-1};
+  bool intersection_            {false};
 
 // parameterized
   std::string config_file_      {""};

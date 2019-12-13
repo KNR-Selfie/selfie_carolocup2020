@@ -180,3 +180,12 @@ void RoadLine::reset()
   coeff_.push_back(0);
   coeff_.push_back(0);
 }
+
+void RoadLine::reduceTopPoints(float ratio)
+{
+  if (points_.empty())
+    return;
+
+  int begin = points_.size() * (1 - ratio);
+  points_.erase(points_.begin() + begin, points_.end());
+}
