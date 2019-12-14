@@ -7,10 +7,10 @@ project(selfie_avoiding_obstacles)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS roscpp selfie_msgs actionlib selfie_scheduler selfie_park geometry_msgs)
+find_package(catkin REQUIRED COMPONENTS roscpp selfie_msgs actionlib selfie_scheduler selfie_park geometry_msgs dynamic_reconfigure)
 
 ## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED COMPONENTS system)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -84,10 +84,9 @@ find_package(catkin REQUIRED COMPONENTS roscpp selfie_msgs actionlib selfie_sche
 ##     and list every .cfg file to be processed
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
-# generate_dynamic_reconfigure_options(
-#   cfg/DynReconf1.cfg
-#   cfg/DynReconf2.cfg
-# )
+generate_dynamic_reconfigure_options(
+    cfg/lane_controller.cfg
+)
 
 ###################################
 ## catkin specific configuration ##
@@ -99,7 +98,7 @@ find_package(catkin REQUIRED COMPONENTS roscpp selfie_msgs actionlib selfie_sche
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
+  INCLUDE_DIRS include
 #  LIBRARIES selfie_avoiding_obstacles
 #  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
@@ -113,6 +112,9 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
   include ${catkin_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIRS}
+  ${selfie_avoiding_obstacles_INCLUDE_DIRS}
+
 # include
 # ${catkin_INCLUDE_DIRS}
 )
@@ -208,7 +210,7 @@ add_executable(lane_controller
   src/road_obstacle_detector.cpp
   src/lane_controller.cpp
 )
-add_dependencies(lane_controller ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(lane_controller ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencfg)
 target_link_libraries(lane_controller
   ${catkin_LIBRARIES}
 )
