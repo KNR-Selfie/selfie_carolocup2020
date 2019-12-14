@@ -8,12 +8,13 @@
     <param name="threshold_c" value="-25"/>
     <param name="real_window_size_" value="0.05"/>
 
-    <param name="obstacles_threshold" value="195"/>
+    <param name="obstacles_threshold" value="90"/>
     <param name="obstacle_window_size" value="0.09"/>
 
     <param name="pf_num_samples" value="30"/>
     <param name="pf_std" value="0.02"/>
 
     <param name="debug_mode" value="true"/>
+    <param name="tune_params_mode" value="false"/>
   </node>
 </launch>

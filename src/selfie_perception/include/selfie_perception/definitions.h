@@ -5,8 +5,8 @@
 #define TOPVIEW_ROWS 197
 #define TOPVIEW_COLS 640
 
-#define TOPVIEW_MIN_X 0.3
-#define TOPVIEW_MAX_X 1.45
+#define TOPVIEW_MIN_X 0.45
+#define TOPVIEW_MAX_X 1.5
 #define TOPVIEW_MIN_Y -1.3
 #define TOPVIEW_MAX_Y 1.3
 
