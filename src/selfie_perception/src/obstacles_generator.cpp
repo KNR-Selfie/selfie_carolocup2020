@@ -15,7 +15,8 @@ ObstaclesGenerator::ObstaclesGenerator(const ros::NodeHandle &nh, const ros::Nod
   min_segment_size_(0.04),
   max_segment_size_(0.5),
   min_to_divide_(0.03),
-  upside_down_(false)
+  upside_down_(false),
+  dr_server_CB_(boost::bind(&ObstaclesGenerator::reconfigureCB, this, _1, _2))
 {
   obstacles_pub_ = nh_.advertise<selfie_msgs::PolygonArray>("obstacles", 10);
 }
@@ -43,6 +44,8 @@ bool ObstaclesGenerator::init()
 
   pnh_.getParam("lidar_offset", lidar_offset_);
   pnh_.getParam("upside_down", upside_down_);
+
+  dr_server_.setCallback(dr_server_CB_);
 
   if (visualize_)
   {
@@ -418,4 +421,38 @@ void ObstaclesGenerator::convertUpsideDown()
     obstacle_array_.polygons[i].points[2].y *= -1;
     obstacle_array_.polygons[i].points[3].y *= -1;
   }
+}
+void ObstaclesGenerator::reconfigureCB(selfie_perception::DetectObstaclesConfig& config, uint32_t level)
+{
+    if(max_range_ != (float)config.max_range)
+    {
+        max_range_ = config.max_range;
+        ROS_INFO("max_range_ new value: %f", max_range_);
+    }
+    if(max_segment_size_ != (float)config.max_segment_size)
+    {
+        max_segment_size_ = config.max_segment_size;
+        ROS_INFO("max_segment_size_ new value: %f", max_segment_size_);
+    }
+    if(min_range_ != (float)config.min_range)
+    {
+        min_range_ = config.min_range;
+        ROS_INFO("min_range_ new value: %f", min_range_);
+    }
+    if(min_segment_size_ != (float)config.min_segment_size)
+    {
+        min_segment_size_ = config.min_segment_size;
+        ROS_INFO("min_segment_size_ new value: %f", min_segment_size_);
+    }
+    if(min_to_divide_ != (float)config.min_to_divide)
+    {
+        min_to_divide_ = config.min_to_divide;
+        ROS_INFO("min_to_divide new value: %f", min_to_divide_);
+    }
+    if(segment_threshold_ != (float)config.segment_threshold)
+    {
+        segment_threshold_ = config.segment_threshold;
+        ROS_INFO("segment_threshold new value: %f", segment_threshold_);
+    }
+
 }

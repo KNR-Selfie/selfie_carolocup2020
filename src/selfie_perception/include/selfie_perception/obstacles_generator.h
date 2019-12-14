@@ -11,6 +11,8 @@
 #include <geometry_msgs/Polygon.h>
 #include <visualization_msgs/Marker.h>
 #include <selfie_msgs/PolygonArray.h>
+#include <dynamic_reconfigure/server.h>
+#include <selfie_perception/DetectObstaclesConfig.h>
 
 struct Point
 {
@@ -41,6 +43,10 @@ private:
     ros::Publisher obstacles_pub_;
     ros::Publisher visualization_lines_pub_;
     ros::Publisher visualization_obstacles_pub_;
+
+    dynamic_reconfigure::Server<selfie_perception::DetectObstaclesConfig> dr_server_;
+    dynamic_reconfigure::Server<selfie_perception::DetectObstaclesConfig>::CallbackType dr_server_CB_;
+    void reconfigureCB(selfie_perception::DetectObstaclesConfig& config, uint32_t level);
 
     std::vector <Line> line_array_;
     std::vector <std::vector <Point> > segments_;
