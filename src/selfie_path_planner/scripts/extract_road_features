@@ -90,6 +90,7 @@ def max_speed_callback(msg):
 
 def act_speed_callback(msg):
     global act_speed
+    global sma_act_speed
     act_speed = sma_act_speed.process(msg.data)
 
 if __name__ == '__main__':
