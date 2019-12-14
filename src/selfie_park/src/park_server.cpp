@@ -8,7 +8,8 @@
 ParkService::ParkService(const ros::NodeHandle &nh, const ros::NodeHandle &pnh) :
 nh_(nh),
 pnh_(pnh),
-as_(nh_, "park", false)
+as_(nh_, "park", false),
+dr_server_CB_(boost::bind(&ParkService::reconfigureCB, this, _1, _2))
 {
   pnh_.param<std::string>("odom_topic", odom_topic_, "/odom");
   pnh_.param<std::string>("ackermann_topic", ackermann_topic_, "/drive");
@@ -22,6 +23,8 @@ as_(nh_, "park", false)
   pnh_.param<float>("odom_to_back", odom_to_back_, -0.33);
   pnh_.param<float>("max_turn", max_turn_, 0.8);
   pnh_.param<float>("idle_time", idle_time_, 2.);
+
+  dr_server_.setCallback(dr_server_CB_);
   move_state_ = first_phase;
   parking_state_ = not_parking;
   action_status_ = READY_TO_DRIVE;
@@ -348,6 +351,40 @@ void ParkService::blinkRight(bool on)
   msg.data = on;
   right_indicator_pub_.publish(msg);
   return;
+}
+void ParkService::reconfigureCB(selfie_park::ParkServerConfig& config, uint32_t level)
+{
+    if(dist_turn_ != (float)config.dist_turn)
+    {
+        dist_turn_ = config.dist_turn;
+        ROS_INFO("dist_turn new value: %f",dist_turn_);
+    }
+    if(idle_time_ != (float)config.idle_time)
+    {
+        idle_time_ = config.idle_time;
+        ROS_INFO("idle_time_ new value: %f",idle_time_);
+    }
+    if(max_rot_ != (float)config.max_rot)
+    {
+        max_rot_ = config.max_rot;
+        ROS_INFO("max_rot_ new value: %f",max_rot_);
+    }
+    if(max_turn_ != (float)config.max_turn)
+    {
+        max_turn_ = config.max_turn;
+        ROS_INFO("max_turn new value: %f",max_turn_);
+    }
+    if(minimal_start_parking_x_ != (float)config.minimal_start_parking_x)
+    {
+        minimal_start_parking_x_ = config.minimal_start_parking_x;
+        ROS_INFO("minimal_start_parking_x new value: %f",minimal_start_parking_x_);
+    }
+    if(parking_speed_ != (float)config.parking_speed)
+    {
+        parking_speed_ = config.parking_speed;
+        ROS_INFO("parking_speed_ new value: %f",parking_speed_);
+    }
+
 }
 
 int main(int argc, char **argv)

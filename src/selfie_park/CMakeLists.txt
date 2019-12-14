@@ -85,6 +85,7 @@ find_package(catkin REQUIRED COMPONENTS geometry_msgs roscpp rospy selfie_msgs s
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
 generate_dynamic_reconfigure_options(
    cfg/detect_parking_spot.cfg
+   cfg/park_server.cfg
 )
 
 ###################################
@@ -198,7 +199,7 @@ add_executable(park_server
   src/park_server.cpp
         
         )
-add_dependencies(park_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(park_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencfg)
 target_link_libraries(park_server
   ${catkin_LIBRARIES}
 )
