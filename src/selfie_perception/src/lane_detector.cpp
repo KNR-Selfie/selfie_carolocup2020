@@ -46,7 +46,7 @@ bool LaneDetector::init()
   kernel_h_.at<float>(1, 0) = 0;
   kernel_h_.at<float>(2, 0) = 1;
   dilate_element_ = getStructuringElement(2, cv::Size(3, 3), cv::Point(1, 1));
-  close_element_ = getStructuringElement(0, cv::Size(15, 15), cv::Point(7, 7));
+  close_element_ = getStructuringElement(0, cv::Size(7, 7), cv::Point(3, 3));
   dilate_obst_element_ = getStructuringElement(0, cv::Size(15, 15), cv::Point(7, 7));
 
   int obs_el_size = static_cast<int>(TOPVIEW_COLS / (TOPVIEW_MAX_Y - TOPVIEW_MIN_Y) * obstacle_window_size_);
@@ -781,7 +781,7 @@ void LaneDetector::ROILaneRight(cv::Mat &input_frame, cv::Mat &output_frame)
     offset_right = 0.02;
     offset_center = -0.03;
   }
-  else
+  else if (!intersection_)
   {
     if (!right_line_.isExist() || right_line_.isShort())
       offset_right = 0.11;
@@ -1640,7 +1640,7 @@ void LaneDetector::calcRoadWidth()
   debug_points_.clear();
   cv::Point2f p;
   cv::Point2f p_ahead;
-  p_ahead.x = 0.6;
+  p_ahead.x = 0.7;
   p_ahead.y = getPolyY(center_line_.getCoeff(), p_ahead.x);
   double deriative;
   if (center_line_.getDegree() == 3)
@@ -2214,6 +2214,13 @@ bool LaneDetector::isIntersection()
 
   if(left_intersection && right_intersection && center_line_.isExist())
   {
+    if (center_line_.getPoints()[0].x > ((TOPVIEW_MIN_X + TOPVIEW_MAX_X) / 2))
+    {
+      center_line_.setDegree(2);
+      right_line_.setDegree(2);
+      left_line_.setDegree(2);
+      return false;
+    }
     intersection_ = true;
     ROS_INFO_THROTTLE(2, "INTERSECTION");
     if (intersection_line_dist_ != -1)
@@ -2227,10 +2234,34 @@ bool LaneDetector::isIntersection()
     right_line_.setDegree(1);
     left_line_.setDegree(1);
     center_line_.aprox();
-    right_line_.reduceTopPoints(0.5);
-    left_line_.reduceTopPoints(0.5);
-    adjust(center_line_, right_line_, false);
-    adjust(center_line_, left_line_, true);
+    if (right_line_.isExist())
+    {
+      right_line_.reduceTopPoints(0.5);
+      adjust(center_line_, right_line_, false);
+    }
+    else
+    {
+      right_line_.setDegree(center_line_.getDegree());
+      std::vector<float> tmp_coeff;
+      polyfit(createOffsetLine(center_line_.getCoeff(), center_line_.getDegree(), -1 * right_lane_width_),
+                               right_line_.getDegree(), tmp_coeff);
+      right_line_.setCoeff(tmp_coeff);
+    }
+    
+    if (left_line_.isExist())
+    {
+      left_line_.reduceTopPoints(0.5);
+      adjust(center_line_, left_line_, true);
+    }
+    else
+    {
+      left_line_.setDegree(center_line_.getDegree());
+      std::vector<float> tmp_coeff;
+      polyfit(createOffsetLine(center_line_.getCoeff(), center_line_.getDegree(), left_lane_width_),
+                               left_line_.getDegree(), tmp_coeff);
+      left_line_.setCoeff(tmp_coeff);
+    }
+
     center_line_.pfReset();
     right_line_.pfReset();
     left_line_.pfReset();
