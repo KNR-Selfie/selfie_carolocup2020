@@ -30,6 +30,8 @@ bool QrDecoder::startSearching(std_srvs::Empty::Request &rq, std_srvs::Empty::Re
 {
   image_sub_ = nh_.subscribe("image_rect", 1, &QrDecoder::imageRectCallback, this);
   count_valid_iterations_= 0;
+  init_ = false;
+  count_valid_iterations_= 0;
   ROS_INFO("QrDetector start searching");
   return true;
 }
@@ -38,7 +40,6 @@ bool QrDecoder::stopSearching(std_srvs::Empty::Request &rq, std_srvs::Empty::Res
 {
   rate_timer_.stop();
   image_sub_.shutdown();
-  count_valid_iterations_= 0;
   ROS_INFO("QrDetector stop searching");
   return true;
 }

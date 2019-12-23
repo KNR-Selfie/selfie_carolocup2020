@@ -12,19 +12,17 @@ StartingProcedureAction::StartingProcedureAction(const ros::NodeHandle &nh, cons
   as_.registerPreemptCallback(boost::bind(&StartingProcedureAction::preemptCB, this));
   as_.registerGoalCallback(boost::bind(&StartingProcedureAction::executeCB, this));
 
-  parking_button_sub_ = nh_.subscribe("start_button1", 10, &StartingProcedureAction::parkingButtonCB, this);
-  obstacle_button_sub_ = nh_.subscribe("start_button2", 10, &StartingProcedureAction::obstacleButtonCB, this);
-  qr_client_ = nh_.serviceClient<std_srvs::Empty>("startQrSearch");
+  qr_start_search_ = nh_.serviceClient<std_srvs::Empty>("startQrSearch");
+  qr_stop_search_ = nh_.serviceClient<std_srvs::Empty>("stopQrSearch");
   scan_client_ = nh_.serviceClient<std_srvs::Empty>("startGateScan");
-  distance_sub_ = nh_.subscribe("distance", 10, &StartingProcedureAction::distanceCB, this);
   drive_pub_ = nh_.advertise<ackermann_msgs::AckermannDriveStamped>("drive", 1);
   pnh_.param<float>("starting_speed", starting_speed_, 2.f);
   pnh_.param<bool>("use_scan", use_scan_, false);
   pnh_.param<bool>("use_qr", use_qr_, true);
-  if (use_qr_) {qr_sub_ = nh_.subscribe("qr_gate_open", 1, &StartingProcedureAction::gateOpenCB, this);}
-  if (use_scan_) {gate_scan_sub_ = nh_.subscribe("scan_gate_open", 1, &StartingProcedureAction::gateOpenCB, this);}
 
   ROS_INFO("Starting_speed: %.3f", starting_speed_);
+  ROS_INFO("use_qr: %d", use_qr_);
+  ROS_INFO("use_scan: %d", use_scan_);
   as_.start();
   ROS_INFO("Starting procedure object created");
 }
@@ -34,12 +32,24 @@ void StartingProcedureAction::executeCB()
   selfie_msgs::startingGoal goal = *as_.acceptNewGoal();
   distance_goal_ = goal.distance;
   ROS_INFO("received goal %f", goal.distance);
+  if (use_qr_)
+  {
+    qr_sub_ = nh_.subscribe("qr_gate_open", 1, &StartingProcedureAction::gateOpenCB, this);
+  }
+  if (use_scan_)
+  {
+    gate_scan_sub_ = nh_.subscribe("scan_gate_open", 1, &StartingProcedureAction::gateOpenCB, this);
+  }
+  distance_sub_ = nh_.subscribe("distance", 10, &StartingProcedureAction::distanceCB, this);
+  parking_button_sub_ = nh_.subscribe("start_button1", 10, &StartingProcedureAction::parkingButtonCB, this);
+  obstacle_button_sub_ = nh_.subscribe("start_button2", 10, &StartingProcedureAction::obstacleButtonCB, this);
   publishFeedback(SELFIE_READY);
   state_ = State::WAIT_BUTTON;
 }
 
 void StartingProcedureAction::parkingButtonCB(const std_msgs::Empty &msg)
 {
+  result_.drive_mode = false;
   if (state_ == State::WAIT_BUTTON)
   {
     min_second_press_time_ = ros::Time::now() + debounce_duration_;
@@ -49,7 +59,7 @@ void StartingProcedureAction::parkingButtonCB(const std_msgs::Empty &msg)
     {
       ROS_INFO("start qr search");
       std_srvs::Empty call = std_srvs::Empty();
-      qr_client_.call(call);
+      qr_start_search_.call(call);
     }
     if (use_scan_)
     {
@@ -63,18 +73,24 @@ void StartingProcedureAction::parkingButtonCB(const std_msgs::Empty &msg)
   {
     if( ros::Time::now() > min_second_press_time_)
     {
-        publishFeedback(BUTTON_PARKING_DRIVE_PRESSED);
-        distance_goal_ = distance_read_ + distance_goal_;
-        starting_distance_ = distance_read_;
-        ROS_INFO("start parking");
-        state_ = State::START_MOVE;
-        publishFeedback(START_DRIVE);
+      if (use_qr_)
+      {
+        std_srvs::Empty call = std_srvs::Empty();
+        qr_stop_search_.call(call);
+      }
+      publishFeedback(BUTTON_PARKING_DRIVE_PRESSED);
+      distance_goal_ = distance_read_ + distance_goal_;
+      starting_distance_ = distance_read_;
+      ROS_INFO("start parking mode");
+      state_ = State::START_MOVE;
+      publishFeedback(START_DRIVE);
     }
   }
 }
 
 void StartingProcedureAction::obstacleButtonCB(const std_msgs::Empty &msg)
 {
+  result_.drive_mode = true;
   if (state_ == State::WAIT_BUTTON)
   {
     min_second_press_time_ = ros::Time::now() + debounce_duration_;
@@ -84,7 +100,7 @@ void StartingProcedureAction::obstacleButtonCB(const std_msgs::Empty &msg)
     {
       ROS_INFO("start qr search");
       std_srvs::Empty call = std_srvs::Empty();
-      qr_client_.call(call);
+      qr_start_search_.call(call);
     }
     if (use_scan_)
     {
@@ -98,10 +114,15 @@ void StartingProcedureAction::obstacleButtonCB(const std_msgs::Empty &msg)
   {
     if (ros::Time::now() > min_second_press_time_)
     {
+      if (use_qr_)
+      {
+        std_srvs::Empty call = std_srvs::Empty();
+        qr_stop_search_.call(call);
+      }
       publishFeedback(BUTTON_OBSTACLE_DRIVE_PRESSED);
       distance_goal_ = distance_read_ + distance_goal_;
       starting_distance_ = distance_read_;
-      ROS_INFO("start obstacle");
+      ROS_INFO("start obstacle mode");
       state_ = State::START_MOVE;
       publishFeedback(START_DRIVE);
     }
@@ -129,6 +150,10 @@ void StartingProcedureAction::preemptCB()
   parking_button_sub_.shutdown();
   obstacle_button_sub_.shutdown();
   distance_sub_.shutdown();
+  if (use_qr_)
+    qr_sub_.shutdown();
+  if (use_scan_)
+    gate_scan_sub_.shutdown();
   as_.setAborted();
 }
 
@@ -141,8 +166,15 @@ void StartingProcedureAction::distanceCB(const std_msgs::Float32ConstPtr &msg)
     if (distance_read_ > distance_goal_)
     {
       state_ = State::IDLE;
-      ROS_INFO("end start procedure");
+      ROS_INFO("starting procedure completed");
       publishFeedback(END_DRIVE);
+      parking_button_sub_.shutdown();
+      obstacle_button_sub_.shutdown();
+      distance_sub_.shutdown();
+      if (use_qr_)
+        qr_sub_.shutdown();
+      if (use_scan_)
+        gate_scan_sub_.shutdown();
       as_.setSucceeded(result_);
     }
   }

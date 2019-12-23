@@ -37,7 +37,8 @@ protected:
   ros::Subscriber distance_sub_;
   ros::Subscriber qr_sub_;
   ros::Subscriber gate_scan_sub_;
-  ros::ServiceClient qr_client_;
+  ros::ServiceClient qr_start_search_;
+  ros::ServiceClient qr_stop_search_;
   ros::ServiceClient scan_client_;
   //publishers
   ros::Publisher drive_pub_;
