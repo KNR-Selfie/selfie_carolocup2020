@@ -23,7 +23,6 @@ class QrDecoder
   zbar::Image zbar_image_;
 
   bool init_{false};
-  cv::Mat kernel_;
 
   cv::Point tr_;
   cv::Point tl_;

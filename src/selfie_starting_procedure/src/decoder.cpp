@@ -18,11 +18,6 @@ QrDecoder::QrDecoder(const ros::NodeHandle &nh, const ros::NodeHandle &pnh): nh_
   start_serv_ = nh_.advertiseService("startQrSearch", &QrDecoder::startSearching, this);
   stop_serv_ = nh_.advertiseService("stopQrSearch", &QrDecoder::stopSearching, this);
 
-  kernel_ = cv::Mat(3, 3, CV_32F);
-  kernel_.at<float>(0, 0) = -1;    kernel_.at<float>(1, 0) = -1;   kernel_.at<float>(2, 0) = -1;
-  kernel_.at<float>(0, 1) = -1;     kernel_.at<float>(1, 1) = 9;    kernel_.at<float>(2, 1) = -1;
-  kernel_.at<float>(0, 2) = -1;     kernel_.at<float>(1, 2) = -1;    kernel_.at<float>(2, 2) = -1;
-
   ROS_INFO("QrDetector initialized");
 }
 
@@ -73,8 +68,6 @@ void QrDecoder::decodeImage(const cv_bridge::CvImagePtr raw_img)
     cv::warpPerspective(output, output, M_, cv::Size(trans_width_, trans_height_));
 
     cv::equalizeHist(output,output);
-    
-    cv::filter2D(output, output, -1, kernel_, cv::Point(-1, -1), 0, cv::BORDER_DEFAULT);
   }
 
   if(visualize_)
