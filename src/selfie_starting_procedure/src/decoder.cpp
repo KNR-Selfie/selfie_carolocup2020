@@ -9,9 +9,11 @@ QrDecoder::QrDecoder(const ros::NodeHandle &nh, const ros::NodeHandle &pnh): nh_
   zbar_scanner_.set_config(zbar::ZBAR_QRCODE, zbar::ZBAR_CFG_ENABLE, 1);
   gate_open_pub_ = nh_.advertise<std_msgs::Empty>("qr_gate_open", 1);
   pnh_.param<float>("min_detect_rate", min_detect_rate_, 0.4);
+  pnh_.param<int>("interations_to_vaild", interations_to_vaild_, 2);
   pnh_.param("visualize", visualize_, false);
 
   ROS_INFO("min_detect_rate: %.2f", min_detect_rate_);
+  ROS_INFO("interations_to_vaild: %d", interations_to_vaild_);
 
   start_serv_ = nh_.advertiseService("startQrSearch", &QrDecoder::startSearching, this);
   stop_serv_ = nh_.advertiseService("stopQrSearch", &QrDecoder::stopSearching, this);
@@ -27,6 +29,7 @@ QrDecoder::QrDecoder(const ros::NodeHandle &nh, const ros::NodeHandle &pnh): nh_
 bool QrDecoder::startSearching(std_srvs::Empty::Request &rq, std_srvs::Empty::Response &rp)
 {
   image_sub_ = nh_.subscribe("image_rect", 1, &QrDecoder::imageRectCallback, this);
+  count_valid_iterations_= 0;
   ROS_INFO("QrDetector start searching");
   return true;
 }
@@ -35,6 +38,7 @@ bool QrDecoder::stopSearching(std_srvs::Empty::Request &rq, std_srvs::Empty::Res
 {
   rate_timer_.stop();
   image_sub_.shutdown();
+  count_valid_iterations_= 0;
   ROS_INFO("QrDetector stop searching");
   return true;
 }
@@ -157,6 +161,7 @@ void QrDecoder::decodeImage(const cv_bridge::CvImagePtr raw_img)
 
       M_ = cv::getPerspectiveTransform(rect, dst);
 
+      ROS_INFO("QrDetector - QR found");
       init_ = true;
       rate_timer_ = nh_.createTimer(ros::Duration(1), &QrDecoder::calcRate, this);
     }
@@ -173,10 +178,27 @@ void QrDecoder::calcRate(const ros::TimerEvent &time)
   {
     detect_rate_ = 0;
   }
-  
-  ROS_INFO("QrDetection rate: %.3f", detect_rate_);
   count_bar_ = 0;
   count_frame_ = 0;
+  if (count_valid_iterations_ < interations_to_vaild_)
+  {
+    if (detect_rate_ < min_detect_rate_)
+    {
+      rate_timer_.stop();
+      init_ = false;
+      count_valid_iterations_= 0;
+      ROS_INFO("QrDetector - detection not valid");
+      return;
+    }
+    ++count_valid_iterations_;
+    if (count_valid_iterations_ == interations_to_vaild_)
+    {
+      ROS_INFO("QrDetector - detection valid");
+    }
+    return;
+  }
+  
+  ROS_INFO("QrDetection rate: %.3f", detect_rate_);
   if (detect_rate_ < min_detect_rate_)
   {
     ROS_INFO("QrDetector - gate opened");

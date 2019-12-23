@@ -36,10 +36,12 @@ class QrDecoder
 
   bool visualize_ {false};
   float min_detect_rate_ {0.2};
+  int interations_to_vaild_ {2};
   float detect_rate_ {1.0};
 
   int count_frame_{0};
   int count_bar_{0};
+  int count_valid_iterations_{0};
 
   ros::Timer rate_timer_;
   cv_bridge::CvImagePtr cv_ptr;
