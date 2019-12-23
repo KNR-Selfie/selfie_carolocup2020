@@ -16,28 +16,40 @@ class QrDecoder
   ros::NodeHandle nh_,pnh_;
   ros::Subscriber image_sub_; 
   ros::ServiceServer start_serv_;
+  ros::ServiceServer stop_serv_;
   ros::Publisher gate_open_pub_;
 
   zbar::ImageScanner zbar_scanner_;
   zbar::Image zbar_image_;
 
+  bool init_{false};
+  cv::Mat kernel_;
 
-  float qr_invisible_time_thresh_;
-  int detect_samples_length_;
-  bool visualize_;
-  float min_detect_rate_;
-  bool timer_running_;
-  std::list<float> detect_list_;
-  float detect_rate_;
+  cv::Point tr_;
+  cv::Point tl_;
+  cv::Point br_;
+  cv::Point bl_;
 
-  ros::Timer timer_;
+  float trans_width_;
+  float trans_height_;
+  cv::Mat M_;
+
+  bool visualize_ {false};
+  float min_detect_rate_ {0.2};
+  float detect_rate_ {1.0};
+
+  int count_frame_{0};
+  int count_bar_{0};
+
+  ros::Timer rate_timer_;
   cv_bridge::CvImagePtr cv_ptr;
 
   bool startSearching(std_srvs::Empty::Request &rq, std_srvs::Empty::Response &rp);
+  bool stopSearching(std_srvs::Empty::Request &rq, std_srvs::Empty::Response &rp);
+
   void imageRectCallback(const sensor_msgs::Image::ConstPtr msg);
   void decodeImage(const cv_bridge::CvImagePtr img);
-  void timerCallback(const ros::TimerEvent &e);
-  void resetTimer();
+  void calcRate(const ros::TimerEvent &time);
 public:
   QrDecoder(const ros::NodeHandle &nh, const ros::NodeHandle &pnh);
 };
