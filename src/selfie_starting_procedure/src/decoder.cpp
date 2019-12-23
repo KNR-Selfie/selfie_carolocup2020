@@ -11,6 +11,8 @@ QrDecoder::QrDecoder(const ros::NodeHandle &nh, const ros::NodeHandle &pnh): nh_
   pnh_.param<float>("min_detect_rate", min_detect_rate_, 0.4);
   pnh_.param("visualize", visualize_, false);
 
+  ROS_INFO("min_detect_rate: %.2f", min_detect_rate_);
+
   start_serv_ = nh_.advertiseService("startQrSearch", &QrDecoder::startSearching, this);
   stop_serv_ = nh_.advertiseService("stopQrSearch", &QrDecoder::stopSearching, this);
 

@@ -108,3 +108,7 @@ starting_procedure:
   {
     starting_speed: 2.0
   }
+qr_decoder: 
+  {
+    min_detect_rate: 0.3
+  }
