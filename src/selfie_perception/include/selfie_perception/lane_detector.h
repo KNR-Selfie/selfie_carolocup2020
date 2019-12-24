@@ -118,7 +118,7 @@ class LaneDetector
   void adjust(RoadLine &good_road_line, RoadLine &short_road_line, bool left_offset);
   void calcRoadWidth();
   void generatePoints();
-  std::vector<cv::Point2f> createOffsetLine(const std::vector<float> &coeff, const int &degree, float offset, float height = 0.2);
+  std::vector<cv::Point2f> createOffsetLine(const std::vector<float> &coeff, const int &degree, float offset);
   void detectStartAndIntersectionLine();
   void recognizeLinesNew();
   void LCRLinesDraw(cv::Mat &visualization_frame);

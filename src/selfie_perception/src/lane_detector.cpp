@@ -116,12 +116,25 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
   if (!init_imageCallback_)
   {
     dynamicMask(binary_frame_, masked_frame_);
-    if (debug_mode_)
-      cv::bitwise_and(homography_frame_, dynamic_mask_, homography_frame_);
-
+      
     // remove ROI inside left and right lane
     ROILaneRight(masked_frame_, masked_frame_);
     ROILaneLeft(masked_frame_, masked_frame_);
+    if (debug_mode_)
+    {
+      cv::Mat copy = homography_frame_.clone();
+      cv::bitwise_and(homography_frame_, dynamic_mask_, copy);
+      //bitwise_not(dynamic_mask_, dynamic_mask_);
+      cv::addWeighted(copy, 0.7, homography_frame_, 0.3, 0, homography_frame_);
+
+      copy = homography_frame_.clone();
+      cv::bitwise_and(homography_frame_, left_lane_ROI_, copy);
+      cv::addWeighted(copy, 0.7, homography_frame_, 0.3, 0, homography_frame_);
+
+      copy = homography_frame_.clone();
+      cv::bitwise_and(homography_frame_, right_lane_ROI_, copy);
+      cv::addWeighted(copy, 0.7, homography_frame_, 0.3, 0, homography_frame_);
+    }
     detectStartAndIntersectionLine();
 
     cv::bitwise_not(dynamic_mask_, dynamic_mask_);
@@ -766,6 +779,8 @@ void LaneDetector::dynamicMask(cv::Mat &input_frame, cv::Mat &output_frame)
 
   std::vector<cv::Point2f> left_line_offset = createOffsetLine(left_line_.getCoeff(), left_line_.getDegree(), offset_left);
   std::vector<cv::Point2f> right_line_offset = createOffsetLine(right_line_.getCoeff(), right_line_.getDegree(), offset_right);
+  left_line_offset.push_back(cv::Point2f(TOPVIEW_MAX_X, left_line_offset[left_line_offset.size() - 1].y));
+  right_line_offset.push_back(cv::Point2f(TOPVIEW_MAX_X, right_line_offset[right_line_offset.size() - 1].y));
   cv::transform(left_line_offset, left_line_offset, world2topview_.rowRange(0, 2));
   cv::transform(right_line_offset, right_line_offset, world2topview_.rowRange(0, 2));
 
@@ -803,11 +818,9 @@ void LaneDetector::ROILaneRight(cv::Mat &input_frame, cv::Mat &output_frame)
     if (!center_line_.isExist() || center_line_.isShort())
       offset_center = -0.13;
   }
-  
-  
 
-  std::vector<cv::Point2f> center_line_offset = createOffsetLine(center_line_.getCoeff(), center_line_.getDegree(), offset_center, -0.2);
-  std::vector<cv::Point2f> right_line_offset = createOffsetLine(right_line_.getCoeff(), right_line_.getDegree(), offset_right, -0.2);
+  std::vector<cv::Point2f> center_line_offset = createOffsetLine(center_line_.getCoeff(), center_line_.getDegree(), offset_center);
+  std::vector<cv::Point2f> right_line_offset = createOffsetLine(right_line_.getCoeff(), right_line_.getDegree(), offset_right);
   cv::transform(center_line_offset, center_line_offset, world2topview_.rowRange(0, 2));
   cv::transform(right_line_offset, right_line_offset, world2topview_.rowRange(0, 2));
 
@@ -828,6 +841,9 @@ void LaneDetector::ROILaneRight(cv::Mat &input_frame, cv::Mat &output_frame)
 
   right_lane_frame_ = input_frame.clone();
   cv::bitwise_and(input_frame, right_lane_ROI_, right_lane_frame_);
+
+  cv::Mat top_roi = right_lane_ROI_(cv::Rect(0, 0, TOPVIEW_COLS, TOPVIEW_ROWS / 4));
+  top_roi.setTo(cv::Scalar(0, 0, 0));
 
   cv::bitwise_not(right_lane_ROI_, right_lane_ROI_);
   cv::bitwise_and(input_frame, right_lane_ROI_, output_frame);
@@ -853,8 +869,8 @@ void LaneDetector::ROILaneLeft(cv::Mat &input_frame, cv::Mat &output_frame)
       offset_center = 0.11;
   }
   
-  std::vector<cv::Point2f> center_line_offset = createOffsetLine(center_line_.getCoeff(), center_line_.getDegree(), offset_center, -0.2);
-  std::vector<cv::Point2f> left_line_offset = createOffsetLine(left_line_.getCoeff(), left_line_.getDegree(), offset_left, -0.2);
+  std::vector<cv::Point2f> center_line_offset = createOffsetLine(center_line_.getCoeff(), center_line_.getDegree(), offset_center);
+  std::vector<cv::Point2f> left_line_offset = createOffsetLine(left_line_.getCoeff(), left_line_.getDegree(), offset_left);
   cv::transform(center_line_offset, center_line_offset, world2topview_.rowRange(0, 2));
   cv::transform(left_line_offset, left_line_offset, world2topview_.rowRange(0, 2));
 
@@ -875,6 +891,9 @@ void LaneDetector::ROILaneLeft(cv::Mat &input_frame, cv::Mat &output_frame)
 
   left_lane_frame_ = input_frame.clone();
   cv::bitwise_and(input_frame, left_lane_ROI_, left_lane_frame_);
+
+  cv::Mat top_roi = left_lane_ROI_(cv::Rect(0, 0, TOPVIEW_COLS, TOPVIEW_ROWS / 4));
+  top_roi.setTo(cv::Scalar(0, 0, 0));
 
   cv::bitwise_not(left_lane_ROI_, left_lane_ROI_);
   cv::bitwise_and(input_frame, left_lane_ROI_, output_frame);
@@ -1773,11 +1792,11 @@ void LaneDetector::calcRoadWidth()
   }
 }
 
-std::vector<cv::Point2f> LaneDetector::createOffsetLine(const std::vector<float> &coeff, const int &degree, float offset, float height)
+std::vector<cv::Point2f> LaneDetector::createOffsetLine(const std::vector<float> &coeff, const int &degree, float offset)
 {
   std::vector<cv::Point2f> new_line;
   cv::Point2f p;
-  for (float i = TOPVIEW_MIN_X - 0.2; i < TOPVIEW_MAX_X + height; i += 0.05)
+  for (float i = TOPVIEW_MIN_X - 0.11; i < TOPVIEW_MAX_X + 0.11; i += 0.1)
   {
     float deriative;
     switch (degree)
@@ -1797,6 +1816,8 @@ std::vector<cv::Point2f> LaneDetector::createOffsetLine(const std::vector<float>
     p.x = i - offset * sin(angle);
     p.y = getPolyY(coeff, i) + offset * cos(angle);
     new_line.push_back(p);
+    if (p.y > TOPVIEW_MAX_Y || p.y < TOPVIEW_MIN_Y)
+      break;
   }
   return new_line;
 }
