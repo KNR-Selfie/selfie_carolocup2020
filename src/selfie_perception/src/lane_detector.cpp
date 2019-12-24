@@ -187,9 +187,24 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
     //recognizeLines();
     //generatePoints();
 
-    right_line_.addBottomPoint();
-    center_line_.addBottomPoint();
-    left_line_.addBottomPoint();
+    int force_bottom_point = false;
+    if (right_line_.isExist() && center_line_.isExist() && left_line_.isExist())
+    {
+      ROS_INFO("limit: %f", (TOPVIEW_MAX_X - TOPVIEW_MIN_X) / 2 + TOPVIEW_MIN_X);
+      ROS_INFO("right bottom: %f", right_line_.getPoints()[0].x);
+      ROS_INFO("center bottom: %f", center_line_.getPoints()[0].x);
+      ROS_INFO("left bottom: %f", left_line_.getPoints()[0].x);
+      if (right_line_.getPoints()[0].x > (TOPVIEW_MAX_X - TOPVIEW_MIN_X) / 2 + TOPVIEW_MIN_X &&
+          center_line_.getPoints()[0].x > (TOPVIEW_MAX_X - TOPVIEW_MIN_X) / 2 + TOPVIEW_MIN_X &&
+          left_line_.getPoints()[0].x > (TOPVIEW_MAX_X - TOPVIEW_MIN_X) / 2 + TOPVIEW_MIN_X)
+      {
+        force_bottom_point = true;
+        ROS_INFO("force");
+      }
+    }
+    right_line_.addBottomPoint(force_bottom_point);
+    center_line_.addBottomPoint(force_bottom_point);
+    left_line_.addBottomPoint(force_bottom_point);
 
     if (!center_line_.isShort())
       calcRoadWidth();

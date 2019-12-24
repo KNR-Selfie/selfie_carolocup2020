@@ -15,7 +15,7 @@ public:
   void aprox();
   int pointsSize();
   void calcParams();
-  void addBottomPoint();
+  void addBottomPoint(bool force = false);
   void generateForDensity();
   void reduceTopPoints(float ratio);
   void reset();

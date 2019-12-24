@@ -110,16 +110,23 @@ void RoadLine::calcParams()
     is_short_ = true;
 }
 
-void RoadLine::addBottomPoint()
+void RoadLine::addBottomPoint(bool force)
 {
   if (!exist_)
     return;
 
-  if (points_[0].x < ((TOPVIEW_MIN_X + TOPVIEW_MAX_X) / 3))
+  if (force || points_[0].x < ((TOPVIEW_MIN_X + TOPVIEW_MAX_X) / 3))
   {
     cv::Point2f p;
     p.x = TOPVIEW_MIN_X;
-    p.y = points_[0].y;
+    if (force)
+    {
+      p.y = points_[pointsSize()].y;
+    }
+    else
+    {
+      p.y = points_[0].y;
+    }
     points_.insert(points_.begin(), p);
   }
 }
