@@ -1,0 +1,12 @@
+<launch>
+  <node pkg="selfie_starting_procedure" type="starting_procedure" name="starting_procedure" output="screen">
+    <param name="use_qr" type="bool" value="true"/>
+    <param name="use_scan" type="bool" value="false"/>
+  </node>
+  <!--node pkg="selfie_starting_procedure" type="qr_decoder" name="qr_decoder" output="screen">
+    <param name="qr_invisible_time_thresh" type="double" value="2.0"/>
+  </node-->
+  <node pkg="selfie_starting_procedure" type="gate_scanner" name="gate_scanner" output="screen">
+    <param name="no_obstacle_time_thresh" type="double" value="2.0"/>
+  </node>
+</launch>

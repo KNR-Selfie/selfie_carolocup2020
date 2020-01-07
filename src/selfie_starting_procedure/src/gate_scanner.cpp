@@ -2,15 +2,16 @@
  * This code is licensed under BSD license (see LICENSE for details)
  **/
 #include <ros/ros.h>
-#include <selfie_starting_procedure/starting_procedure_action.h>
+#include "selfie_starting_procedure/gate_scanner.h"
 
-int main(int argc, char **argv)
+
+
+int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "starting_procedure");
+  ros::init(argc, argv, "qr_decoder");
   ros::NodeHandle nh;
   ros::NodeHandle pnh("~");
-  StartingProcedureAction s_p(nh, pnh);
-
+  GateScanner gate_scanner(nh, pnh);
   ros::spin();
   return 0;
 }
