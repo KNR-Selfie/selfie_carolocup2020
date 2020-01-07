@@ -16,6 +16,8 @@
 #include <std_msgs/Bool.h>
 #include <std_srvs/Empty.h>
 #include <visualization_msgs/Marker.h>
+#include <dynamic_reconfigure/server.h>
+#include <selfie_avoiding_obstacles/LaneControllerConfig.h>
 
 #include <ros/console.h>
 
@@ -96,6 +98,11 @@ private:
   bool received_road_markings_;
   bool return_distance_calculated_;
   status status_;
+
+  dynamic_reconfigure::Server<selfie_avoiding_obstacles::LaneControllerConfig> dr_server_;
+  dynamic_reconfigure::Server<selfie_avoiding_obstacles::LaneControllerConfig>::CallbackType dr_server_CB_;
+  void reconfigureCB(selfie_avoiding_obstacles::LaneControllerConfig& config, uint32_t level);
+
 
   void filter_boxes(const selfie_msgs::PolygonArray &);           // filters boxes and saves in filtered_boxes_
   void road_markings_callback(const selfie_msgs::RoadMarkings &); // checks if boxes from filtered_boxes_ are on right lane

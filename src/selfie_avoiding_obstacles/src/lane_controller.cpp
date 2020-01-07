@@ -11,7 +11,7 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "lane_controller");
   ros::NodeHandle nh;
   ros::NodeHandle pnh("~");
-  auto detector = Road_obstacle_detector(nh, pnh);
+  Road_obstacle_detector road_obst_detector(nh, pnh);
 
   ros::spin();
 }
