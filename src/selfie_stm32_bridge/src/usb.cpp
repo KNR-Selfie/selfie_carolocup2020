@@ -56,6 +56,11 @@ int USB_STM::init(int speed)
 
   return 1;
 }
+void USB_STM::send_cmd_to_STM(uint8_t cmd)
+{ 
+  unsigned char cmd_data[3] = {frame_startbyte, cmd, frame_endbyte};
+  write(fd, cmd_data, 3);
+}
 
 bool USB_STM::read_from_STM()
 {
@@ -64,9 +69,8 @@ bool USB_STM::read_from_STM()
     //cast read_buffer to frame
     read_frame = (UsbReadFrame_s *)read_buffer;
     
-    if (read_state == USB_RECEIVE_SIZE && read_frame->startbyte == frame_startbyte
-      && read_frame->code == frame_code && read_frame->length == USB_RECEIVE_SIZE - 4
-      && read_frame->endByte == frame_endbyte)
+    if (read_state == USB_RECEIVE_SIZE && read_frame->start_code == frame_startbyte && read_frame->length == USB_RECEIVE_SIZE - 4
+      && read_frame->end_code == frame_endbyte)
     {   
         return true; //correct data
     }
@@ -76,22 +80,19 @@ bool USB_STM::read_from_STM()
     }
 }
 
-void USB_STM::send_to_STM(uint32_t timestamp_ms, Sub_messages to_send)
+void USB_STM::send_frame_to_STM(uint32_t timestamp_ms, Sub_messages to_send)
 {
     send_frame = (UsbSendFrame_s *)send_buffer;
-    send_frame->startbyte = frame_startbyte;
-    send_frame->code = frame_code;
-    send_frame->length = USB_SEND_SIZE - 4;
+    send_frame->start_code = frame_startbyte;
+    send_frame->length = USB_SEND_SIZE;
 
-    send_frame->timestamp_ms = timestamp_ms;
-    send_frame->steering_angle = (int16_t)(to_send.ackerman.steering_angle * 10000);
-    send_frame->steering_angle_velocity = (int16_t)(to_send.ackerman.steering_angle_velocity * 10000);
+    send_frame->timecode = timestamp_ms;
+    send_frame->steering_fi_front = (int16_t)(to_send.ackerman.steering_angle_front * 10000);
+    send_frame->steering_fi_back = (int16_t)(to_send.ackerman.steering_angle_back * 10000);
     send_frame->speed = (int16_t)(to_send.ackerman.speed * 1000);
     send_frame->acceleration = (int16_t)(to_send.ackerman.acceleration * 1000);
     send_frame->jerk = (int16_t)(to_send.ackerman.jerk * 1000);
-    send_frame->left_indicator = (uint8_t)(to_send.indicator.left);
-    send_frame->right_indicator = (uint8_t)(to_send.indicator.right);
-    send_frame->endbyte = frame_endbyte;
+    send_frame->end_code = frame_endbyte;
 
     write(fd, &send_buffer, USB_SEND_SIZE);
 }
@@ -122,35 +123,38 @@ void USB_STM::fill_publishers(Pub_messages &pub_data)
     pub_data.dist_msg.data = (float)read_frame->distance / 1000;
 
     //buttons
-    pub_data.button1_msg.data = read_frame->start_button1;
-    pub_data.button2_msg.data = read_frame->start_button2;
+    uint8_t button1_state = (read_frame->buttons >> 0) & 1U;
+    uint8_t button2_state = (read_frame->buttons >> 2) & 1U;
+
+    if(button1_state)
+      pub_data.button_1 = true;
+    else 
+      pub_data.button_1 = false;
+    if(button2_state)
+      pub_data.button_2 = true;
+    else
+      pub_data.button_2 = false;
 
     //reset states
-    pub_data.reset_vision_msg.data = read_frame->reset_vision;
-    pub_data.switch_state_msg.data = read_frame->switch_state;
+    pub_data.futaba_state.data = read_frame->futaba_state;
 
     //unused
     // read_frame->timestamp
     // read_frame->yaw
-
-
 }
 USB_STM::~USB_STM()
 {
     send_frame = (UsbSendFrame_s *)send_buffer;
-    send_frame->startbyte = frame_startbyte;
-    send_frame->code = frame_code;
+    send_frame->start_code = frame_startbyte;
     send_frame->length = USB_SEND_SIZE - 4;
 
-    send_frame->timestamp_ms = 0;
-    send_frame->steering_angle = 0;
-    send_frame->steering_angle_velocity = 0;
+    send_frame->timecode = 0;
+    send_frame->steering_fi_back = 0;
+    send_frame->steering_fi_front = 0;
     send_frame->speed = 0;
     send_frame->acceleration = 0;
     send_frame->jerk = 0;
-    send_frame->left_indicator = 0;
-    send_frame->right_indicator = 0;
-    send_frame->endbyte = frame_endbyte;
+    send_frame->end_code = frame_endbyte;
 
     write(fd, &send_buffer, USB_SEND_SIZE);
 }
