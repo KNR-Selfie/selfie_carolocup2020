@@ -26,24 +26,28 @@ IntersectionServer::IntersectionServer(const ros::NodeHandle &nh, const ros::Nod
   point_max_x_ = point_min_x_ + road_width_;
   ROS_INFO("Intersection server: active");
 
+  intersection_subscriber_ = nh_.subscribe("/intersection_distance", 1, &IntersectionServer::intersection_callback, this);
   if (visualization_)
   {
     visualize_intersection_ = nh_.advertise<visualization_msgs::Marker>("/intersection_visualization", 10);
-    Box(point_min_x_, point_max_x_, point_min_y_, point_max_y_)
-        .visualize(visualize_intersection_, "area_of_interest", 0.9, 0.9, 0.1);
   }
 }
 
 void IntersectionServer::init()
 {
   goal_ = *(intersectionServer_.acceptNewGoal());
-  intersection_subscriber_ = nh_.subscribe("/intersection_distance", 1, &IntersectionServer::intersection_callback, this);
   obstacles_sub_ = nh_.subscribe("/obstacles", 1, &IntersectionServer::manager, this);
   speed_publisher_ = nh_.advertise<std_msgs::Float64>("/max_speed", 2);
   speed_publisher_.publish(speed_);
   publishFeedback(STOPPED_ON_INTERSECTION);
   time_started_ = false;
   ROS_INFO("Initialized");
+
+  if (visualization_)
+  {
+    Box(point_min_x_, point_max_x_, point_min_y_, point_max_y_)
+        .visualize(visualize_intersection_, "area_of_interest", 0.9, 0.9, 0.1);
+  }
 }
 
 void IntersectionServer::manager(const selfie_msgs::PolygonArray &boxes)
@@ -102,7 +106,13 @@ void IntersectionServer::intersection_callback(const std_msgs::Float32 &msg)
 {
   point_min_x_ = msg.data;
   point_max_x_ = point_min_x_ + road_width_;
-  ROS_INFO_THROTTLE(1, "Distance to intersection: %lf", point_min_x_);
+  if (intersectionServer_.isActive())
+    ROS_INFO_THROTTLE(1, "Distance to intersection: %lf", point_min_x_);
+  if (visualization_ && intersectionServer_.isActive())
+  {
+    Box(point_min_x_, point_max_x_, point_min_y_, point_max_y_)
+        .visualize(visualize_intersection_, "area_of_interest", 0.9, 0.9, 0.1);
+  }
 }
 
 void IntersectionServer::send_goal()
