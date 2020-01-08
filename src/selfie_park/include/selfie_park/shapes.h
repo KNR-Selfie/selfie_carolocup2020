@@ -221,7 +221,8 @@ public:
   }
   void print_lines() {}
 
-  void visualize(const ros::Publisher &pub, const std::string &name, float red = 0.4, float green = 0.3, float blue = 0)
+  void visualize(const ros::Publisher &pub, const std::string &name, float red = 0.4, float green = 0.3, float blue = 0,
+                 int lifetime = 2)
   {
     visualization_msgs::Marker marker;
 
@@ -231,7 +232,10 @@ public:
     marker.type = visualization_msgs::Marker::LINE_LIST;
     marker.action = visualization_msgs::Marker::ADD;
     marker.id = 0;
-    marker.lifetime = ros::Duration(2);
+    if (lifetime != 0)
+      marker.lifetime = ros::Duration(lifetime);
+    else
+      marker.lifetime = ros::Duration();
 
     marker.color.r = red;
     marker.color.g = green;
