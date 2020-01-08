@@ -95,6 +95,16 @@ public:
     left_vertical_line = other.left_vertical_line;
     bottom_horizontal_line = other.bottom_horizontal_line;
   }
+  Box(const float x_min, const float x_max, const float y_min, const float y_max)
+  {
+    bottom_left = Point(x_min, y_max);
+    bottom_right = Point(x_min, y_min);
+    top_left = Point(x_max, y_max);
+    top_right = Point(x_max, y_min);
+
+    bottom_horizontal_line.a = 0;
+    bottom_horizontal_line.b = x_min;
+  }
   // this constructor finds and assign correct points to corners of our box
   Box(geometry_msgs::Polygon right_side_poly)
   {
