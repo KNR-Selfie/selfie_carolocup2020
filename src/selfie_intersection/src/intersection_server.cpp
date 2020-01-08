@@ -9,20 +9,21 @@ IntersectionServer::IntersectionServer(const ros::NodeHandle &nh, const ros::Nod
     : nh_(nh)
     , pnh_(pnh)
     , intersectionServer_(nh_, "intersection", false)
-    , point_max_x_(0.95)
+    , point_max_x_(0.95) // Width of road
 {
   intersectionServer_.registerGoalCallback(boost::bind(&IntersectionServer::init, this));
   intersectionServer_.registerPreemptCallback(boost::bind(&IntersectionServer::preemptCb, this));
   intersectionServer_.start();
   speed_.data = 0;
-  pnh_.param<float>("distance_to_intersection", max_distance_to_intersection_, 0.25);
+  pnh_.param<float>("distance_to_intersection", max_distance_to_intersection_, 0.7);
   pnh_.param<float>("road_width", road_width_, 0.95);
-  pnh_.param<float>("point_min_y", point_min_y_, -3);
-  pnh_.param<float>("point_max_y", point_max_y_, 3);
+  pnh_.param<float>("point_min_y", point_min_y_, -2);
+  pnh_.param<float>("point_max_y", point_max_y_, 2);
   pnh_.param<float>("stop_time", stop_time_, 3);
   pnh_.param<float>("speed_default", speed_default_, 0.3);
   pnh_.param<bool>("visualization", visualization_, true);
   point_min_x_ = max_distance_to_intersection_;
+  point_max_x_ = point_min_x_ + road_width_;
   ROS_INFO("Intersection server: active");
 
   if (visualization_)
