@@ -78,6 +78,15 @@ park_server:
     odom_to_laser: 0.0,
     parking_speed: 0.4
   }
+intersection_server: 
+  {
+    distance_to_intersection: 0.7,
+    road_width: 0.95,
+    point_min_y: -1.5,
+    point_max_y: 1.5,
+    stop_time: 3,
+    speed_default: 0.3,
+  }
 pid_controller: 
   {
     Kd: 0.01,
