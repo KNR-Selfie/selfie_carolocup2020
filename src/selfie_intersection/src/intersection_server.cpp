@@ -30,7 +30,7 @@ IntersectionServer::IntersectionServer(const ros::NodeHandle &nh, const ros::Nod
   {
     visualize_intersection_ = nh_.advertise<visualization_msgs::Marker>("/intersection_visualization", 10);
     Box(point_min_x_, point_max_x_, point_min_y_, point_max_y_)
-        .visualize(filtered_boxes_, visualize_intersection_, "area_of_interest", 0.9, 0.9, 0.1);
+        .visualize(visualize_intersection_, "area_of_interest", 0.9, 0.9, 0.1);
   }
 }
 
@@ -50,7 +50,7 @@ void IntersectionServer::manager(const selfie_msgs::PolygonArray &boxes)
 {
   if (!intersectionServer_.isActive())
   {
-    ROS_INFO("Search server not active");
+    ROS_INFO("Intersection Server server not active");
     return;
   }
   filter_boxes(boxes);
