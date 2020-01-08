@@ -44,20 +44,19 @@ rosrun selfie_intersection intersection_server_node
 
 ###
 
--  `point_min_x`,`point_min_y`,`point_max_x`,`point_max_x` (*float*)
 
-   - describing area of interest
 -  `distance_to_intersection` (*float*)
 
    - how far from intersection car should stop
 
 -  `road_width` (*float*)
--  `stop_time` (*float*)
 
+-  `point_min_y`,`point_max_y`(*float*)
+   - describing width of area of interest (height depends on `distance_to_intersection` and `road_width`)
+-  `stop_time` (*float*)
    - how long car should stop on intersection (even if there are no other cars)
 -  `speed_default` (*float*)
 
    - default speed of approaching to intersection
 -  `visualization` (*bool*, default: false)
-
    - Whether or not visualization topics are active
