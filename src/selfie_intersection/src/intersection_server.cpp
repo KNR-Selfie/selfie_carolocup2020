@@ -119,9 +119,10 @@ void IntersectionServer::send_goal()
 {
   selfie_msgs::intersectionResult result;
   result.done = true;
+  point_min_x_ = max_distance_to_intersection_;
+  point_max_x_ = point_min_x_ + road_width_;
 
   obstacles_sub_.shutdown();
-  intersection_subscriber_.shutdown();
   intersectionServer_.setSucceeded();
 }
 
