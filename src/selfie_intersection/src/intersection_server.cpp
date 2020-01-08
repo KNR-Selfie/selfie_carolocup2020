@@ -111,7 +111,7 @@ void IntersectionServer::intersection_callback(const std_msgs::Float32 &msg)
   if (visualization_ && intersectionServer_.isActive())
   {
     Box(point_min_x_, point_max_x_, point_min_y_, point_max_y_)
-        .visualize(visualize_intersection_, "area_of_interest", 0.9, 0.9, 0.1);
+        .visualize(visualize_intersection_, "area_of_interest", 0.9, 0.9, 0.1, 0);
   }
 }
 
