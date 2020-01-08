@@ -50,7 +50,7 @@ void IntersectionServer::manager(const selfie_msgs::PolygonArray &boxes)
 {
   if (!intersectionServer_.isActive())
   {
-    ROS_INFO("Intersection Server server not active");
+    ROS_INFO_THROTTLE(2, "Intersection Server server not active");
     return;
   }
   filter_boxes(boxes);
