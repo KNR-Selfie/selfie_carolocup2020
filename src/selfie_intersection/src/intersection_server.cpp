@@ -14,7 +14,6 @@ IntersectionServer::IntersectionServer(const ros::NodeHandle &nh, const ros::Nod
   intersectionServer_.registerGoalCallback(boost::bind(&IntersectionServer::init, this));
   intersectionServer_.registerPreemptCallback(boost::bind(&IntersectionServer::preemptCb, this));
   intersectionServer_.start();
-  speed_.data = 0;
   pnh_.param<float>("distance_to_intersection", max_distance_to_intersection_, 0.7);
   pnh_.param<float>("road_width", road_width_, 0.95);
   pnh_.param<float>("point_min_y", point_min_y_, -2);
@@ -24,9 +23,9 @@ IntersectionServer::IntersectionServer(const ros::NodeHandle &nh, const ros::Nod
   pnh_.param<bool>("visualization", visualization_, true);
   point_min_x_ = max_distance_to_intersection_;
   point_max_x_ = point_min_x_ + road_width_;
-  ROS_INFO("Intersection server: active");
+  speed_.data = speed_default_;
+  ROS_INFO("Intersection server initialized");
 
-  intersection_subscriber_ = nh_.subscribe("/intersection_distance", 1, &IntersectionServer::intersection_callback, this);
   if (visualization_)
   {
     visualize_intersection_ = nh_.advertise<visualization_msgs::Marker>("/intersection_visualization", 10);
@@ -38,10 +37,11 @@ void IntersectionServer::init()
   goal_ = *(intersectionServer_.acceptNewGoal());
   obstacles_sub_ = nh_.subscribe("/obstacles", 1, &IntersectionServer::manager, this);
   speed_publisher_ = nh_.advertise<std_msgs::Float64>("/max_speed", 2);
+  intersection_subscriber_ = nh_.subscribe("/intersection_distance", 1, &IntersectionServer::intersection_callback, this);
   speed_publisher_.publish(speed_);
   publishFeedback(STOPPED_ON_INTERSECTION);
   time_started_ = false;
-  ROS_INFO("Initialized");
+  ROS_INFO("Goal received - node activated");
 
   if (visualization_)
   {
@@ -75,7 +75,11 @@ void IntersectionServer::manager(const selfie_msgs::PolygonArray &boxes)
     {
       ROS_INFO_THROTTLE(1.5, "Another car on the road");
       if (visualization_)
+      {
         Box().visualizeList(filtered_boxes_, visualize_intersection_, "obstacles_on_road", 0.9, 0.9, 0.9);
+        Box(point_min_x_, point_max_x_, point_min_y_, point_max_y_)
+            .visualize(visualize_intersection_, "area_of_interest", 0.9, 0.9, 0.1, 3);
+      }
       if (action_status_.action_status != FOUND_OBSTACLES)
       {
         speed_.data = 0;
@@ -108,11 +112,6 @@ void IntersectionServer::intersection_callback(const std_msgs::Float32 &msg)
   point_max_x_ = point_min_x_ + road_width_;
   if (intersectionServer_.isActive())
     ROS_INFO_THROTTLE(1, "Distance to intersection: %lf", point_min_x_);
-  if (visualization_ && intersectionServer_.isActive())
-  {
-    Box(point_min_x_, point_max_x_, point_min_y_, point_max_y_)
-        .visualize(visualize_intersection_, "area_of_interest", 0.9, 0.9, 0.1, 0);
-  }
 }
 
 void IntersectionServer::send_goal()
@@ -122,6 +121,7 @@ void IntersectionServer::send_goal()
   point_min_x_ = max_distance_to_intersection_;
   point_max_x_ = point_min_x_ + road_width_;
 
+  intersection_subscriber_.shutdown();
   obstacles_sub_.shutdown();
   intersectionServer_.setSucceeded();
 }
