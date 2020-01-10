@@ -15,6 +15,8 @@
 #include <selfie_msgs/PolygonArray.h>
 #include <tf/transform_listener.h>
 #include <tf/transform_datatypes.h>
+#include <dynamic_reconfigure/server.h>
+#include <selfie_perception/DetectObstaclesConfig.h>
 
 struct Point
 {
@@ -48,6 +50,11 @@ private:
     tf::TransformListener transformListener_;
 
     tf::StampedTransform transform_;
+
+    dynamic_reconfigure::Server<selfie_perception::DetectObstaclesConfig> dr_server_;
+    dynamic_reconfigure::Server<selfie_perception::DetectObstaclesConfig>::CallbackType dr_server_CB_;
+    void reconfigureCB(selfie_perception::DetectObstaclesConfig& config, uint32_t level);
+
     std::vector <Line> line_array_;
     std::vector <std::vector <Point> > segments_;
     selfie_msgs::PolygonArray obstacle_array_;

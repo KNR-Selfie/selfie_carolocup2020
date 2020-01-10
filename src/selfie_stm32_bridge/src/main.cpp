@@ -3,6 +3,7 @@
 #include "std_msgs/Float32.h"
 #include "std_msgs/UInt8.h"
 #include "std_msgs/Bool.h"
+#include "std_msgs/Empty.h"
 #include "ackermann_msgs/AckermannDriveStamped.h"
 #include <selfie_stm32_bridge/usb.hpp>
 #include <selfie_stm32_bridge/bridge.h>
@@ -26,8 +27,8 @@ int main(int argc, char **argv)
     ros::Publisher imu_publisher = n.advertise<sensor_msgs::Imu>("imu", 100);
     ros::Publisher velo_publisher = n.advertise<std_msgs::Float32>("speed", 50);
     ros::Publisher dis_publisher = n.advertise<std_msgs::Float32>("distance", 50);
-    ros::Publisher button1_publisher = n.advertise<std_msgs::Bool>("start_button1", 50);
-    ros::Publisher button2_publisher = n.advertise<std_msgs::Bool>("start_button2", 50);
+    ros::Publisher button1_publisher = n.advertise<std_msgs::Empty>("start_button1", 50);
+    ros::Publisher button2_publisher = n.advertise<std_msgs::Empty>("start_button2", 50);
     ros::Publisher reset_vision_publisher = n.advertise<std_msgs::Bool>("reset_vision", 50);
     ros::Publisher switch_state_publisher = n.advertise<std_msgs::UInt8>("switch_state", 50);
 
@@ -51,8 +52,8 @@ int main(int argc, char **argv)
         imu_publisher.publish(pub_messages.imu_msg);
         velo_publisher.publish(pub_messages.velo_msg);
         dis_publisher.publish(pub_messages.dist_msg);
-        button1_publisher.publish(pub_messages.button1_msg);
-        button2_publisher.publish(pub_messages.button2_msg);
+        if(pub_messages.button1_msg.data) button1_publisher.publish(std_msgs::Empty());
+        if(pub_messages.button2_msg.data) button2_publisher.publish(std_msgs::Empty());
         reset_vision_publisher.publish(pub_messages.reset_vision_msg);
         switch_state_publisher.publish(pub_messages.switch_state_msg);
 

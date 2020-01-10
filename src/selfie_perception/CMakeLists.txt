@@ -19,6 +19,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   roslint
   tf
+  dynamic_reconfigure
 )
 
 find_package(OpenCV 3.3.1 REQUIRED)
@@ -98,10 +99,10 @@ find_package(OpenCV 3.3.1 REQUIRED)
 ##     and list every .cfg file to be processed
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
-# generate_dynamic_reconfigure_options(
-#   cfg/DynReconf1.cfg
-#   cfg/DynReconf2.cfg
-# )
+ generate_dynamic_reconfigure_options(
+
+    cfg/detect_obstacles.cfg
+ )
 
 ###################################
 ## catkin specific configuration ##
@@ -226,6 +227,6 @@ add_dependencies(detect_markings ${catkin_EXPORTED_TARGETS})
 
 add_executable(detect_obstacles src/detect_obstacles.cpp src/obstacles_generator.cpp)
 target_link_libraries(detect_obstacles ${catkin_LIBRARIES})
-add_dependencies(detect_obstacles ${catkin_EXPORTED_TARGETS})
+add_dependencies(detect_obstacles ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencfg)
 
 roslint_cpp(src/lane_detector.cpp include/selfie_perception/lane_detector.h)

@@ -1,0 +1,6 @@
+<launch>
+  <node pkg="selfie_stm32_bridge" type="selfie_stm32_bridge" name="selfie_stm32_bridge"/>
+  <include file="$(find selfie_launch)/subsystems/basler.launch"/>
+  <node pkg="urg_node" type="urg_node" name="lidar"/>
+</launch>
+

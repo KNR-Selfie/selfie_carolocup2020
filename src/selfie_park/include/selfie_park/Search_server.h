@@ -15,10 +15,12 @@
 #include <std_msgs/Float64.h>
 #include <std_msgs/Int16.h>
 #include <visualization_msgs/Marker.h>
+#include <dynamic_reconfigure/server.h>
 
 #include <actionlib/server/simple_action_server.h>
 #include <selfie_msgs/searchAction.h>
 #include <selfie_scheduler/scheduler_enums.h>
+#include <selfie_park/DetectParkingSpotConfig.h>
 
 #include <ros/console.h>
 
@@ -65,6 +67,10 @@ private:
   selfie_msgs::searchFeedback action_status;
   void publishFeedback(unsigned int);
   selfie_msgs::searchResult result;
+
+  dynamic_reconfigure::Server<selfie_park::DetectParkingSpotConfig> dr_server_;
+  dynamic_reconfigure::Server<selfie_park::DetectParkingSpotConfig>::CallbackType dr_server_CB_;
+  void reconfigureCB(selfie_park::DetectParkingSpotConfig& config, uint32_t level);
 
   // area of interest (used unit- meter)
   float point_min_x;

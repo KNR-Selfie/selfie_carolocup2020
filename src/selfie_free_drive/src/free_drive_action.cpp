@@ -13,12 +13,14 @@ FreeDriveAction::FreeDriveAction(const ros::NodeHandle &nh, const ros::NodeHandl
   starting_line_distance_to_end_(0.45),
   intersection_distance_to_end_(0.8),
   event_detected_(false),
-  max_speed_(2)
+  max_speed_(2),
+  dr_server_CB_(boost::bind(&FreeDriveAction::reconfigureCB, this, _1, _2))
 {
   as_.registerGoalCallback(boost::bind(&FreeDriveAction::registerGoal, this));
   as_.registerPreemptCallback(boost::bind(&FreeDriveAction::preemptCB, this));
   as_.start();
   max_speed_pub_ = nh_.advertise<std_msgs::Float64>("max_speed", 1);
+  dr_server_.setCallback(dr_server_CB_);
   pnh_.getParam("max_speed", max_speed_);
   pnh_.getParam("starting_line_distance_to_end", starting_line_distance_to_end_);
   pnh_.getParam("intersection_distance_to_end", intersection_distance_to_end_);
@@ -152,4 +154,21 @@ void FreeDriveAction::preemptCB()
   starting_line_sub_.shutdown();
   intersection_sub_.shutdown();
   as_.setAborted();
+}
+void FreeDriveAction::reconfigureCB(selfie_free_drive::FreeDriveConfig& config, uint32_t level){
+    if(intersection_distance_to_end_ != config.intersection_distance_to_end)
+    {
+        intersection_distance_to_end_ = config.intersection_distance_to_end;
+        ROS_INFO("Intersection distance to end new value: %f",intersection_distance_to_end_);
+    }
+    if(intersection_distance_to_end_ != config.max_speed)
+    {
+        max_speed_ = config.max_speed;
+        ROS_INFO("Max speed new value: %f",max_speed_);
+    }
+    if(starting_line_distance_to_end_ != config.starting_line_distance_to_end)
+    {
+        starting_line_distance_to_end_ = config.starting_line_distance_to_end;
+        ROS_INFO("Starting line distance to end to end new value %f",starting_line_distance_to_end_);
+    }
 }

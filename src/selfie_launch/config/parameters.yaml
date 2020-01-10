@@ -106,5 +106,12 @@ detect_obstacles:
   }
 starting_procedure: 
   {
-    starting_speed: 2.0
+    starting_speed: 2.0,
+    use_scan: false,
+    use_qr: true
+  }
+qr_decoder: 
+  {
+    min_detect_rate: 0.3,
+    interations_to_vaild: 2
   }

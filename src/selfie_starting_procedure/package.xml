@@ -49,18 +49,25 @@
   <!-- Use doc_depend for packages you need only for building documentation: -->
   <!--   <doc_depend>doxygen</doc_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>zbar_ros</build_depend>
+  <build_depend>roslint</build_depend>
   <build_depend>actionlib</build_depend>
   <build_depend>roscpp</build_depend>
   <build_depend>std_msgs</build_depend>
   <build_depend>selfie_scheduler</build_depend>
+  <build_depend>selfie_msgs</build_depend>
   <build_export_depend>actionlib</build_export_depend>
+  <build_export_depend> zbar_ros</build_export_depend>
   <build_export_depend>roscpp</build_export_depend>
   <build_export_depend>std_msgs</build_export_depend>
   <build_export_depend>selfie_scheduler</build_export_depend>
+  <build_export_depend>selfie_msgs</build_export_depend>
   <exec_depend>actionlib</exec_depend>
+  <exec_depend>zbar_ros</exec_depend>
   <exec_depend>roscpp</exec_depend>
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>selfie_scheduler</exec_depend>
+  <exec_depend>selfie_msgs</exec_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

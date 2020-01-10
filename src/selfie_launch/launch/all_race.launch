@@ -37,6 +37,8 @@
     <param name="visualization" value="$(arg lane_controller_visualization)" />
   </node>
 
+  <node pkg="selfie_starting_procedure" type="qr_decoder" name="qr_decoder"/>
+
   <node name="odometry" type="selfie_odometry" pkg="selfie_odometry" respawn="true" output="screen"/>
   <node name="scheduler" type="scheduler" pkg="selfie_scheduler" respawn="true" output="screen" />
 
