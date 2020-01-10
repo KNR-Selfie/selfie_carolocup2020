@@ -18,6 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
   image_transport
   rospy
   roslint
+  tf
 )
 
 find_package(OpenCV 3.3.1 REQUIRED)

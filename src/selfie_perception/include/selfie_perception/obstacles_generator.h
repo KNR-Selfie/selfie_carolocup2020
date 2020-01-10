@@ -6,11 +6,15 @@
 #include <iostream>
 #include <vector>
 #include <math.h>
+#include <algorithm>
+#include <functional>
 
 #include <sensor_msgs/LaserScan.h>
 #include <geometry_msgs/Polygon.h>
 #include <visualization_msgs/Marker.h>
 #include <selfie_msgs/PolygonArray.h>
+#include <tf/transform_listener.h>
+#include <tf/transform_datatypes.h>
 
 struct Point
 {
@@ -41,7 +45,9 @@ private:
     ros::Publisher obstacles_pub_;
     ros::Publisher visualization_lines_pub_;
     ros::Publisher visualization_obstacles_pub_;
+    tf::TransformListener transformListener_;
 
+    tf::StampedTransform transform_;
     std::vector <Line> line_array_;
     std::vector <std::vector <Point> > segments_;
     selfie_msgs::PolygonArray obstacle_array_;
@@ -59,6 +65,9 @@ private:
     void printInfoParams();
     void generateObstacles();
     void convertUpsideDown();
+    void convertToOutputFrame();
+    void initializeTransform();
+    void transformPoint(geometry_msgs::Point32 &);
 
     float max_range_;
     float min_range_;
@@ -67,6 +76,7 @@ private:
     float lidar_offset_;
     std::string visualization_frame_;
     std::string obstacles_frame_;
+    std::string output_frame_;
     float segment_threshold_;
     float min_segment_size_;
     float max_segment_size_;
