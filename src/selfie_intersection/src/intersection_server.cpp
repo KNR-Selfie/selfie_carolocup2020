@@ -174,4 +174,5 @@ void IntersectionServer::preemptCb()
   ROS_INFO("Intersection action preempted");
   obstacles_sub_.shutdown();
   intersection_subscriber_.shutdown();
+  intersectionServer_.setAborted();
 }
