@@ -15,12 +15,13 @@ void left_turn_indicatorCallback(const std_msgs::Bool::ConstPtr& msg);
 void right_turn_indicatorCallback(const std_msgs::Bool::ConstPtr& msg);
 bool steeringAckermanCallback(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
 bool steeringParallelCallback(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
+bool steeringFrontAxisCallback(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
 
 Pub_messages pub_messages;
 Sub_messages sub_messages;
 
 USB_STM Usb;
-bool steering_mode = true;
+int steering_mode = 0;
 std_msgs::Empty empty_msg;
 
 int main(int argc, char **argv)
@@ -36,6 +37,8 @@ int main(int argc, char **argv)
 
     ros::ServiceServer ackerman_steering_mode = n.advertiseService("steering_ackerman", steeringAckermanCallback);
     ros::ServiceServer parallel_steering_mode = n.advertiseService("steering_parallel", steeringParallelCallback);
+    ros::ServiceServer front_axis_steering_mode = n.advertiseService("steering_front_axis", steeringFrontAxisCallback);
+
     ros::Subscriber ackerman_subscriber = n.subscribe("drive", 1, ackermanCallback);
     ros::Subscriber left_turn_indicator_subscriber = n.subscribe("left_turn_indicator", 1, left_turn_indicatorCallback);
     ros::Subscriber right_turn_indicator_subscriber = n.subscribe("right_turn_indicator", 1, right_turn_indicatorCallback);
@@ -70,13 +73,17 @@ int main(int argc, char **argv)
 void ackermanCallback(const ackermann_msgs::AckermannDriveStamped::ConstPtr& msg)
 {   
     sub_messages.ackerman.steering_angle_front = -msg->drive.steering_angle;
-    if(steering_mode)
+    if(steering_mode == 1)
     {
         sub_messages.ackerman.steering_angle_back = msg->drive.steering_angle;
     }
-    else
+    else if(steering_mode == 0)
     {
         sub_messages.ackerman.steering_angle_back = -msg->drive.steering_angle;
+    }
+    else if(steering_mode == 2)
+    {
+        sub_messages.ackerman.steering_angle_back = 0;
     }
         
     sub_messages.ackerman.speed = msg->drive.speed;
@@ -86,12 +93,19 @@ void ackermanCallback(const ackermann_msgs::AckermannDriveStamped::ConstPtr& msg
 
 bool steeringAckermanCallback(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
 {
-    steering_mode = true;
+    steering_mode = 0;
     return true;
 }
+
 bool steeringParallelCallback(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
 {
-    steering_mode = false;
+    steering_mode = 1;
+    return true;
+}
+
+bool steeringFrontAxisCallback(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
+{
+    steering_mode = 2;
     return true;
 }
 

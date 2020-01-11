@@ -78,4 +78,11 @@ typedef enum client_goal_state
     SUCCESS,
 
 }client_goal_state_variable;
+
+typedef enum steering_mode
+{
+    ACKERMANN = 0,
+    PARALLEL,
+    FRONT_AXIS
+}steering_mode_variable;
 #endif // SCHEDULER_ENUMS_H

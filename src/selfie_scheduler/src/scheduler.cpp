@@ -10,11 +10,15 @@ Scheduler::Scheduler() :
     pnh_("~"),
     begin_action_(STARTING),
     start_distance_(1.0),
-    parking_spot_(0.6)
+    parking_spot_(0.6),
+    parking_steering_mode_(ACKERMANN),
+    drive_steering_mode_(ACKERMANN)
 {
     pnh_.getParam("begin_action", begin_action_);
     pnh_.getParam("starting_distance", start_distance_);
     pnh_.getParam("parking_spot", parking_spot_);
+    pnh_.getParam("parking_steering_mode", parking_steering_mode_);
+    pnh_.getParam("drive_steering_mode", drive_steering_mode_);
 
     ROS_INFO("Created scheduler with params: BA: %d, SD: %f, PS: %f", begin_action_, start_distance_, parking_spot_);
 
@@ -24,6 +28,9 @@ Scheduler::Scheduler() :
     avoidingObstSetPassive_ = nh_.serviceClient<std_srvs::Empty>("avoiding_obst_set_passive");
     avoidingObstSetActive_ = nh_.serviceClient<std_srvs::Empty>("avoiding_obst_set_active");
     resetLaneController_ = nh_.serviceClient<std_srvs::Empty>("resetLaneControl");
+    steeringModeSetAckermann_ = nh_.serviceClient<std_srvs::Empty>("steering_ackerman");
+    steeringModeSetParallel_ = nh_.serviceClient<std_srvs::Empty>("steering_parallel");
+    steeringModeSetFrontAxis_ = nh_.serviceClient<std_srvs::Empty>("steering_front_axis");
     switchState_ = nh_.subscribe("switch_state", 10, &Scheduler::switchStateCallback, this);
 
     clients_[STARTING] = new StartingProcedureClient("starting_procedure");
@@ -160,6 +167,24 @@ void Scheduler::stopCmdCreator()
     std_srvs::Empty empty_msg;
     cmdCreatorStopPub_.call(empty_msg);
 }
+void Scheduler::setParkSteeringMode()
+{   
+    std_srvs::Empty empty_msg;
+    if(parking_steering_mode_)
+        steeringModeSetParallel_.call(empty_msg);
+    else
+        steeringModeSetAckermann_.call(empty_msg);
+}
+void Scheduler::setDriveSteeringMode()
+{   
+    std_srvs::Empty empty_msg;
+    if(drive_steering_mode_ == PARALLEL)
+        steeringModeSetParallel_.call(empty_msg);
+    else if(drive_steering_mode_ == ACKERMANN)
+        steeringModeSetAckermann_.call(empty_msg);
+    else if(drive_steering_mode_ == FRONT_AXIS)
+        steeringModeSetFrontAxis_.call(empty_msg);
+}
 template <typename T>
 bool Scheduler::checkCurrentClientType()
 {
@@ -178,6 +203,7 @@ void Scheduler::shiftAction()
         resetVision();
         startAction(DRIVING);
         startCmdCreator();
+        setDriveSteeringMode();
     }
     else if (checkCurrentClientType<DriveClient*>())
     {
@@ -187,16 +213,19 @@ void Scheduler::shiftAction()
     {
         stopCmdCreator();
         startAction(PARK);
+        setParkSteeringMode();
     }
     else if (checkCurrentClientType<ParkClient*>())
     {
         resetVision();
         startAction(DRIVING);
         startCmdCreator();
+        setDriveSteeringMode();
     }
     else if (checkCurrentClientType<IntersectionClient*>())
     {
         startNextAction();
+        setDriveSteeringMode();
     }
     else
     {
@@ -257,6 +286,7 @@ void Scheduler::switchStateCallback(const std_msgs::UInt8ConstPtr &msg)
             {
                 resetVision();
                 startAction(DRIVING);
+                setDriveSteeringMode();
                 startCmdCreator();
                 resetLaneControl();
             }
@@ -264,6 +294,7 @@ void Scheduler::switchStateCallback(const std_msgs::UInt8ConstPtr &msg)
             {
                 resetVision();
                 startAction(DRIVING);
+                setDriveSteeringMode();
                 startCmdCreator();
                 resetLaneControl();
             }

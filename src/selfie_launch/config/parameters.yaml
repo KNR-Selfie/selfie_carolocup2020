@@ -91,6 +91,8 @@ scheduler:
   {
     begin_action: 1,
     parking_spot: 0.6,
+    parking_steering_mode: 0, # 0 - ackermann 1 - paralell
+    drive_steering_mode: 0, # 0 - ackermann  1 - paralell 2 - front axis only 
     starting_distance: 1.0
   }
 detect_obstacles: 

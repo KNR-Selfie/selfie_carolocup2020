@@ -24,6 +24,8 @@ class Scheduler
     int begin_action_;
     float start_distance_;
     float parking_spot_;
+    int parking_steering_mode_;
+    int drive_steering_mode_;
 
     program_state current_car_state_;
     program_state previous_car_state_;
@@ -39,6 +41,10 @@ class Scheduler
     ros::ServiceClient avoidingObstSetPassive_;
     ros::ServiceClient avoidingObstSetActive_;
     ros::ServiceClient resetLaneController_;
+    ros::ServiceClient steeringModeSetAckermann_;
+    ros::ServiceClient steeringModeSetParallel_;
+    ros::ServiceClient steeringModeSetFrontAxis_;
+
 
     ros::Subscriber switchState_;
     rc_state previousRcState_;
@@ -56,6 +62,9 @@ class Scheduler
     void resetVision();
     void stopCmdCreator();
     void startCmdCreator();
+    void setParkSteeringMode();
+    void setDriveSteeringMode();
+
 
 public:
     Scheduler();
