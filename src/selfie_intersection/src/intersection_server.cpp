@@ -40,7 +40,7 @@ void IntersectionServer::init()
   speed_publisher_ = nh_.advertise<std_msgs::Float64>("/max_speed", 2);
   intersection_subscriber_ = nh_.subscribe("/intersection_distance", 1, &IntersectionServer::intersection_callback, this);
   speed_publisher_.publish(speed_);
-  publishFeedback(STOPPED_ON_INTERSECTION);
+  publishFeedback(APPROACHING_TO_INTERSECTION);
   time_started_ = false;
   ROS_INFO("Goal received - node activated");
 
@@ -63,7 +63,7 @@ void IntersectionServer::manager(const selfie_msgs::PolygonArray &boxes)
   {
     speed_.data = speed_default_;
     speed_publisher_.publish(speed_);
-    publishFeedback(APPROACHING_TO_INTERSECTION_WITH_OBSTACLES);
+    publishFeedback(APPROACHING_TO_INTERSECTION);
   } else
   {
     if (!time_started_)
@@ -81,11 +81,11 @@ void IntersectionServer::manager(const selfie_msgs::PolygonArray &boxes)
         Box(point_min_x_, point_max_x_, point_min_y_, point_max_y_)
             .visualize(visualize_intersection_, "area_of_interest", 0.9, 0.9, 0.1, 3);
       }
-      if (action_status_.action_status != FOUND_OBSTACLES)
+      if (action_status_.action_status != STOPPED_ON_INTERSECTION)
       {
         speed_.data = 0;
         speed_publisher_.publish(speed_);
-        publishFeedback(FOUND_OBSTACLES);
+        publishFeedback(STOPPED_ON_INTERSECTION);
       }
     } else
     {
