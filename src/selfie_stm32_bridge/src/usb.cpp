@@ -69,7 +69,7 @@ bool USB_STM::read_from_STM()
     //cast read_buffer to frame
     read_frame = (UsbReadFrame_s *)read_buffer;
     
-    if (read_state == USB_RECEIVE_SIZE && read_frame->start_code == frame_startbyte && read_frame->length == USB_RECEIVE_SIZE - 4
+    if (read_state == USB_RECEIVE_SIZE && read_frame->start_code == frame_startbyte && read_frame->length == USB_RECEIVE_SIZE
       && read_frame->end_code == frame_endbyte)
     {   
         return true; //correct data
@@ -146,7 +146,7 @@ USB_STM::~USB_STM()
 {
     send_frame = (UsbSendFrame_s *)send_buffer;
     send_frame->start_code = frame_startbyte;
-    send_frame->length = USB_SEND_SIZE - 4;
+    send_frame->length = USB_SEND_SIZE;
 
     send_frame->timecode = 0;
     send_frame->steering_fi_back = 0;
