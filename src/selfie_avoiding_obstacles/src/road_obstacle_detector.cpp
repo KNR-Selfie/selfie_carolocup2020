@@ -270,7 +270,11 @@ void Road_obstacle_detector::posOffsetCallback(const std_msgs::Float64 &msg)
   }
 }
 
-void Road_obstacle_detector::passive_timer_cb(const ros::TimerEvent &time) { setpoint_pub_.publish(setpoint_value_); }
+void Road_obstacle_detector::passive_timer_cb(const ros::TimerEvent &time)
+{
+  setpoint_value_.data = right_lane_;
+  setpoint_pub_.publish(setpoint_value_);
+}
 
 bool Road_obstacle_detector::switchToActive(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response)
 {
