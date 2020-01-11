@@ -4,6 +4,7 @@ from sensor_msgs.msg import LaserScan #/scan
 from sensor_msgs.msg import Image #/image_rect
 from std_msgs.msg import Bool #/left_turn_indicator, /right_turn_indicator
 from enum import Enum
+import os
 
 class State(Enum):
     OK = 1
@@ -64,6 +65,8 @@ class Diagnostic :
 
 
 if __name__ == "__main__":
+    ret = os.access("/opt", os.F_OK)
+    print(ret)
     diagnoser = Diagnostic()
     rospy.init_node("selfie_diagnostics", anonymous=True)
     print("Starting diagnostics")
