@@ -23,6 +23,7 @@ dr_server_CB_(boost::bind(&ParkService::reconfigureCB, this, _1, _2))
   pnh_.param<float>("odom_to_back", odom_to_back_, -0.33);
   pnh_.param<float>("max_turn", max_turn_, 0.8);
   pnh_.param<float>("idle_time", idle_time_, 2.);
+  pnh_.param("visualize",visualize_,true);
 
   dr_server_.setCallback(dr_server_CB_);
   move_state_ = first_phase;
@@ -35,6 +36,14 @@ dr_server_CB_(boost::bind(&ParkService::reconfigureCB, this, _1, _2))
   ackermann_pub_ = nh_.advertise<ackermann_msgs::AckermannDriveStamped>(ackermann_topic_, 10);
   right_indicator_pub_ = nh_.advertise<std_msgs::Bool>("right_turn_indicator", 20);
   left_indicator_pub_ = nh_.advertise<std_msgs::Bool>("left_turn_indicator", 20);
+  h_ = 0.001;
+  if(visualize_)
+  {
+      vis_spot_pub_ = nh_.advertise<visualization_msgs::Marker>("park_spot_visualization",1);
+      vis_pos_pub_ = nh_.advertise<visualization_msgs::Marker>("park_pos_visualization",1);
+      vis_traj_pub_ = nh_.advertise<visualization_msgs::Marker>("park_traj_visualization",1);
+      vis_traj_front_pub_ = nh_.advertise<visualization_msgs::Marker>("park_traj_front_visualization",1);
+  }
 }
 
 void ParkService::odomCallback(const nav_msgs::Odometry &msg)
@@ -48,6 +57,9 @@ void ParkService::odomCallback(const nav_msgs::Odometry &msg)
     actual_back_parking_position_ = Position(actual_parking_position_, odom_to_back_);
     actual_front_parking_position_ = Position(actual_parking_position_, odom_to_front_);
 
+
+    if(visualize_) visualizePosition();
+
     switch (parking_state_)
     {
       case go_to_parking_spot:
@@ -56,6 +68,8 @@ void ParkService::odomCallback(const nav_msgs::Odometry &msg)
         {
           parking_state_ = going_in;
           leaving_target_ = actual_parking_position_.y_;
+          initializeTrajectory(actual_back_parking_position_.x_,front_wall_-0.5, actual_back_parking_position_.y_, middle_of_parking_spot_y_);
+          if(visualize_) visualizeTrajectory();
         }
         if (state_msgs_) ROS_INFO_THROTTLE(5, "go_to_parking_spot");
         blinkRight(true);
@@ -146,6 +160,8 @@ void ParkService::initParkingSpot(const geometry_msgs::Polygon &msg)
   parking_spot_position_ = Position(bl.x(), bl.y(), atan2(br.y() - bl.y(), br.x() - bl.x()));
   actual_parking_position_ = Position(parking_spot_position_.transform_.inverse() * actual_odom_position_.transform_);
   Position actual_laser_parking_position = Position(actual_parking_position_, odom_to_laser_);
+  actual_back_parking_position_ = Position(actual_parking_position_, odom_to_back_);
+  actual_front_parking_position_ = Position(actual_parking_position_, odom_to_front_);
   std::vector <tf::Vector3> parking_parking_spot;
   for (std::vector<geometry_msgs::Point32>::const_iterator it = msg.points.begin(); it < msg.points.end(); it++)
   {
@@ -163,10 +179,15 @@ void ParkService::initParkingSpot(const geometry_msgs::Polygon &msg)
   front_wall_ = tr.x() < br.x() ? tr.x() : br.x();
   middle_of_parking_spot_x_ = (front_wall_ - back_wall_) / 2.0;
   mid_y_ = middle_of_parking_spot_y_ + (leaving_target_ - middle_of_parking_spot_y_) / 2.0;
+  if(visualize_)
+  {
+      visualizeParkingSpot();
+  }
 }
 
 void ParkService::goalCB()
 {
+  std::cout<<"got goal"<<std::endl;
   selfie_msgs::parkGoal goal = *as_.acceptNewGoal();
   initParkingSpot(goal.parking_spot);
   selfie_msgs::parkFeedback feedback;
@@ -209,42 +230,18 @@ bool ParkService::toParkingSpot()
 
 bool ParkService::park()
 {
-  switch (move_state_)
-  {
-    case first_phase:
-      if (state_msgs_) ROS_INFO_THROTTLE(5, "  1st phase");
-      drive(parking_speed_, -max_turn_);
-      if (actual_parking_position_.rot_ < -max_rot_)
-      {
-        move_state_ = straight;
-      }
-      if (actual_parking_position_.y_ < mid_y_)
-      {
-        move_state_ = second_phase;
-      }
-      break;
-
-    case straight:
-      if (state_msgs_) ROS_INFO_THROTTLE(5, "  straight");
-      drive(parking_speed_, 0.0);
-      if (actual_parking_position_.y_ < dist_turn_ + middle_of_parking_spot_y_)
-      {
-        move_state_ = second_phase;
-      }
-      break;
-
-    case second_phase:
-      if (state_msgs_) ROS_INFO_THROTTLE(5, "  2nd phase");
-      drive(parking_speed_, max_turn_);
-      if (actual_parking_position_.rot_ > 0.0 ||
-          (actual_front_parking_position_.x_ > front_wall_ - max_distance_to_wall_))
-      {
-        move_state_ = first_phase;
+    if(actual_back_parking_position_.x_>=x1_)
+    {
+        drive(0,0);
         return true;
-      }
-      break;
-  }
-  return false;
+    }
+    else
+    {
+        Position act_front_pos_target = frontTrajectoryPoint(actual_back_parking_position_.x_,0.5);
+        double act_rot_target = atan(trajectoryDeri(actual_back_parking_position_.x_));
+        drive(0.5,act_front_pos_target.rot_ - act_rot_target);
+    }
+
 }
 
 bool ParkService::leave()
@@ -284,6 +281,137 @@ bool ParkService::leave()
       break;
   }
   return false;
+}
+
+
+void ParkService::visualizeParkingSpot()
+{
+    visualization_msgs::Marker marker;
+    marker.header.frame_id = "odom";
+    marker.header.stamp = ros::Time::now();
+    marker.ns = "park_parking_spot";
+    marker.type = visualization_msgs::Marker::LINE_STRIP;
+    marker.action = visualization_msgs::Marker::ADD;
+    tf::Vector3 v = parking_spot_position_.transform_* tf::Vector3(back_wall_,0.,0.);
+    geometry_msgs::Point point, first;
+    point = vecToPoint(v);
+    first = point;
+    marker.points.push_back(point);
+
+    v = parking_spot_position_.transform_* tf::Vector3(front_wall_,0.,0.);
+    point = vecToPoint(v);
+    marker.points.push_back(point);
+
+    v = parking_spot_position_.transform_* tf::Vector3(front_wall_,(parking_spot_width_),0.);
+    point = vecToPoint(v);
+    marker.points.push_back(point);
+
+    v = parking_spot_position_.transform_* tf::Vector3(back_wall_,(parking_spot_width_),0.);
+    point = vecToPoint(v);
+    marker.points.push_back(point);
+    marker.points.push_back(first);
+
+    marker.color.a = 1.;
+    marker.color.r = 1.;
+    marker.color.g = 0.41176;
+    marker.color.b = 0.70588;
+
+    marker.scale.x = 0.01;
+    vis_spot_pub_.publish(marker);
+
+}
+
+void ParkService::visualizePosition()
+{
+    visualization_msgs::Marker marker;
+    marker.header.frame_id = "odom";
+    marker.ns = "park_position";
+    marker.header.stamp = ros::Time::now();
+    marker.type = visualization_msgs::Marker::ARROW;
+    tf::Vector3 v = parking_spot_position_.transform_*tf::Vector3(actual_back_parking_position_.x_,actual_back_parking_position_.y_,0.);
+    geometry_msgs::Point pos;
+    pos = vecToPoint(v);
+    marker.points.push_back(pos);
+    v = parking_spot_position_.transform_*tf::Vector3(actual_front_parking_position_.x_,actual_front_parking_position_.y_,0.);
+    pos = vecToPoint(v);
+    marker.points.push_back(pos);
+    marker.color.a = 1.;
+    marker.color.r = 1.;
+    marker.color.g = 0.673;
+    marker.color.b = 0.75686;
+
+    marker.scale.x = 0.1;
+    marker.scale.y = 0.15;
+    marker.scale.z = 0.15;
+    vis_pos_pub_.publish(marker);
+}
+
+void ParkService::visualizeTrajectory() {
+    visualization_msgs::Marker marker;
+    marker.header.frame_id = "odom";
+    marker.ns = "park_trajectory";
+    marker.header.stamp = ros::Time::now();
+    marker.type = visualization_msgs::Marker::LINE_STRIP;
+    for (double x = x0_; x <= x1_; x += 0.01) {
+        tf::Vector3 v = parking_spot_position_.transform_ * tf::Vector3(x, trajectoryPoint(x), 0.);
+        marker.points.push_back(vecToPoint(v));
+
+    }
+    marker.color.a = 1.;
+    marker.color.r = 1.;
+    marker.color.g = 0.573;
+    marker.color.b = 0.70686;
+
+    marker.scale.x = 0.01;
+    vis_traj_pub_.publish(marker);
+
+    visualization_msgs::Marker markerFront;
+    markerFront.header.frame_id = "odom";
+    markerFront.ns = "park_trajectory_front";
+    markerFront.header.stamp = ros::Time::now();
+    markerFront.type = visualization_msgs::Marker::LINE_STRIP;
+    for (double x = x0_; x <= x1_; x += 0.01) {
+        Position front_pos = frontTrajectoryPoint(x, 0.5);
+        tf::Vector3 v = parking_spot_position_.transform_ * tf::Vector3(front_pos.x_, front_pos.y_, 0.);
+        markerFront.points.push_back(vecToPoint(v));
+    }
+    markerFront.color.a = 1.;
+    markerFront.color.r = 0.9;
+    markerFront.color.g = 0.;
+    markerFront.color.b = 0.;
+
+    markerFront.scale.x = 0.04;
+    vis_traj_front_pub_.publish(markerFront);
+}
+
+
+void ParkService::initializeTrajectory(double x0, double x1, double y0, double y1)
+{
+    x0_ = x0;
+    x1_ = x1;
+    y0_ = y0;
+    y1_ = y1;
+}
+
+double ParkService::trajectoryPoint(double x)
+{
+    return ((y0_-y1_)/2.)*cos(PI * (x-x0_)/(x1_-x0_)) + (y1_+y0_)/2.;
+}
+
+double ParkService::trajectoryDeri(double x)
+{
+    return -((y0_-y1_)/2.)*sin(PI * (x-x0_)/(x1_-x0_))*(PI/(x1_-x0_));
+}
+
+ParkService::Position ParkService::frontTrajectoryPoint(double x, double length)
+{
+    double x2 = x + length*cos(atan(trajectoryDeri(x)));
+    double y2 = trajectoryPoint(x) + length*sin(atan(trajectoryDeri(x)));
+    double x3 = x+h_ + length*cos(atan(trajectoryDeri(x+h_)));
+    double y3 = trajectoryPoint(x+h_) + length*sin(atan(trajectoryDeri(x+h_)));
+    double deri = (y3 - y2)/(x3-x2);
+    double rot = atan(deri);
+    return Position(x2,y2,rot);
 }
 
 float ParkService::Position::quatToRot(const geometry_msgs::Quaternion &quat)
@@ -385,6 +513,16 @@ void ParkService::reconfigureCB(selfie_park::ParkServerConfig& config, uint32_t 
         ROS_INFO("parking_speed_ new value: %f",parking_speed_);
     }
 
+}
+
+
+geometry_msgs::Point ParkService::vecToPoint(const tf::Vector3 &vec)
+{
+    geometry_msgs::Point pt;
+    pt.x = vec.x();
+    pt.y = vec.y();
+    pt.z = vec.z();
+    return pt;
 }
 
 int main(int argc, char **argv)

@@ -18,6 +18,8 @@
 #include <selfie_scheduler/scheduler_enums.h>
 #include <selfie_park/ParkServerConfig.h>
 #include <dynamic_reconfigure/server.h>
+#include <visualization_msgs/Marker.h>
+#include <boost/math/constants/constants.hpp>
 
 
 class ParkService
@@ -32,6 +34,10 @@ private:
   ros::Publisher ackermann_pub_;
   ros::Publisher right_indicator_pub_;
   ros::Publisher left_indicator_pub_;
+  ros::Publisher vis_spot_pub_;
+  ros::Publisher vis_pos_pub_;
+  ros::Publisher vis_traj_pub_;
+  ros::Publisher vis_traj_front_pub_;
 
   dynamic_reconfigure::Server<selfie_park::ParkServerConfig> dr_server_;
   dynamic_reconfigure::Server<selfie_park::ParkServerConfig>::CallbackType dr_server_CB_;
@@ -64,6 +70,20 @@ private:
   void initParkingSpot(const geometry_msgs::Polygon &msg);
   void blinkLeft(bool on);
   void blinkRight(bool on);
+  geometry_msgs::Point vecToPoint(const tf::Vector3 &vec);
+  void initializeTrajectory(double x0, double x1, double y0, double y1);
+  double trajectoryDeri(double x);
+  double trajectoryPoint(double x);
+  Position frontTrajectoryPoint(double x, double length);
+  double x0_;
+  double x1_;
+  double y0_;
+  double y1_;
+  double h_;
+
+  void visualizeParkingSpot();
+  void visualizePosition();
+  void visualizeTrajectory();
 
   enum Parking_State
   {
@@ -76,6 +96,8 @@ private:
     out = 5,
     go_back = 6
   } parking_state_;
+
+  const double PI = boost::math::constants::pi<double>();
 
   feedback_variable action_status_;
 
@@ -109,4 +131,5 @@ private:
   float odom_to_laser_;
   float max_turn_;
   float idle_time_;
+  bool visualize_;
 };
