@@ -213,7 +213,7 @@ bool ParkService::park()
     {
         if(actual_parking_position_.y_ > middle_of_parking_spot_y_)
         {
-            if(actual_parking_position_.x_ > front_wall_ - max_distance_to_wall_)
+            if(actual_front_parking_position_.x_ > front_wall_ - max_distance_to_wall_)
             {
                 drive(0,max_turn_);
                 move_state_ = second_phase;
@@ -238,7 +238,7 @@ bool ParkService::park()
 
         if(actual_parking_position_.y_ > middle_of_parking_spot_y_)
         {
-            if(actual_parking_position_.x_ < back_wall_ + max_distance_to_wall_)
+            if(actual_back_parking_position_.x_ < back_wall_ + max_distance_to_wall_)
             {
                 drive(0,-max_turn_);
                 move_state_ = first_phase;
