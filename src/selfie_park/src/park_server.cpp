@@ -23,7 +23,11 @@ dr_server_CB_(boost::bind(&ParkService::reconfigureCB, this, _1, _2))
   pnh_.param<float>("odom_to_back", odom_to_back_, -0.33);
   pnh_.param<float>("max_turn", max_turn_, 0.8);
   pnh_.param<float>("idle_time", idle_time_, 2.);
+  pnh_.param<float>("iter_distance",iter_distance_,0.2);
 
+  car_length_ = 0.5;
+  front_target_ = 0.;
+  back_target_ = 0.;
   dr_server_.setCallback(dr_server_CB_);
   move_state_ = first_phase;
   parking_state_ = not_parking;
@@ -31,22 +35,16 @@ dr_server_CB_(boost::bind(&ParkService::reconfigureCB, this, _1, _2))
   as_.registerGoalCallback(boost::bind(&ParkService::goalCB, this));
   as_.registerPreemptCallback(boost::bind(&ParkService::preemptCB, this));
   as_.start();
-  odom_sub_ = nh_.subscribe(odom_topic_, 10, &ParkService::odomCallback, this);
+  dist_sub_ = nh_.subscribe("/distance", 10, &ParkService::distanceCallback, this);
   ackermann_pub_ = nh_.advertise<ackermann_msgs::AckermannDriveStamped>(ackermann_topic_, 10);
   right_indicator_pub_ = nh_.advertise<std_msgs::Bool>("right_turn_indicator", 20);
   left_indicator_pub_ = nh_.advertise<std_msgs::Bool>("left_turn_indicator", 20);
 }
 
-void ParkService::odomCallback(const nav_msgs::Odometry &msg)
+void ParkService::distanceCallback(const std_msgs::Float32 &msg)
 {
-  actual_odom_position_ = Position(msg);
-  actual_laser_odom_position_ = Position(actual_odom_position_, odom_to_laser_);
 
-  if (parking_state_ > not_parking)
-  {
-    actual_parking_position_ = Position(parking_spot_position_.transform_.inverse() * actual_odom_position_.transform_);
-    actual_back_parking_position_ = Position(actual_parking_position_, odom_to_back_);
-    actual_front_parking_position_ = Position(actual_parking_position_, odom_to_front_);
+    actual_dist_ = msg.data;
 
     switch (parking_state_)
     {
@@ -54,10 +52,12 @@ void ParkService::odomCallback(const nav_msgs::Odometry &msg)
         action_status_ = START_PARK;
         if (toParkingSpot())
         {
-          parking_state_ = going_in;
-          leaving_target_ = actual_parking_position_.y_;
+            prev_dist_ = actual_dist_;
+            parking_state_ = going_in;
+
         }
         if (state_msgs_) ROS_INFO_THROTTLE(5, "go_to_parking_spot");
+        //std::cout<<"go to parking spot"<<std::endl;
         blinkRight(true);
         blinkLeft(false);
         break;
@@ -67,40 +67,18 @@ void ParkService::odomCallback(const nav_msgs::Odometry &msg)
         if (park()) parking_state_ = parked;
         blinkRight(true);
         blinkLeft(false);
+        //std::cout<<"going in"<<std::endl;
         break;
 
       case parked:
         action_status_ = IN_PLACE;
         if (state_msgs_) ROS_INFO_THROTTLE(5, "parked");
-        drive(0, -max_turn_);
+        drive(0., 0.);
         blinkLeft(true);
         blinkRight(true);
         ros::Duration(idle_time_).sleep();
-        parking_state_ = get_straight;
-        break;
-
-      case get_straight:
-        action_status_ = OUT_PLACE;
-        blinkLeft(false);
-        blinkRight(false);
-        if (state_msgs_) ROS_INFO_THROTTLE(5, "get_straight");
-        if (actual_parking_position_.rot_ < 0.0)
-        {
-          drive(-parking_speed_, -max_turn_);
-        }
-        else parking_state_ = go_back;
-        break;
-
-      case go_back:
-        if (state_msgs_) ROS_INFO_THROTTLE(5, "go_back");
-        blinkLeft(false);
-        blinkRight(false);
-        drive(-parking_speed_, 0);
-        if (actual_back_parking_position_.x_ < back_wall_ + max_distance_to_wall_)
-        {
-          drive(0, 0);
-          parking_state_ = going_out;
-        }
+        parking_state_ = going_out;
+        //std::cout<<"parked"<<std::endl;
         break;
 
       case going_out:
@@ -108,6 +86,7 @@ void ParkService::odomCallback(const nav_msgs::Odometry &msg)
         blinkRight(false);
         if (state_msgs_) ROS_INFO_THROTTLE(5, "get_out");
         if (leave()) parking_state_ = out;
+        //std::cout<<"going out"<<std::endl;
         break;
 
       case out:
@@ -123,50 +102,14 @@ void ParkService::odomCallback(const nav_msgs::Odometry &msg)
         result.done = true;
         as_.setSucceeded(result);
         parking_state_ = not_parking;
-        odom_sub_.shutdown();
+        //std::cout<<"go to parking spot"<<std::endl;
         break;
     }
-  }
-}
-
-void ParkService::initParkingSpot(const geometry_msgs::Polygon &msg)
-{
-  std::vector <tf::Vector3> odom_parking_spot;
-
-  for (std::vector<geometry_msgs::Point32>::const_iterator it = msg.points.begin(); it < msg.points.end(); it++)
-  {
-    tf::Vector3 vec(it->x, it->y, 0);
-    odom_parking_spot.push_back(actual_laser_odom_position_.transform_ * vec);
-  }
-  tf::Vector3 tl = odom_parking_spot[0];
-  tf::Vector3 bl = odom_parking_spot[1];
-  tf::Vector3 br = odom_parking_spot[2];
-  tf::Vector3 tr = odom_parking_spot[3];
-
-  parking_spot_position_ = Position(bl.x(), bl.y(), atan2(br.y() - bl.y(), br.x() - bl.x()));
-  actual_parking_position_ = Position(parking_spot_position_.transform_.inverse() * actual_odom_position_.transform_);
-  Position actual_laser_parking_position = Position(actual_parking_position_, odom_to_laser_);
-  std::vector <tf::Vector3> parking_parking_spot;
-  for (std::vector<geometry_msgs::Point32>::const_iterator it = msg.points.begin(); it < msg.points.end(); it++)
-  {
-    tf::Vector3 vec(it->x, it->y, 0);
-    parking_parking_spot.push_back(actual_laser_parking_position.transform_ * vec);
-  }
-  tl = parking_parking_spot[0];
-  bl = parking_parking_spot[1];
-  br = parking_parking_spot[2];
-  tr = parking_parking_spot[3];
-
-  parking_spot_width_ = tl.y() < tr.y() ? tl.y() : tr.y();
-  middle_of_parking_spot_y_ = parking_spot_width_ / 2.0;
-  back_wall_ = tl.x() > bl.x() ? tl.x() : bl.x();
-  front_wall_ = tr.x() < br.x() ? tr.x() : br.x();
-  middle_of_parking_spot_x_ = (front_wall_ - back_wall_) / 2.0;
-  mid_y_ = middle_of_parking_spot_y_ + (leaving_target_ - middle_of_parking_spot_y_) / 2.0;
 }
 
 void ParkService::goalCB()
 {
+  std::cout<<"got goal"<<std::endl;
   selfie_msgs::parkGoal goal = *as_.acceptNewGoal();
   initParkingSpot(goal.parking_spot);
   selfie_msgs::parkFeedback feedback;
@@ -186,6 +129,26 @@ void ParkService::preemptCB()
 }
 
 
+void ParkService::initParkingSpot(const geometry_msgs::Polygon &msg)
+{
+    float min_point_dist = 10000.f;
+    float sum = 0.;
+    for(auto it = msg.points.begin();it<msg.points.end();++it)
+    {
+        if(it->x < min_point_dist) min_point_dist = it->x;
+        sum+= it->y;
+    }
+    park_spot_dist_ini_ = fabs(sum/4.);
+    park_spot_dist_ = park_spot_dist_ini_;
+
+    back_target_ = actual_dist_ + min_point_dist + car_length_;
+    front_target_ = back_target_ + iter_distance_;
+    //std::cout<<"init parking spot"<<std::endl;
+    //std::cout<<"dist "<<back_target_ - actual_dist_<<std::endl;
+    //std::cout<<park_spot_dist_ini_<<" park dist"<<std::endl;
+}
+
+
 void ParkService::drive(float speed, float steering_angle)
 {
   ackermann_msgs::AckermannDriveStamped msg;
@@ -198,171 +161,117 @@ void ParkService::drive(float speed, float steering_angle)
 
 bool ParkService::toParkingSpot()
 {
-  if (actual_parking_position_.x_ < back_wall_ + minimal_start_parking_x_)
-  {
-    drive(parking_speed_, 0.0);
-  }
-  else return true;
-
-  return false;
+    std::cout<<"target "<<back_target_<<" actual "<<actual_dist_<<std::endl;
+    if(actual_dist_ > back_target_)
+    {
+        return true;
+    }
+    drive(parking_speed_, 0.);
+    return false;
 }
 
 bool ParkService::park()
 {
+    park_spot_dist_ -= sin(max_turn_)*fabs(actual_dist_ - prev_dist_);
+    //std::cout<<"park spot dist "<<park_spot_dist_<<std::endl;
     if(move_state_ == first_phase)
     {
-        if(actual_parking_position_.y_ > middle_of_parking_spot_y_)
+        if(park_spot_dist_ > 0.)
         {
-            if(actual_front_parking_position_.x_ > front_wall_ - max_distance_to_wall_)
+            if(actual_dist_ > front_target_)
             {
-                drive(0,max_turn_);
                 move_state_ = second_phase;
-                return false;
+                drive(0., max_turn_);
             }
             else
             {
                 drive(parking_speed_, -max_turn_);
-                return false;
             }
-
+            
         }
         else
         {
-            drive(0,0);
             return true;
         }
+        
 
     }
     else
     {
-
-        if(actual_parking_position_.y_ > middle_of_parking_spot_y_)
+        if(park_spot_dist_ > 0.)
         {
-            if(actual_back_parking_position_.x_ < back_wall_ + max_distance_to_wall_)
+            if(actual_dist_ < back_target_)
             {
-                drive(0,-max_turn_);
                 move_state_ = first_phase;
-                return false;
+                drive(0., -max_turn_);
             }
             else
             {
                 drive(-parking_speed_, max_turn_);
-                return false;
             }
-
+            
         }
         else
         {
-            drive(0,0);
             return true;
         }
-
+        
     }
-
+    return false;
+    prev_dist_ = actual_dist_;
 }
 
 bool ParkService::leave()
 {
+
+    park_spot_dist_ += sin(max_turn_)*fabs(actual_dist_ - prev_dist_);
+    //std::cout<<"leaving dist "<<park_spot_dist_<<std::endl;
     if(move_state_ == first_phase)
     {
-        if(actual_parking_position_.y_ < leaving_target_ )
+    if(park_spot_dist_ < park_spot_dist_ini_)
         {
-            if(actual_parking_position_.x_ > front_wall_ - max_distance_to_wall_)
+            if(actual_dist_ > front_target_)
             {
-                drive(0,max_turn_);
                 move_state_ = second_phase;
-                return false;
+                drive(0., -max_turn_);
             }
             else
             {
                 drive(parking_speed_, max_turn_);
-                return false;
             }
-
+            
         }
         else
         {
-            drive(0,0);
             return true;
         }
+        
 
     }
     else
     {
-
-        if(actual_parking_position_.y_ < leaving_target_)
+        if(park_spot_dist_ < park_spot_dist_ini_)
         {
-            if(actual_parking_position_.x_ < back_wall_ + max_distance_to_wall_)
+            if(actual_dist_ < back_target_)
             {
-                drive(0,-max_turn_);
                 move_state_ = first_phase;
-                return false;
+                drive(0., max_turn_);
             }
             else
             {
                 drive(-parking_speed_, -max_turn_);
-                return false;
             }
-
+            
         }
         else
         {
-            drive(0,0);
             return true;
         }
-
+        
     }
+    return false;
+    prev_dist_ = actual_dist_;
 
-}
-
-float ParkService::Position::quatToRot(const geometry_msgs::Quaternion &quat)
-{
-  return static_cast<float>(tf::getYaw(quat));
-}
-
-ParkService::Position::Position(const nav_msgs::Odometry &msg, float offset)
-{
-  rot_ = quatToRot(msg.pose.pose.orientation);
-  x_ = msg.pose.pose.position.x + offset * cos(rot_);
-  y_ = msg.pose.pose.position.y + offset * sin(rot_);
-  tf::Vector3 vec(x_, y_, 0);
-  tf::Quaternion quat;
-  tf::quaternionMsgToTF(msg.pose.pose.orientation, quat);
-  transform_ = tf::Transform(quat, vec);
-}
-
-ParkService::Position::Position(float x, float y, float rot) :
-x_(x),
-y_(y),
-rot_(rot)
-{
-  tf::Vector3 vec(x_, y_, 0);
-  tf::Quaternion quat = tf::createQuaternionFromYaw(rot_);
-  transform_ = tf::Transform(quat, vec);
-}
-
-ParkService::Position ParkService::Position::operator-(const Position &other)
-{
-  return Position(x_ - other.x_, y_ - other.y_, rot_ - other.rot_);
-}
-
-ParkService::Position::Position(const tf::Transform &trans)
-{
-  x_ = trans.getOrigin().x();
-  y_ = trans.getOrigin().y();
-  rot_ = tf::getYaw(trans.getRotation());
-  transform_ = trans;
-}
-
-ParkService::Position::Position(const Position &other, float offset)
-{
-  rot_ = other.rot_;
-  x_ = other.x_ + cos(rot_) * offset;
-  y_ = other.y_ + sin(rot_) * offset;
-  tf::Quaternion quat;
-  quat.setRPY(0, 0, rot_);
-  tf::Vector3 vec(x_, y_, 0);
-  transform_ = tf::Transform(quat, vec);
 }
 
 
@@ -381,6 +290,7 @@ void ParkService::blinkRight(bool on)
   right_indicator_pub_.publish(msg);
   return;
 }
+
 void ParkService::reconfigureCB(selfie_park::ParkServerConfig& config, uint32_t level)
 {
     if(dist_turn_ != (float)config.dist_turn)
