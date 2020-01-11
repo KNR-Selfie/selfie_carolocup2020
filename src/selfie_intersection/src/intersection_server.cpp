@@ -113,6 +113,12 @@ void IntersectionServer::intersection_callback(const std_msgs::Float32 &msg)
   point_max_x_ = point_min_x_ + road_width_;
   if (intersectionServer_.isActive())
     ROS_INFO_THROTTLE(1, "Distance to intersection: %lf", point_min_x_);
+
+  if (max_distance_to_intersection_ >= point_min_x_)
+  {
+    selfie_msgs::PolygonArray emptyBoxes;
+    manager(emptyBoxes);
+  }
 }
 
 void IntersectionServer::send_goal()
