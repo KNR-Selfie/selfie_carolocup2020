@@ -18,6 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
   image_transport
   rospy
   roslint
+  tf
   dynamic_reconfigure
 )
 
@@ -98,9 +99,10 @@ find_package(OpenCV 3.3.1 REQUIRED)
 ##     and list every .cfg file to be processed
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
-generate_dynamic_reconfigure_options(
-   cfg/detect_obstacles.cfg
-)
+ generate_dynamic_reconfigure_options(
+
+    cfg/detect_obstacles.cfg
+ )
 
 ###################################
 ## catkin specific configuration ##
