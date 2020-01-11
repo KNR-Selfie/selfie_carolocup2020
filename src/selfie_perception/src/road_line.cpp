@@ -82,7 +82,13 @@ void RoadLine::pfReset()
 
 void RoadLine::aprox()
 {
-  polyfit(points_, degree_, coeff_);
+  if(!polyfit(points_, degree_, coeff_))
+  {
+    coeff_.clear();
+    coeff_.push_back(0.2);
+    coeff_.push_back(0);
+    coeff_.push_back(0);
+  }
 }
 
 int RoadLine::pointsSize()
