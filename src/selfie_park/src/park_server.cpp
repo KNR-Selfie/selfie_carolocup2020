@@ -209,81 +209,110 @@ bool ParkService::toParkingSpot()
 
 bool ParkService::park()
 {
-  switch (move_state_)
-  {
-    case first_phase:
-      if (state_msgs_) ROS_INFO_THROTTLE(5, "  1st phase");
-      drive(parking_speed_, -max_turn_);
-      if (actual_parking_position_.rot_ < -max_rot_)
-      {
-        move_state_ = straight;
-      }
-      if (actual_parking_position_.y_ < mid_y_)
-      {
-        move_state_ = second_phase;
-      }
-      break;
+    if(move_state_ == first_phase)
+    {
+        if(actual_parking_position_.y_ > middle_of_parking_spot_y_)
+        {
+            if(actual_parking_position_.x_ > front_wall_ - max_distance_to_wall_)
+            {
+                drive(0,max_turn_);
+                move_state_ = second_phase;
+                return false;
+            }
+            else
+            {
+                drive(parking_speed_, -max_turn_);
+                return false;
+            }
 
-    case straight:
-      if (state_msgs_) ROS_INFO_THROTTLE(5, "  straight");
-      drive(parking_speed_, 0.0);
-      if (actual_parking_position_.y_ < dist_turn_ + middle_of_parking_spot_y_)
-      {
-        move_state_ = second_phase;
-      }
-      break;
+        }
+        else
+        {
+            drive(0,0);
+            return true;
+        }
 
-    case second_phase:
-      if (state_msgs_) ROS_INFO_THROTTLE(5, "  2nd phase");
-      drive(parking_speed_, max_turn_);
-      if (actual_parking_position_.rot_ > 0.0 ||
-          (actual_front_parking_position_.x_ > front_wall_ - max_distance_to_wall_))
-      {
-        move_state_ = first_phase;
-        return true;
-      }
-      break;
-  }
-  return false;
+    }
+    else
+    {
+
+        if(actual_parking_position_.y_ > middle_of_parking_spot_y_)
+        {
+            if(actual_parking_position_.x_ < back_wall_ + max_distance_to_wall_)
+            {
+                drive(0,-max_turn_);
+                move_state_ = first_phase;
+                return false;
+            }
+            else
+            {
+                drive(-parking_speed_, max_turn_);
+                return false;
+            }
+
+        }
+        else
+        {
+            drive(0,0);
+            return true;
+        }
+
+    }
+
 }
 
 bool ParkService::leave()
 {
-  switch (move_state_)
-  {
-    case first_phase:
-      if (state_msgs_) ROS_INFO_THROTTLE(5, "  1st phase");
-      drive(parking_speed_, max_turn_);
-      if (actual_parking_position_.rot_ > max_rot_)
-      {
-        move_state_ = straight;
-      }
-      if (actual_parking_position_.y_ > mid_y_)
-      {
-        move_state_ = second_phase;
-      }
-      break;
+    if(move_state_ == first_phase)
+    {
+        if(actual_parking_position_.y_ < leaving_target_ )
+        {
+            if(actual_parking_position_.x_ > front_wall_ - max_distance_to_wall_)
+            {
+                drive(0,max_turn_);
+                move_state_ = second_phase;
+                return false;
+            }
+            else
+            {
+                drive(parking_speed_, max_turn_);
+                return false;
+            }
 
-    case straight:
-      if (state_msgs_) ROS_INFO_THROTTLE(5, "  straight");
-      drive(parking_speed_, 0.0);
-      if (actual_parking_position_.y_ > leaving_target_ - dist_turn_)
-      {
-        move_state_ = second_phase;
-      }
-      break;
+        }
+        else
+        {
+            drive(0,0);
+            return true;
+        }
 
-    case second_phase:
-      if (state_msgs_) ROS_INFO_THROTTLE(5, "  2nd phase");
-      drive(parking_speed_, -max_turn_);
-      if (actual_parking_position_.rot_ < 0.0)
-      {
-        move_state_ = first_phase;
-        return true;
-      }
-      break;
-  }
-  return false;
+    }
+    else
+    {
+
+        if(actual_parking_position_.y_ < leaving_target_)
+        {
+            if(actual_parking_position_.x_ < back_wall_ + max_distance_to_wall_)
+            {
+                drive(0,-max_turn_);
+                move_state_ = first_phase;
+                return false;
+            }
+            else
+            {
+                drive(-parking_speed_, -max_turn_);
+                return false;
+            }
+
+        }
+        else
+        {
+            drive(0,0);
+            return true;
+        }
+
+    }
+
 }
 
 float ParkService::Position::quatToRot(const geometry_msgs::Quaternion &quat)
