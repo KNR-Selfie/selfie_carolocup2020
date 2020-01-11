@@ -1593,10 +1593,10 @@ void LaneDetector::removeCar(cv::Mat &frame)
 {
   cv::Mat car_mask = cv::Mat::zeros(cv::Size(frame.cols, frame.rows), CV_8UC1);
   cv::Point points[4];
-  points[0] = cv::Point(305, 197);
-  points[1] = cv::Point(335, 197);
-  points[2] = cv::Point(335, 160);
-  points[3] = cv::Point(305, 160);
+  points[0] = cv::Point(310, TOPVIEW_ROWS);
+  points[1] = cv::Point(335, TOPVIEW_ROWS);
+  points[2] = cv::Point(330, 230);
+  points[3] = cv::Point(310, 230);
 
   cv::fillConvexPoly(car_mask, points, 4, cv::Scalar(255, 255, 255));
   cv::bitwise_not(car_mask, car_mask);
