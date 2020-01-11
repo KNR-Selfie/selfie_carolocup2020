@@ -583,7 +583,7 @@ float LaneDetector::findMinPointToParabola(cv::Point2f p, std::vector<float> coe
   float min = p.y - poly_p.y;
   float new_min = min;
   float step = 0.05;
-  int it = 0
+  int it = 0;
   do
   {
     min = new_min;
