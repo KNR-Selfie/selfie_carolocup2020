@@ -1,6 +1,7 @@
 <launch>
   <!-- PASSED PARAMS-->
   <arg name="i_visualization_in_searching" />
+  <arg name="i_visualization_of_intersection" />
   <arg name="i_parking_msgs_output" />
 
 
@@ -21,7 +22,7 @@
   </node>
   
   <node name="intersection_server_node" type="intersection_server_node" pkg="selfie_intersection" respawn="true" output="screen">
-  <param name="visualization_in_searching" value="$(arg i_visualization_in_searching)" />
+  <param name="visualization_of_intersection" value="$(arg i_visualization_of_intersection)" />
   </node>
 
 </launch>

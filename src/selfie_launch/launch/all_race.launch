@@ -5,6 +5,7 @@
 
   <!-- LAUNCH DEPENDENT PARAMS -->
   <arg name="visualization_in_searching" default="false" />
+  <arg name="visualization_of_intersection" default="false" />
   <arg name="parking_msgs_output" default="false" />
   <arg name="detect_obstacles_visualization" default="false" />
   <arg name="lane_controller_visualization" default="false" />
@@ -48,6 +49,7 @@
   <include file="$(find selfie_launch)/launch/subsystems/control.launch"/>
   <include file="$(find selfie_launch)/launch/subsystems/action_servers.launch">
     <arg name="i_visualization_in_searching" value="$(arg visualization_in_searching)" />
+    <arg name="i_visualization_of_intersection" value="$(arg visualization_of_intersection)" />
     <arg name="i_parking_msgs_output" value="$(arg parking_msgs_output)" />
   </include>
 
