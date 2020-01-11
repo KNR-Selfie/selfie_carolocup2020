@@ -2230,7 +2230,7 @@ bool LaneDetector::isIntersection()
       else
         p_inner = lines_out_h_world_[i + 1];
 
-      if (p_inner.x - right_line_.getPoints()[0].x < 0.025)
+      if (p_inner.x - left_line_.getPoints()[0].x < 0.025)
         continue;
 
       float min_dist = 99999; // init huge value
