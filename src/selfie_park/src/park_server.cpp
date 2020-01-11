@@ -35,7 +35,7 @@ dr_server_CB_(boost::bind(&ParkService::reconfigureCB, this, _1, _2))
   as_.registerGoalCallback(boost::bind(&ParkService::goalCB, this));
   as_.registerPreemptCallback(boost::bind(&ParkService::preemptCB, this));
   as_.start();
-  dist_sub_ = nh_.subscribe("/distance", 10, &ParkService::distanceCallback, this);
+  dist_sub_ = nh_.subscribe("/distance", 1, &ParkService::distanceCallback, this);
   ackermann_pub_ = nh_.advertise<ackermann_msgs::AckermannDriveStamped>(ackermann_topic_, 10);
   right_indicator_pub_ = nh_.advertise<std_msgs::Bool>("right_turn_indicator", 20);
   left_indicator_pub_ = nh_.advertise<std_msgs::Bool>("left_turn_indicator", 20);
@@ -139,7 +139,7 @@ void ParkService::initParkingSpot(const geometry_msgs::Polygon &msg)
         sum+= it->y;
         std::cout<<"y "<<it->y<<std::endl;
     }
-    park_spot_dist_ini_ = fabs(sum/msg.points.size());
+    park_spot_dist_ini_ = std::abs(sum/msg.points.size());
     park_spot_dist_ = park_spot_dist_ini_;
 
     back_target_ = actual_dist_ + min_point_dist + car_length_;
@@ -173,7 +173,7 @@ bool ParkService::toParkingSpot()
 
 bool ParkService::park()
 {
-    park_spot_dist_ -= sin(max_turn_)*fabs(actual_dist_ - prev_dist_);
+    park_spot_dist_ -= std::sin(max_turn_)*std::abs(actual_dist_ - prev_dist_);
     std::cout<<"sin "<<sin(max_turn_)<<std::endl;
     std::cout<<"diff "<<actual_dist_ - prev_dist_<<std::endl;
     std::cout<<"park spot dist "<<park_spot_dist_<<std::endl;
@@ -227,7 +227,7 @@ bool ParkService::park()
 bool ParkService::leave()
 {
 
-    park_spot_dist_ += sin(max_turn_)*fabs(actual_dist_ - prev_dist_);
+    park_spot_dist_ += std::sin(max_turn_)*std::abs(actual_dist_ - prev_dist_);
     std::cout<<"leaving dist "<<park_spot_dist_<<std::endl;
     if(move_state_ == first_phase)
     {
