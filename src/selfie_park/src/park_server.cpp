@@ -57,7 +57,7 @@ void ParkService::distanceCallback(const std_msgs::Float32 &msg)
 
         }
         if (state_msgs_) ROS_INFO_THROTTLE(5, "go_to_parking_spot");
-        //std::cout<<"go to parking spot"<<std::endl;
+        std::cout<<"go to parking spot"<<std::endl;
         blinkRight(true);
         blinkLeft(false);
         break;
@@ -67,7 +67,7 @@ void ParkService::distanceCallback(const std_msgs::Float32 &msg)
         if (park()) parking_state_ = parked;
         blinkRight(true);
         blinkLeft(false);
-        //std::cout<<"going in"<<std::endl;
+        std::cout<<"going in"<<std::endl;
         break;
 
       case parked:
@@ -78,7 +78,7 @@ void ParkService::distanceCallback(const std_msgs::Float32 &msg)
         blinkRight(true);
         ros::Duration(idle_time_).sleep();
         parking_state_ = going_out;
-        //std::cout<<"parked"<<std::endl;
+        std::cout<<"parked"<<std::endl;
         break;
 
       case going_out:
@@ -86,7 +86,7 @@ void ParkService::distanceCallback(const std_msgs::Float32 &msg)
         blinkRight(false);
         if (state_msgs_) ROS_INFO_THROTTLE(5, "get_out");
         if (leave()) parking_state_ = out;
-        //std::cout<<"going out"<<std::endl;
+        std::cout<<"going out"<<std::endl;
         break;
 
       case out:
@@ -102,7 +102,7 @@ void ParkService::distanceCallback(const std_msgs::Float32 &msg)
         result.done = true;
         as_.setSucceeded(result);
         parking_state_ = not_parking;
-        //std::cout<<"go to parking spot"<<std::endl;
+        std::cout<<"go to parking spot"<<std::endl;
         break;
     }
 }
@@ -137,15 +137,16 @@ void ParkService::initParkingSpot(const geometry_msgs::Polygon &msg)
     {
         if(it->x < min_point_dist) min_point_dist = it->x;
         sum+= it->y;
+        std::cout<<"y "<<it->y<<std::endl;
     }
-    park_spot_dist_ini_ = fabs(sum/4.);
+    park_spot_dist_ini_ = fabs(sum/msg.points.size());
     park_spot_dist_ = park_spot_dist_ini_;
 
     back_target_ = actual_dist_ + min_point_dist + car_length_;
     front_target_ = back_target_ + iter_distance_;
-    //std::cout<<"init parking spot"<<std::endl;
-    //std::cout<<"dist "<<back_target_ - actual_dist_<<std::endl;
-    //std::cout<<park_spot_dist_ini_<<" park dist"<<std::endl;
+    std::cout<<"init parking spot"<<std::endl;
+    std::cout<<"dist "<<back_target_ - actual_dist_<<std::endl;
+    std::cout<<park_spot_dist_ini_<<" park dist"<<std::endl;
 }
 
 
@@ -173,7 +174,9 @@ bool ParkService::toParkingSpot()
 bool ParkService::park()
 {
     park_spot_dist_ -= sin(max_turn_)*fabs(actual_dist_ - prev_dist_);
-    //std::cout<<"park spot dist "<<park_spot_dist_<<std::endl;
+    std::cout<<"sin "<<sin(max_turn_)<<std::endl;
+    std::cout<<"diff "<<actual_dist_ - prev_dist_<<std::endl;
+    std::cout<<"park spot dist "<<park_spot_dist_<<std::endl;
     if(move_state_ == first_phase)
     {
         if(park_spot_dist_ > 0.)
@@ -225,7 +228,7 @@ bool ParkService::leave()
 {
 
     park_spot_dist_ += sin(max_turn_)*fabs(actual_dist_ - prev_dist_);
-    //std::cout<<"leaving dist "<<park_spot_dist_<<std::endl;
+    std::cout<<"leaving dist "<<park_spot_dist_<<std::endl;
     if(move_state_ == first_phase)
     {
     if(park_spot_dist_ < park_spot_dist_ini_)
