@@ -86,6 +86,7 @@ class LaneDetector
 
   std::vector<cv::Point2f> debug_points_;
   std::vector<cv::Point2f> isec_debug_points_;
+  std::vector<cv::Point2f> isec_min_dist_points_;
 
   RoadLine left_line_;
   RoadLine center_line_;
@@ -179,6 +180,9 @@ class LaneDetector
   int isec_HL_thresh_           {25};
   double isec_HL_min_length_    {25};
   int isec_HL_max_gap_          {40};
+
+  float isec_line_close_        {0.10};
+  float isec_angle_diff_        {10 / 57.2957795};
 
   int color_set[20][3] =
   {

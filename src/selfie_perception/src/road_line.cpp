@@ -196,3 +196,13 @@ void RoadLine::reduceTopPoints(float ratio)
   int begin = points_.size() * (1 - ratio);
   points_.erase(points_.begin() + begin, points_.end());
 }
+
+cv::Point2f RoadLine::getPointNextToBottom(float min_dist_to_bottom)
+{
+  for(int i = 1; i < pointsSize(); ++i)
+  {
+    if (points_[i].x - points_[0].x > min_dist_to_bottom)
+      return points_[i];
+  }
+  return points_[pointsSize() - 1];
+}
