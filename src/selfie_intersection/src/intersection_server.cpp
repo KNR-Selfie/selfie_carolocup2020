@@ -20,6 +20,7 @@ IntersectionServer::IntersectionServer(const ros::NodeHandle &nh, const ros::Nod
   pnh_.param<float>("point_max_y", point_max_y_, 2);
   pnh_.param<float>("stop_time", stop_time_, 3);
   pnh_.param<float>("speed_default", speed_default_, 0.3);
+  pnh_.param<int>("num_corners_to_detect", num_corners_to_detect_, 3);
   pnh_.param<bool>("visualization", visualization_, true);
   point_min_x_ = max_distance_to_intersection_;
   point_max_x_ = point_min_x_ + road_width_;
@@ -129,23 +130,21 @@ void IntersectionServer::send_goal()
 void IntersectionServer::filter_boxes(const selfie_msgs::PolygonArray &msg)
 {
   filtered_boxes_.clear();
-  bool box_ok;
   if (!msg.polygons.empty())
   {
     for (int box_nr = msg.polygons.size() - 1; box_nr >= 0; box_nr--)
     {
       geometry_msgs::Polygon polygon = msg.polygons[box_nr];
-      box_ok = true;
+      int corners = 0;
       for (int a = 0; a < 4; ++a)
       {
         Point p(polygon.points[a]);
-        if (!p.check_position(point_min_x_, point_max_x_, point_min_y_, point_max_y_))
+        if (p.check_position(point_min_x_, point_max_x_, point_min_y_, point_max_y_))
         {
-          box_ok = false;
-          break;
+          corners++;
         }
       }
-      if (box_ok)
+      if (corners >= num_corners_to_detect_)
       {
         Box temp_box(polygon);
         filtered_boxes_.push_back(temp_box);
