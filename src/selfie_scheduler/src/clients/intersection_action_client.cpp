@@ -1,4 +1,5 @@
 #include <selfie_scheduler/intersection_action_client.h>
+#include <std_srvs/Empty.h>
 
 IntersectionClient::IntersectionClient(std::string name):
     ac_(name, true)
@@ -6,6 +7,7 @@ IntersectionClient::IntersectionClient(std::string name):
     result_flag_ = EMPTY;
     next_action_ = DRIVING;
     action_state_ = SELFIE_IDLE;
+    avoidingObstSetPassive_ = nh_.serviceClient<std_srvs::Empty>("avoiding_obst_set_passive");
 }
 IntersectionClient::~IntersectionClient()
 {
@@ -58,5 +60,11 @@ void IntersectionClient::cancelAction()
 void IntersectionClient::getActionResult(boost::any &result)
 {
     // result = result_;
+}
+void IntersectionClient::prepareAction()
+{
+    std_srvs::Empty empty_msg;
+    avoidingObstSetPassive_.call(empty_msg);
+    ROS_INFO("Prepare intersection - call avoiding obst passive");
 }
 

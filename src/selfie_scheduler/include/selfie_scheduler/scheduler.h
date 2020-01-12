@@ -24,8 +24,6 @@ class Scheduler
     int begin_action_;
     float start_distance_;
     float parking_spot_;
-    int parking_steering_mode_;
-    int drive_steering_mode_;
 
     program_state current_car_state_;
     program_state previous_car_state_;
@@ -34,17 +32,6 @@ class Scheduler
     std::map<action, ClientInterface*> clients_;
     std::map<action, boost::any> action_args_;
     ClientInterface *current_client_ptr_;
-
-    ros::ServiceClient visionReset_ ;
-    ros::ServiceClient cmdCreatorStartPub_;
-    ros::ServiceClient cmdCreatorStopPub_;
-    ros::ServiceClient avoidingObstSetPassive_;
-    ros::ServiceClient avoidingObstSetActive_;
-    ros::ServiceClient resetLaneController_;
-    ros::ServiceClient steeringModeSetAckermann_;
-    ros::ServiceClient steeringModeSetParallel_;
-    ros::ServiceClient steeringModeSetFrontAxis_;
-
 
     ros::Subscriber switchState_;
     rc_state previousRcState_;
@@ -56,17 +43,7 @@ class Scheduler
     void startAction(action action_to_set);
     void startNextAction();
     void stopAction();
-
-    void setAvoidingObstActive();
-    void setAvoidingObstPassive();
-    void resetLaneControl();
-    void resetVision();
-    void stopCmdCreator();
-    void startCmdCreator();
-    void setParkSteeringMode();
-    void setDriveSteeringMode();
-
-
+    
 public:
     Scheduler();
     ~Scheduler();

@@ -10,33 +10,20 @@ Scheduler::Scheduler() :
     pnh_("~"),
     begin_action_(STARTING),
     start_distance_(1.0),
-    parking_spot_(0.6),
-    parking_steering_mode_(ACKERMANN),
-    drive_steering_mode_(ACKERMANN)
+    parking_spot_(0.6)
 {
     pnh_.getParam("begin_action", begin_action_);
     pnh_.getParam("starting_distance", start_distance_);
     pnh_.getParam("parking_spot", parking_spot_);
-    pnh_.getParam("parking_steering_mode", parking_steering_mode_);
-    pnh_.getParam("drive_steering_mode", drive_steering_mode_);
 
     ROS_INFO("Created scheduler with params: BA: %d, SD: %f, PS: %f", begin_action_, start_distance_, parking_spot_);
 
-    visionReset_ = nh_.serviceClient<std_srvs::Empty>("resetVision");
-    cmdCreatorStartPub_ = nh_.serviceClient<std_srvs::Empty>("cmd_start_pub");
-    cmdCreatorStopPub_ = nh_.serviceClient<std_srvs::Empty>("cmd_stop_pub");
-    avoidingObstSetPassive_ = nh_.serviceClient<std_srvs::Empty>("avoiding_obst_set_passive");
-    avoidingObstSetActive_ = nh_.serviceClient<std_srvs::Empty>("avoiding_obst_set_active");
-    resetLaneController_ = nh_.serviceClient<std_srvs::Empty>("resetLaneControl");
-    steeringModeSetAckermann_ = nh_.serviceClient<std_srvs::Empty>("steering_ackerman");
-    steeringModeSetParallel_ = nh_.serviceClient<std_srvs::Empty>("steering_parallel");
-    steeringModeSetFrontAxis_ = nh_.serviceClient<std_srvs::Empty>("steering_front_axis");
     switchState_ = nh_.subscribe("switch_state", 10, &Scheduler::switchStateCallback, this);
 
     clients_[STARTING] = new StartingProcedureClient("starting_procedure");
     action_args_[STARTING] = start_distance_;
 
-    clients_[DRIVING] = new DriveClient("free_drive");
+    clients_[DRIVING] = new DriveClient("free_drive", pnh_);
     action_args_[DRIVING] = [](bool x){return x;}(false);
 
     previousRcState_ = RC_UNINTIALIZED;
@@ -77,34 +64,24 @@ void Scheduler::setupActionClients(bool button_pressed)
         clients_[PARKING_SEARCH] = new SearchClient("search");
         action_args_[PARKING_SEARCH] = parking_spot_;
 
-        clients_[PARK] = new ParkClient("park");
+        clients_[PARK] = new ParkClient("park", pnh_);
         action_args_[PARK] = [](geometry_msgs::Polygon x){return x;};
     }
     else // intersection mode
     {
         clients_[INTERSECTION] = new IntersectionClient("intersection");
         action_args_[INTERSECTION] = (int)0; // empty goal
-        setAvoidingObstActive();
     }
 }
 void Scheduler::init()
 {
     startAction((action)begin_action_);
-
-    switch(begin_action_)
-    {
-        case(DRIVING):
-            startCmdCreator();
-            break;
-        case(PARK):
-            stopCmdCreator();
-            break;
-    }
 }
 void Scheduler::startAction(action action_to_set)
 {
     current_client_ptr_ = clients_[action_to_set];
     current_client_ptr_->waitForServer(200);
+    current_client_ptr_->prepareAction();
     current_client_ptr_->setGoal(action_args_[action_to_set]);
 }
 void Scheduler::startNextAction()
@@ -112,6 +89,7 @@ void Scheduler::startNextAction()
     action next_action = current_client_ptr_->getNextAction();
     current_client_ptr_ = clients_[next_action];
     current_client_ptr_->waitForServer(200);
+    current_client_ptr_->prepareAction();
     current_client_ptr_->setGoal(action_args_[next_action]);
 }
 int Scheduler::checkIfActionFinished()
@@ -123,7 +101,7 @@ void Scheduler::loop()
     if (checkIfActionFinished() == SUCCESS)
     {
         current_client_ptr_->getActionResult(action_args_[current_client_ptr_->getNextAction()]);
-        shiftAction();
+        startNextAction();
     }
     else if(checkIfActionFinished() == ABORTED)
     {
@@ -135,60 +113,10 @@ void Scheduler::loop()
         else // abort caused by server
         {
             stopAction();
-            resetVision();
             startAction(DRIVING);
-            startCmdCreator();
         }
     }
     stateMachine();
-}
-void Scheduler::setAvoidingObstActive()
-{
-    std_srvs::Empty empty_msg;
-    avoidingObstSetActive_.call(empty_msg);
-}
-void Scheduler::setAvoidingObstPassive()
-{
-    std_srvs::Empty empty_msg;
-    avoidingObstSetPassive_.call(empty_msg);
-}
-void Scheduler::resetLaneControl()
-{
-    std_srvs::Empty empty_msg;
-    resetLaneController_.call(empty_msg);
-}
-void Scheduler::resetVision()
-{
-    std_srvs::Empty empty_msg;
-    visionReset_.call(empty_msg);
-}
-void Scheduler::startCmdCreator()
-{
-    std_srvs::Empty empty_msg;
-    cmdCreatorStartPub_.call(empty_msg);
-}
-void Scheduler::stopCmdCreator()
-{
-    std_srvs::Empty empty_msg;
-    cmdCreatorStopPub_.call(empty_msg);
-}
-void Scheduler::setParkSteeringMode()
-{   
-    std_srvs::Empty empty_msg;
-    if(parking_steering_mode_)
-        steeringModeSetParallel_.call(empty_msg);
-    else
-        steeringModeSetAckermann_.call(empty_msg);
-}
-void Scheduler::setDriveSteeringMode()
-{   
-    std_srvs::Empty empty_msg;
-    if(drive_steering_mode_ == PARALLEL)
-        steeringModeSetParallel_.call(empty_msg);
-    else if(drive_steering_mode_ == ACKERMANN)
-        steeringModeSetAckermann_.call(empty_msg);
-    else if(drive_steering_mode_ == FRONT_AXIS)
-        steeringModeSetFrontAxis_.call(empty_msg);
 }
 template <typename T>
 bool Scheduler::checkCurrentClientType()
@@ -199,45 +127,6 @@ bool Scheduler::checkCurrentClientType()
         return true;
     }
     return false;
-}
-
-void Scheduler::shiftAction()
-{
-    if (checkCurrentClientType<StartingProcedureClient*>())
-    {
-        resetVision();
-        startAction(DRIVING);
-        startCmdCreator();
-        setDriveSteeringMode();
-    }
-    else if (checkCurrentClientType<DriveClient*>())
-    {
-        setAvoidingObstPassive();
-        startNextAction();
-    }
-    else if (checkCurrentClientType<SearchClient*>())
-    {
-        stopCmdCreator();
-        startAction(PARK);
-        setParkSteeringMode();
-    }
-    else if (checkCurrentClientType<ParkClient*>())
-    {
-        resetVision();
-        startAction(DRIVING);
-        startCmdCreator();
-        setDriveSteeringMode();
-    }
-    else if (checkCurrentClientType<IntersectionClient*>())
-    {
-        setAvoidingObstActive();
-        startNextAction();
-        setDriveSteeringMode();
-    }
-    else
-    {
-        ROS_WARN("No such action client!!");
-    }
 }
 void Scheduler::stateMachine()
 {
@@ -291,22 +180,13 @@ void Scheduler::switchStateCallback(const std_msgs::UInt8ConstPtr &msg)
             }
             else if(currentRcState_ == RC_AUTONOMOUS && previousRcState_ == RC_MANUAL)
             {
-                resetVision();
                 startAction(DRIVING);
-                setDriveSteeringMode();
-                startCmdCreator();
-                resetLaneControl();
             }
             else if(currentRcState_ == RC_HALF_AUTONOMOUS && previousRcState_ == RC_MANUAL)
             {
-                resetVision();
                 startAction(DRIVING);
-                setDriveSteeringMode();
-                startCmdCreator();
-                resetLaneControl();
             }
             previousRcState_ = currentRcState_;
         } 
     }
 }
-
