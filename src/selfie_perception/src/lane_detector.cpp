@@ -125,15 +125,15 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
       cv::Mat copy = homography_frame_.clone();
       cv::bitwise_and(homography_frame_, dynamic_mask_, copy);
       //bitwise_not(dynamic_mask_, dynamic_mask_);
-      cv::addWeighted(copy, 0.7, homography_frame_, 0.3, 0, homography_frame_);
+      cv::addWeighted(copy, 0.7, homography_frame_, 0.3, 0, homography_masked_frame_);
 
-      copy = homography_frame_.clone();
-      cv::bitwise_and(homography_frame_, left_lane_ROI_, copy);
-      cv::addWeighted(copy, 0.7, homography_frame_, 0.3, 0, homography_frame_);
+      copy = homography_masked_frame_.clone();
+      cv::bitwise_and(homography_masked_frame_, left_lane_ROI_, copy);
+      cv::addWeighted(copy, 0.7, homography_masked_frame_, 0.3, 0, homography_masked_frame_);
 
-      copy = homography_frame_.clone();
-      cv::bitwise_and(homography_frame_, right_lane_ROI_, copy);
-      cv::addWeighted(copy, 0.7, homography_frame_, 0.3, 0, homography_frame_);
+      copy = homography_masked_frame_.clone();
+      cv::bitwise_and(homography_masked_frame_, right_lane_ROI_, copy);
+      cv::addWeighted(copy, 0.7, homography_masked_frame_, 0.3, 0, homography_masked_frame_);
     }
     detectStartAndIntersectionLine();
 
@@ -144,7 +144,12 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
                     isec_HL_thresh_, isec_HL_min_length_, isec_HL_max_gap_);
   }
   else
+  {
     masked_frame_=  binary_frame_.clone();
+    if (debug_mode_)
+      homography_masked_frame_ = homography_frame_.clone();
+  }
+    
 
   cv::filter2D(masked_frame_, masked_frame_, -1, kernel_v_, cv::Point(-1, -1), 0, cv::BORDER_DEFAULT);
   dilate(masked_frame_, masked_frame_, dilate_element_);
@@ -228,7 +233,7 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
     drawParticles(pf_num_samples_vis_);
 
     convertApproxToFrameCoordinate();
-    drawAproxOnHomography();
+    drawAproxOnHomographyMasked();
     openCVVisualization();
     pointsRVIZVisualization();
   }
@@ -283,23 +288,24 @@ void LaneDetector::detectLines(cv::Mat &input_frame, std::vector<std::vector<cv:
   }
 }
 
-void LaneDetector::drawAproxOnHomography()
+void LaneDetector::drawAproxOnHomographyMasked()
 {
-  cv::cvtColor(homography_frame_, homography_frame_, CV_GRAY2BGR);
+  if(homography_masked_frame_.type() == 0)
+    cv::cvtColor(homography_masked_frame_, homography_masked_frame_, CV_GRAY2BGR);
   if (!aprox_lines_frame_coordinate_[2].empty())
     for (int i = 0; i < aprox_lines_frame_coordinate_[2].size(); ++i)
     {
-      cv::circle(homography_frame_, aprox_lines_frame_coordinate_[2][i], 2, cv::Scalar(255, 0, 0), CV_FILLED);
+      cv::circle(homography_masked_frame_, aprox_lines_frame_coordinate_[2][i], 2, cv::Scalar(255, 0, 0), CV_FILLED);
     }
   if (!aprox_lines_frame_coordinate_[0].empty())
     for (int i = 0; i < aprox_lines_frame_coordinate_[0].size(); ++i)
     {
-      cv::circle(homography_frame_, aprox_lines_frame_coordinate_[0][i], 2, cv::Scalar(0, 0, 255), CV_FILLED);
+      cv::circle(homography_masked_frame_, aprox_lines_frame_coordinate_[0][i], 2, cv::Scalar(0, 0, 255), CV_FILLED);
     }
   if (!aprox_lines_frame_coordinate_[1].empty())
     for (int i = 0; i < aprox_lines_frame_coordinate_[1].size(); ++i)
     {
-      cv::circle(homography_frame_, aprox_lines_frame_coordinate_[1][i], 2, cv::Scalar(0, 255, 0), CV_FILLED);
+      cv::circle(homography_masked_frame_, aprox_lines_frame_coordinate_[1][i], 2, cv::Scalar(0, 255, 0), CV_FILLED);
     }
 
   if (!debug_points_.empty())
@@ -307,9 +313,9 @@ void LaneDetector::drawAproxOnHomography()
     cv::transform(debug_points_, debug_points_, world2topview_.rowRange(0, 2));
     for (int i = 0; i < debug_points_.size(); i += 2)
     {
-      cv::line(homography_frame_, debug_points_[i], debug_points_[i + 1], cv::Scalar(0, 255, 255), 2);
-			cv::circle(homography_frame_, debug_points_[i], 5, cv::Scalar(255, 255, 0), CV_FILLED, cv::LINE_AA);
-			cv::circle(homography_frame_, debug_points_[i + 1], 5, cv::Scalar(255, 255, 0), CV_FILLED, cv::LINE_AA);
+      cv::line(homography_masked_frame_, debug_points_[i], debug_points_[i + 1], cv::Scalar(0, 255, 255), 2);
+	  cv::circle(homography_masked_frame_, debug_points_[i], 5, cv::Scalar(255, 255, 0), CV_FILLED, cv::LINE_AA);
+	  cv::circle(homography_masked_frame_, debug_points_[i + 1], 5, cv::Scalar(255, 255, 0), CV_FILLED, cv::LINE_AA);
     }
   }
 }
@@ -375,7 +381,7 @@ void LaneDetector::openCVVisualization()
   cv::Mat m_binary, m_std, m_four;
   cv::hconcat(binary_frame_, masked_frame_, m_binary);
   cv::cvtColor(m_binary, m_binary, CV_GRAY2BGR);
-  cv::hconcat(debug_frame_, homography_frame_, m_std);
+  cv::hconcat(debug_frame_, homography_masked_frame_, m_std);
   cv::vconcat(m_binary, m_std, m_four);
 
   cv::imshow("STD_DEBUG", m_four);
@@ -1622,7 +1628,7 @@ void LaneDetector::adjust(RoadLine &good_road_line,
   }
   float last_cost = 9999999;  // init huge value
   std::vector<float> tmp_coeff;
-  while (std::fabs(offset) > 1)
+  while (std::fabs(offset) < 1)
   {
     if (polyfit(createOffsetLine(good_road_line.getCoeff(), good_road_line.getDegree(), offset), short_road_line.getDegree(), tmp_coeff))
     {
@@ -2009,7 +2015,12 @@ void LaneDetector::drawParticles(int num)
 {
   if(num > 19)
     num = 19;
-  pf_vis_mat_ = cv::Mat::zeros(homography_frame_.size(), CV_8UC3);
+  pf_vis_mat_ = homography_frame_.clone();
+  if(pf_vis_mat_.type() == 0)
+    cv::cvtColor(pf_vis_mat_, pf_vis_mat_, CV_GRAY2BGR);
+
+  if(num < 2)
+    return;
 
   std::vector<float> pf_coeff;
   std::vector<cv::Point2f> pf_cp;
@@ -2031,9 +2042,9 @@ void LaneDetector::drawParticles(int num)
       }
       cv::transform(pf_line, pf_line, world2topview_.rowRange(0, 2));
       cv::transform(pf_cp, pf_cp, world2topview_.rowRange(0, 2));
-      for (int j = 0; j < pf_line.size(); ++j)
+      for (int j = 1; j < pf_line.size(); ++j)
       {
-        cv::circle(pf_vis_mat_, pf_line[j], 1, cv::Scalar(color_set[i][0], color_set[i][1], color_set[i][2]), CV_FILLED);
+        cv::line(pf_vis_mat_, pf_line[j - 1], pf_line[j], cv::Scalar(color_set[i][0], color_set[i][1], color_set[i][2]), 1.5, CV_AA);
       }
       for (int j = 0; j < pf_cp.size(); ++j)
       {
@@ -2055,9 +2066,9 @@ void LaneDetector::drawParticles(int num)
       }
       cv::transform(pf_line, pf_line, world2topview_.rowRange(0, 2));
       cv::transform(pf_cp, pf_cp, world2topview_.rowRange(0, 2));
-      for (int j = 0; j < pf_line.size(); ++j)
+      for (int j = 1; j < pf_line.size(); ++j)
       {
-        cv::circle(pf_vis_mat_, pf_line[j], 1, cv::Scalar(color_set[i][0], color_set[i][1], color_set[i][2]), CV_FILLED);
+        cv::line(pf_vis_mat_, pf_line[j - 1], pf_line[j], cv::Scalar(color_set[i][0], color_set[i][1], color_set[i][2]), 1.5, CV_AA);
       }
       for (int j = 0; j < pf_cp.size(); ++j)
       {
@@ -2079,9 +2090,9 @@ void LaneDetector::drawParticles(int num)
       }
       cv::transform(pf_line, pf_line, world2topview_.rowRange(0, 2));
       cv::transform(pf_cp, pf_cp, world2topview_.rowRange(0, 2));
-      for (int j = 0; j < pf_line.size(); ++j)
+      for (int j = 1; j < pf_line.size(); ++j)
       {
-        cv::circle(pf_vis_mat_, pf_line[j], 1, cv::Scalar(color_set[i][0], color_set[i][1], color_set[i][2]), CV_FILLED);
+        cv::line(pf_vis_mat_, pf_line[j - 1], pf_line[j], cv::Scalar(color_set[i][0], color_set[i][1], color_set[i][2]), 1.5, CV_AA);
       }
       for (int j = 0; j < pf_cp.size(); ++j)
       {

@@ -71,6 +71,7 @@ class LaneDetector
   cv::Mat right_lane_ROI_;
   cv::Mat right_lane_frame_;
   cv::Mat homography_frame_;
+  cv::Mat homography_masked_frame_;
   cv::Mat debug_frame_;
   cv::Mat hom_cut_mask_;
   cv::Mat hom_cut_mask_inv_;
@@ -135,7 +136,7 @@ class LaneDetector
   sensor_msgs::PointCloud points_cloud_;
   ros::Publisher points_cloud_pub_;
   void pointsRVIZVisualization();
-  void drawAproxOnHomography();
+  void drawAproxOnHomographyMasked();
   void lanesVectorVisualization(cv::Mat &visualization_frame);
   void drawParticles(int num);
 
