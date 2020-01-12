@@ -189,7 +189,7 @@ float ParticleFilter::findMinPointToParabola(cv::Point2f p, std::vector<float> c
   cv::Point2f poly_p;
   poly_p.x = p.x;
   poly_p.y = getPolyY(coeff, p.x);
-  float min = p.y - poly_p.y;
+  float min = std::abs(p.y - poly_p.y);
   float new_min = min;
   float step = 0.05;
   int it = 0;
@@ -200,7 +200,9 @@ float ParticleFilter::findMinPointToParabola(cv::Point2f p, std::vector<float> c
     poly_p.y = getPolyY(coeff, poly_p.x);
     new_min = getDistance(p, poly_p);
     ++it;
-  } while (new_min - min < 0 || it > 20);
+    if (it > 5)
+      break;
+  } while (new_min - min < 0);
   return std::fabs(min);
 }
 

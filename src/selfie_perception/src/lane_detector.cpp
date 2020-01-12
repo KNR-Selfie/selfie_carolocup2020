@@ -580,7 +580,7 @@ float LaneDetector::findMinPointToParabola(cv::Point2f p, std::vector<float> coe
   cv::Point2f poly_p;
   poly_p.x = p.x;
   poly_p.y = getPolyY(coeff, p.x);
-  float min = p.y - poly_p.y;
+  float min = std::abs(p.y - poly_p.y);
   float new_min = min;
   float step = 0.05;
   int it = 0;
@@ -591,7 +591,9 @@ float LaneDetector::findMinPointToParabola(cv::Point2f p, std::vector<float> coe
     poly_p.y = getPolyY(coeff, poly_p.x);
     new_min = getDistance(p, poly_p);
     ++it;
-  } while (new_min - min < 0 || it > 20);
+    if (it > 5)
+      break;
+  } while (new_min - min < 0);
   return min;
 }
 
@@ -1620,7 +1622,7 @@ void LaneDetector::adjust(RoadLine &good_road_line,
   }
   float last_cost = 9999999;  // init huge value
   std::vector<float> tmp_coeff;
-  while (true || std::fabs(offset) > 1)
+  while (std::fabs(offset) > 1)
   {
     if (polyfit(createOffsetLine(good_road_line.getCoeff(), good_road_line.getDegree(), offset), short_road_line.getDegree(), tmp_coeff))
     {
@@ -1652,7 +1654,7 @@ void LaneDetector::adjust(RoadLine &good_road_line,
   {
     short_road_line.setCoeff(tmp_coeff);
   }
-  
+
 }
 
 void LaneDetector::calcRoadWidth()
