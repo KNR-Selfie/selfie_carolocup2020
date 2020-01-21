@@ -173,7 +173,7 @@ bool ParkService::toParkingSpot()
 
 bool ParkService::park()
 {
-    park_spot_dist_ -= std::sin(max_turn_)*std::abs(actual_dist_ - prev_dist_);
+    park_spot_dist_ -= 1./2.*std::sin(max_turn_)*std::abs(actual_dist_ - prev_dist_);
     std::cout<<"sin "<<sin(max_turn_)<<std::endl;
     std::cout<<"diff "<<actual_dist_ - prev_dist_<<std::endl;
     std::cout<<"park spot dist "<<park_spot_dist_<<std::endl;
@@ -220,14 +220,14 @@ bool ParkService::park()
         }
         
     }
-    return false;
     prev_dist_ = actual_dist_;
+    return false;
 }
 
 bool ParkService::leave()
 {
 
-    park_spot_dist_ += std::sin(max_turn_)*std::abs(actual_dist_ - prev_dist_);
+    park_spot_dist_ += 1./2.*std::sin(max_turn_)*std::abs(actual_dist_ - prev_dist_);
     std::cout<<"leaving dist "<<park_spot_dist_<<std::endl;
     if(move_state_ == first_phase)
     {
@@ -272,8 +272,8 @@ bool ParkService::leave()
         }
         
     }
-    return false;
     prev_dist_ = actual_dist_;
+    return false;
 
 }
 
