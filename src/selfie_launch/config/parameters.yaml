@@ -86,6 +86,7 @@ intersection_server:
     point_max_y: 1.5,
     stop_time: 3,
     speed_default: 0.3,
+    num_corners_to_detect: 3,
   }
 pid_controller: 
   {
