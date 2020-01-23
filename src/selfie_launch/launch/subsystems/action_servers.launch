@@ -21,7 +21,7 @@
   <node name="starting_procedure" type="starting_procedure" pkg="selfie_starting_procedure" respawn="true" output="screen">
   </node>
   
-  <node name="intersection_server_node" type="intersection_server_node" pkg="selfie_intersection" respawn="true" output="screen">
+  <node name="intersection_server" type="intersection_server" pkg="selfie_intersection" respawn="true" output="screen">
   <param name="visualization_of_intersection" value="$(arg i_visualization_of_intersection)" />
   </node>
 
