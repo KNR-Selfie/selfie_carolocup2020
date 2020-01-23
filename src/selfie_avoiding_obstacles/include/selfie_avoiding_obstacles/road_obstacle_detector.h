@@ -11,9 +11,9 @@
 #include <geometry_msgs/PolygonStamped.h>
 #include <selfie_msgs/PolygonArray.h>
 #include <selfie_msgs/RoadMarkings.h>
+#include <std_msgs/Bool.h>
 #include <std_msgs/Float32.h>
 #include <std_msgs/Float64.h>
-#include <std_msgs/Bool.h>
 #include <std_srvs/Empty.h>
 #include <visualization_msgs/Marker.h>
 #include <dynamic_reconfigure/server.h>
@@ -82,6 +82,10 @@ private:
   float current_offset_;
   float pos_tolerance_;
   float return_distance_; // after passing this distance car returns on right lane
+
+  float gradual_return_distance_;         // returning from left lane should be gradual, and it should take about
+                                          // "gradual_return_distance_" meters
+  float distance_when_started_returning_; // saved when we begin returning
 
   int proof_overtake_;
   int num_proof_to_overtake_;

@@ -34,6 +34,7 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
   pnh_.param<float>("pos_tolerance", pos_tolerance_, 0.01);
   pnh_.param<int>("num_proof_to_overtake", num_proof_to_overtake_, 3);
   pnh_.param<int>("num_corners_to_detect", num_corners_to_detect_, 3);
+  pnh_.param<float>("gradual_return_distance", gradual_return_distance_, 1.5);
 
   dr_server_.setCallback(dr_server_CB_);
   passive_mode_service_ = nh_.advertiseService("/avoiding_obst_set_passive", &Road_obstacle_detector::switchToPassive, this);
@@ -244,6 +245,7 @@ void Road_obstacle_detector::distanceCallback(const std_msgs::Float32 &msg)
     status_ = RETURN;
     ROS_INFO("LC: RETURN");
     return_distance_calculated_ = false;
+    distance_when_started_returning_ = current_distance_;
     selfie_msgs::PolygonArray temp;
     obstacle_callback(temp);
   }
@@ -259,8 +261,7 @@ void Road_obstacle_detector::posOffsetCallback(const std_msgs::Float64 &msg)
     blinkLeft(false);
     selfie_msgs::PolygonArray temp;
     obstacle_callback(temp);
-  }
-  else if (status_ == RETURN && current_offset_ < right_lane_ + pos_tolerance_)
+  } else if (status_ == RETURN && current_offset_ < right_lane_ + pos_tolerance_)
   {
     status_ = ON_RIGHT;
     ROS_INFO("LC: ON_RIGHT");
