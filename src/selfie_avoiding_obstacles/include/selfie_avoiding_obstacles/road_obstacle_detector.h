@@ -7,8 +7,10 @@
 #include <list>
 #include <ros/ros.h>
 
+#include <dynamic_reconfigure/server.h>
 #include <geometry_msgs/Polygon.h>
 #include <geometry_msgs/PolygonStamped.h>
+#include <selfie_avoiding_obstacles/LaneControllerConfig.h>
 #include <selfie_msgs/PolygonArray.h>
 #include <selfie_msgs/RoadMarkings.h>
 #include <std_msgs/Bool.h>
@@ -16,8 +18,6 @@
 #include <std_msgs/Float64.h>
 #include <std_srvs/Empty.h>
 #include <visualization_msgs/Marker.h>
-#include <dynamic_reconfigure/server.h>
-#include <selfie_avoiding_obstacles/LaneControllerConfig.h>
 
 #include <ros/console.h>
 
@@ -76,6 +76,12 @@ private:
 
   float maximum_distance_to_obstacle_; // to avoid changing lane too early
   float maximum_length_of_obstacle_;
+  float speed_of_dynamic_obstacle_;
+  float previous_distance_to_obstacle_;
+  float time_of_previous_distance_measurement_;
+  float time_of_this_distance_measurement_;
+  float speed_est_tolerance_;
+  bool obstacle_is_moving_;
 
   float safety_margin_; // safety margin considering inaccurations in measuring distance etc..
   float current_distance_;
@@ -105,8 +111,7 @@ private:
 
   dynamic_reconfigure::Server<selfie_avoiding_obstacles::LaneControllerConfig> dr_server_;
   dynamic_reconfigure::Server<selfie_avoiding_obstacles::LaneControllerConfig>::CallbackType dr_server_CB_;
-  void reconfigureCB(selfie_avoiding_obstacles::LaneControllerConfig& config, uint32_t level);
-
+  void reconfigureCB(selfie_avoiding_obstacles::LaneControllerConfig &config, uint32_t level);
 
   void filter_boxes(const selfie_msgs::PolygonArray &);           // filters boxes and saves in filtered_boxes_
   void road_markings_callback(const selfie_msgs::RoadMarkings &); // checks if boxes from filtered_boxes_ are on right lane
@@ -114,6 +119,7 @@ private:
   void distanceCallback(const std_msgs::Float32 &);
   void posOffsetCallback(const std_msgs::Float64 &);
   void calculate_return_distance();
+  bool checkIfObstacleIsMoving();
 
   bool switchToActive(std_srvs::Empty::Request &, std_srvs::Empty::Response &);
   bool switchToPassive(std_srvs::Empty::Request &, std_srvs::Empty::Response &);
