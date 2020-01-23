@@ -226,7 +226,7 @@ public:
   {
     visualization_msgs::Marker marker;
 
-    marker.header.frame_id = "laser";
+    marker.header.frame_id = "base_link";
     marker.header.stamp = ros::Time::now();
     marker.ns = name;
     marker.type = visualization_msgs::Marker::LINE_LIST;
@@ -258,7 +258,7 @@ public:
   {
     visualization_msgs::Marker marker;
 
-    marker.header.frame_id = "laser";
+    marker.header.frame_id = "base_link";
     marker.header.stamp = ros::Time::now();
     marker.ns = name;
     marker.type = visualization_msgs::Marker::LINE_LIST;
