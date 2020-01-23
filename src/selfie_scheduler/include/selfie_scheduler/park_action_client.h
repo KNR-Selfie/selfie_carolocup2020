@@ -11,9 +11,14 @@ protected:
     actionlib::SimpleActionClient<selfie_msgs::parkAction> ac_;
     selfie_msgs::parkGoal goal_;
     bool result_;
+    ros::NodeHandle pnh_;
+    int parking_steering_mode_;
+    ros::ServiceClient cmdCreatorStopPub_;
+    ros::ServiceClient steeringModeSetAckermann_;
+    ros::ServiceClient steeringModeSetParallel_;
 
 public:
-    ParkClient(std::string name);
+    ParkClient(std::string name, const ros::NodeHandle &pnh);
     ~ParkClient();
 
     void setGoal(boost::any goal);
@@ -27,6 +32,8 @@ public:
     void feedbackCb(const selfie_msgs::parkFeedbackConstPtr& feedback);
     bool getResult();
     void getActionResult(boost::any &result);
+    void setParkSteeringMode();
+    void prepareAction();
 };
 
 

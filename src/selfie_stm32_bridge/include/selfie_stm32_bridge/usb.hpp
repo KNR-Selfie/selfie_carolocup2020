@@ -17,7 +17,6 @@
 enum
 {
   frame_startbyte = 0xFF,
-  frame_code = 0x40,
   frame_endbyte = 0xFE,
 }data_frame_control_bytes;
 
@@ -30,13 +29,23 @@ enum
   cmd_ready = 0x30,
   cmd_bootloader = 0xDE,
   cmd_reset = 0xAD,
+  headligths_on = 0x50,
+  headligths_off = 0x51,
+  headligths_set_low_beam = 0x52,
+  headligths_set_high_beam = 0x53,
+
+
+  left_indicator_on = 0x58,
+  left_indicator_off = 0x59,
+  rigth_indicator_on = 0x5A,
+  rigth_indicator_off = 0x5B,
+  reset_buttons = 0x60,
 
 }usb_commands;
 
 typedef struct __attribute__((__packed__))
 {
-    uint8_t startbyte;
-    uint8_t code;
+    uint8_t start_code;
     uint8_t length;
 
     uint32_t timecode;
@@ -47,30 +56,27 @@ typedef struct __attribute__((__packed__))
     uint16_t yaw;
     int16_t rates[3];
     int16_t acc[3];
-    uint8_t start_button1;
-    uint8_t start_button2;
-    uint8_t reset_vision;
-    uint8_t switch_state;
-
-    uint8_t endByte;
+    uint8_t buttons;
+    uint8_t lights;
+    uint8_t futaba_state;
+    uint16_t crc16;
+    uint8_t end_code;
 
 } UsbReadFrame_s;
 
 #define USB_RECEIVE_SIZE sizeof(UsbReadFrame_s)
 typedef struct __attribute__((__packed__))
 {
-    uint8_t startbyte;
-    uint8_t code;
+    uint8_t start_code;
     uint8_t length;
-    uint32_t timestamp_ms;
-    int16_t steering_angle;
-    int16_t steering_angle_velocity;
+    uint32_t timecode;
+    int16_t steering_fi_front;
+    int16_t steering_fi_back;
     int16_t speed;
     int16_t acceleration;
     int16_t jerk;
-    uint8_t left_indicator;
-    uint8_t right_indicator;
-    uint8_t endbyte;
+    uint16_t crc16;
+    uint8_t end_code;
 
 }UsbSendFrame_s;
 #define USB_SEND_SIZE sizeof(UsbSendFrame_s)
@@ -83,12 +89,13 @@ private:
     UsbSendFrame_s *send_frame;
     unsigned char read_buffer[512];
     unsigned char send_buffer[sizeof(UsbSendFrame_s)];
-
+    
 public:
   int init(int speed = B115200);
   bool read_from_STM();
-  void send_to_STM(uint32_t timestamp_ms, Sub_messages to_send);
+  void send_frame_to_STM(uint32_t timestamp_ms, Sub_messages to_send);
   void fill_publishers(Pub_messages& to_publish);
+  void send_cmd_to_STM(uint8_t cmd);
   ~USB_STM();
 };
 

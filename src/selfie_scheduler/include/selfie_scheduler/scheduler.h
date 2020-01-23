@@ -33,13 +33,6 @@ class Scheduler
     std::map<action, boost::any> action_args_;
     ClientInterface *current_client_ptr_;
 
-    ros::ServiceClient visionReset_ ;
-    ros::ServiceClient cmdCreatorStartPub_;
-    ros::ServiceClient cmdCreatorStopPub_;
-    ros::ServiceClient avoidingObstSetPassive_;
-    ros::ServiceClient avoidingObstSetActive_;
-    ros::ServiceClient resetLaneController_;
-
     ros::Subscriber switchState_;
     rc_state previousRcState_;
     rc_state currentRcState_;
@@ -50,13 +43,7 @@ class Scheduler
     void startAction(action action_to_set);
     void startNextAction();
     void stopAction();
-
-    void setAvoidingObstActive();
-    void resetLaneControl();
-    void resetVision();
-    void stopCmdCreator();
-    void startCmdCreator();
-
+    
 public:
     Scheduler();
     ~Scheduler();

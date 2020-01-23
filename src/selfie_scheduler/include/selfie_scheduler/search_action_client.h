@@ -26,6 +26,7 @@ public:
     void activeCb();
     void feedbackCb(const selfie_msgs::searchFeedbackConstPtr& feedback);
     void getActionResult(boost::any &result);
+    void prepareAction();
 };
 
 #endif // SEARCH_ACTION_CLIENT_H

@@ -9,6 +9,7 @@ class IntersectionClient : public ClientInterface
 protected:
     actionlib::SimpleActionClient<selfie_msgs::intersectionAction> ac_;
     selfie_msgs::intersectionGoal goal_;
+    ros::ServiceClient avoidingObstSetPassive_;
     bool result_;
 public:
     IntersectionClient(std::string name);
@@ -25,6 +26,7 @@ public:
     void feedbackCb(const selfie_msgs::intersectionFeedbackConstPtr& feedback);
     bool getResult();
     void getActionResult(boost::any &result);
+    void prepareAction();
 };
 
 #endif // INTERSECTION_ACTION_CLIENT_H
