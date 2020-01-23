@@ -11,7 +11,7 @@ ObstaclesGenerator::ObstaclesGenerator(const ros::NodeHandle &nh, const ros::Nod
   visualization_frame_("base_link"),
   output_frame_("base_link"),
 
-  visualize_(false),
+  visualize_(true),
 
   lidar_offset_(0),
   segment_threshold_(0.03),

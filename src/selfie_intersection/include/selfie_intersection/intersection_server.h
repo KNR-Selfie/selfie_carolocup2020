@@ -28,7 +28,7 @@ private:
   double current_time_;
   double difftime_;
   bool time_started_;
-  float stop_time_;  //How long car should stop when approached intersection
+  float stop_time_; // How long car should stop when approached intersection
   float speed_default_;
 
   float point_min_x_; // Area of interest
@@ -38,6 +38,7 @@ private:
   float road_width_;
   float max_distance_to_intersection_; // Describrs how far before intersection
                                        // car should stop
+  int num_corners_to_detect_;
   bool visualization_;
 
   std::list<Box> filtered_boxes_;
