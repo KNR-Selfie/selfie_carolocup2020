@@ -35,6 +35,7 @@ protected:
   //subscribers
   ros::Subscriber starting_line_sub_;
   ros::Subscriber intersection_sub_;
+  ros::Subscriber distance_sub_;
 
   //publishers
   ros::Publisher max_speed_pub_;
@@ -46,6 +47,10 @@ protected:
 
   float starting_line_distance_to_end_;
   float intersection_distance_to_end_;
+
+  bool event_verified_                 {true};
+  float distance_on_last_event_        {0.0};
+  float distance_to_verify_event_      {2.0};
 
   float max_speed_;
   int last_feedback_ {AUTONOMOUS_DRIVE};
@@ -67,5 +72,6 @@ public:
   void preemptCB();
   void startingLineCB(const std_msgs::Float32 &msg);
   void intersectionCB(const std_msgs::Float32 &msg);
+  void distanceCB(const std_msgs::Float32 &msg);
 };
 #endif // FREE_DRIVE_ACTION_H
