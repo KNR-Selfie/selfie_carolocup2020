@@ -203,6 +203,6 @@ install(DIRECTORY include/${PROJECT_NAME}/
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
 
-add_executable(free_drive src/free_drive_action.cpp src/free_drive.cpp)
+add_executable(free_drive src/free_drive_server.cpp src/free_drive.cpp)
 target_link_libraries(free_drive ${catkin_LIBRARIES})
 add_dependencies(free_drive ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencfg)
