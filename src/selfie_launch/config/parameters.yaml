@@ -1,14 +1,14 @@
 detect_markings: 
   {
     threshold_c: -25,
-    real_window_size: 0.05,
+    real_window_size: 0.1,
 
     pf_num_points: 3,
     pf_num_samples: 30,
     pf_num_samples_vis: 4,
     pf_std: 0.02,
     obstacle_window_size: 0.09,
-    obstacles_threshold: 195,
+    obstacles_threshold: 200,
 
     max_mid_line_distance: 0.15,
     max_mid_line_gap: 0.38

@@ -82,7 +82,13 @@ void RoadLine::pfReset()
 
 void RoadLine::aprox()
 {
-  polyfit(points_, degree_, coeff_);
+  if(!polyfit(points_, degree_, coeff_))
+  {
+    coeff_.clear();
+    coeff_.push_back(0.2);
+    coeff_.push_back(0);
+    coeff_.push_back(0);
+  }
 }
 
 int RoadLine::pointsSize()
@@ -110,16 +116,23 @@ void RoadLine::calcParams()
     is_short_ = true;
 }
 
-void RoadLine::addBottomPoint()
+void RoadLine::addBottomPoint(bool force)
 {
   if (!exist_)
     return;
 
-  if (points_[0].x < ((TOPVIEW_MIN_X + TOPVIEW_MAX_X) / 3))
+  if (force || points_[0].x < ((TOPVIEW_MIN_X + TOPVIEW_MAX_X) / 3))
   {
     cv::Point2f p;
     p.x = TOPVIEW_MIN_X;
-    p.y = points_[0].y;
+    if (force)
+    {
+      p.y = points_[pointsSize()].y;
+    }
+    else
+    {
+      p.y = points_[0].y;
+    }
     points_.insert(points_.begin(), p);
   }
 }
@@ -179,4 +192,23 @@ void RoadLine::reset()
   coeff_.push_back(0.2);
   coeff_.push_back(0);
   coeff_.push_back(0);
+}
+
+void RoadLine::reduceTopPoints(float ratio)
+{
+  if (points_.empty())
+    return;
+
+  int begin = points_.size() * (1 - ratio);
+  points_.erase(points_.begin() + begin, points_.end());
+}
+
+cv::Point2f RoadLine::getPointNextToBottom(float min_dist_to_bottom)
+{
+  for(int i = 1; i < pointsSize(); ++i)
+  {
+    if (points_[i].x - points_[0].x > min_dist_to_bottom)
+      return points_[i];
+  }
+  return points_[pointsSize() - 1];
 }

@@ -57,6 +57,7 @@ class LaneDetector
   cv::Mat world2topview_;
 
   cv::Mat kernel_v_;
+  cv::Mat kernel_h_;
   cv::Mat dilate_element_;
   cv::Mat close_element_;
   cv::Mat obstacle_element_;
@@ -70,17 +71,23 @@ class LaneDetector
   cv::Mat right_lane_ROI_;
   cv::Mat right_lane_frame_;
   cv::Mat homography_frame_;
+  cv::Mat homography_masked_frame_;
   cv::Mat debug_frame_;
   cv::Mat hom_cut_mask_;
   cv::Mat hom_cut_mask_inv_;
   cv::Mat obstacles_mask_;
   cv::Mat pf_vis_mat_;
+  cv::Mat outside_road_;
 
   std::vector<std::vector<cv::Point> > lines_vector_;
   std::vector<std::vector<cv::Point2f> > lines_vector_converted_;
   std::vector<std::vector<cv::Point2f> > aprox_lines_frame_coordinate_;
+  std::vector<cv::Vec4i> lines_out_h_;
+  std::vector<cv::Point2f> lines_out_h_world_;
 
   std::vector<cv::Point2f> debug_points_;
+  std::vector<cv::Point2f> isec_debug_points_;
+  std::vector<cv::Point2f> isec_min_dist_points_;
 
   RoadLine left_line_;
   RoadLine center_line_;
@@ -113,7 +120,7 @@ class LaneDetector
   void adjust(RoadLine &good_road_line, RoadLine &short_road_line, bool left_offset);
   void calcRoadWidth();
   void generatePoints();
-  std::vector<cv::Point2f> createOffsetLine(const std::vector<float> &coeff, const int &degree, float offset, float height = 0.2);
+  std::vector<cv::Point2f> createOffsetLine(const std::vector<float> &coeff, const int &degree, float offset);
   void detectStartAndIntersectionLine();
   void recognizeLinesNew();
   void LCRLinesDraw(cv::Mat &visualization_frame);
@@ -122,12 +129,14 @@ class LaneDetector
   void tuneParams(const ros::TimerEvent &time);
   static void static_thresh_c_trackbar(int v, void *ptr);
   void on_thresh_c_trackbar(int v);
+  bool isIntersection();
+  void drawIntersection();
 
   // visualization
   sensor_msgs::PointCloud points_cloud_;
   ros::Publisher points_cloud_pub_;
   void pointsRVIZVisualization();
-  void drawAproxOnHomography();
+  void drawAproxOnHomographyMasked();
   void lanesVectorVisualization(cv::Mat &visualization_frame);
   void drawParticles(int num);
 
@@ -140,6 +149,8 @@ class LaneDetector
   float right_lane_width_       {0.4};
   int proof_intersection_       {0};
   int proof_start_line_         {0};
+  float intersection_line_dist_ {-1};
+  bool intersection_            {false};
 
 // parameterized
   std::string config_file_      {""};
@@ -164,6 +175,15 @@ class LaneDetector
   int pf_num_points_            {3};
   float pf_std_                 {0.02};
   int pf_num_samples_vis_       {20};
+
+  double isec_HL_dist_res_      {1};
+  double isec_HL_angle_res_     {CV_PI / 180};
+  int isec_HL_thresh_           {25};
+  double isec_HL_min_length_    {25};
+  int isec_HL_max_gap_          {40};
+
+  float isec_line_close_        {0.10};
+  float isec_angle_diff_        {10 / 57.2957795};
 
   int color_set[20][3] =
   {

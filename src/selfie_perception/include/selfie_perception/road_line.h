@@ -15,8 +15,10 @@ public:
   void aprox();
   int pointsSize();
   void calcParams();
-  void addBottomPoint();
+  void addBottomPoint(bool force = false);
   void generateForDensity();
+  void reduceTopPoints(float ratio);
+  cv::Point2f getPointNextToBottom(float min_dist_to_bottom);
   void reset();
 
   void pfSetup(int num_particles, int num_control_points, float std);
