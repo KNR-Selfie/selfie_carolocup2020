@@ -25,6 +25,7 @@ public:
     void activeCb();
     void feedbackCb(const selfie_msgs::startingFeedbackConstPtr& feedback);
     void getActionResult(boost::any &result);
+    void prepareAction();
 };
 
 #endif // STARTING_ACTION_CLIENT_H

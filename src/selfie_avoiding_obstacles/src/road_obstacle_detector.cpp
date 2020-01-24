@@ -17,6 +17,7 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
     , current_offset_(0)
     , return_distance_calculated_(false)
     , pos_tolerance_(0.01)
+    , dr_server_CB_(boost::bind(&Road_obstacle_detector::reconfigureCB, this, _1, _2))
 {
   pnh_.param<bool>("visualization", visualization_, false);
   pnh_.param<float>("maximum_length_of_obstacle", maximum_length_of_obstacle_, 0.8);
@@ -33,7 +34,9 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
   pnh_.param<float>("pos_tolerance", pos_tolerance_, 0.01);
   pnh_.param<int>("num_proof_to_overtake", num_proof_to_overtake_, 3);
   pnh_.param<int>("num_corners_to_detect", num_corners_to_detect_, 3);
-  
+  pnh_.param<float>("gradual_return_distance", gradual_return_distance_, 1.5);
+
+  dr_server_.setCallback(dr_server_CB_);
   passive_mode_service_ = nh_.advertiseService("/avoiding_obst_set_passive", &Road_obstacle_detector::switchToPassive, this);
   active_mode_service_ = nh_.advertiseService("/avoiding_obst_set_active", &Road_obstacle_detector::switchToActive, this);
   reset_node_service_ = nh_.advertiseService("/resetLaneControl", &Road_obstacle_detector::reset_node, this);
@@ -242,6 +245,7 @@ void Road_obstacle_detector::distanceCallback(const std_msgs::Float32 &msg)
     status_ = RETURN;
     ROS_INFO("LC: RETURN");
     return_distance_calculated_ = false;
+    distance_when_started_returning_ = current_distance_;
     selfie_msgs::PolygonArray temp;
     obstacle_callback(temp);
   }
@@ -257,8 +261,7 @@ void Road_obstacle_detector::posOffsetCallback(const std_msgs::Float64 &msg)
     blinkLeft(false);
     selfie_msgs::PolygonArray temp;
     obstacle_callback(temp);
-  }
-  else if (status_ == RETURN && current_offset_ < right_lane_ + pos_tolerance_)
+  } else if (status_ == RETURN && current_offset_ < right_lane_ + pos_tolerance_)
   {
     status_ = ON_RIGHT;
     ROS_INFO("LC: ON_RIGHT");
@@ -268,7 +271,11 @@ void Road_obstacle_detector::posOffsetCallback(const std_msgs::Float64 &msg)
   }
 }
 
-void Road_obstacle_detector::passive_timer_cb(const ros::TimerEvent &time) { setpoint_pub_.publish(setpoint_value_); }
+void Road_obstacle_detector::passive_timer_cb(const ros::TimerEvent &time)
+{
+  setpoint_value_.data = right_lane_;
+  setpoint_pub_.publish(setpoint_value_);
+}
 
 bool Road_obstacle_detector::switchToActive(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response)
 {
@@ -322,4 +329,56 @@ void Road_obstacle_detector::blinkRight(bool on)
   msg.data = on;
   right_indicator_pub_.publish(msg);
   return;
+}
+void Road_obstacle_detector::reconfigureCB(selfie_avoiding_obstacles::LaneControllerConfig& config, uint32_t level){
+    if(left_lane_ != (float)config.left_lane_setpoint)
+    {
+        left_lane_ = config.left_lane_setpoint;
+        ROS_INFO("Left lane setpoint new value: %f",left_lane_);
+    }
+    if(maximum_distance_to_obstacle_ != (float)config.maximum_distance_to_obstacle)
+    {
+        maximum_distance_to_obstacle_ = config.maximum_distance_to_obstacle;
+        ROS_INFO("Maximum_distance_to_obstacle new value: %f", maximum_distance_to_obstacle_);
+    }
+    if(maximum_length_of_obstacle_ != (float)config.maximum_length_of_obstacle)
+    {
+        maximum_length_of_obstacle_ = config.maximum_length_of_obstacle;
+        ROS_INFO("Maximum_length_of_obstacle new value: %f", maximum_length_of_obstacle_);
+    }
+    if(max_speed_ != (float)config.maximum_speed)
+    {
+        max_speed_ = config.maximum_speed;
+        ROS_INFO("max_speed new value: %f", max_speed_);
+    }
+    if(num_corners_to_detect_ != config.num_corners_to_detect)
+    {
+        num_corners_to_detect_ = config.num_corners_to_detect;
+        ROS_INFO("num_corners_to_detect new value: %d", num_corners_to_detect_);
+    }
+    if(num_proof_to_overtake_ != config.num_proof_to_overtake)
+    {
+        num_proof_to_overtake_ = config.num_proof_to_overtake;
+        ROS_INFO("num_proof_to_overtake new value: %d", num_proof_to_overtake_);
+    }
+    if(pos_tolerance_ != (float)config.pos_tolerance)
+    {
+        pos_tolerance_ = config.pos_tolerance;
+        ROS_INFO("pos_tolerance new value: %f", pos_tolerance_);
+    }
+    if(right_lane_ != (float)config.right_lane_setpoint)
+    {
+        right_lane_ = config.right_lane_setpoint;
+        ROS_INFO("right_lane_setpoint new value: %f", right_lane_);
+    }
+    if(safety_margin_ != (float)config.safety_margin)
+    {
+        safety_margin_ = config.safety_margin;
+        ROS_INFO("safety_margin new value: %f", safety_margin_);
+    }
+    if(safe_speed_ != (float)config.safe_speed)
+    {
+        safe_speed_ = config.safe_speed;
+        ROS_INFO("safe_speed new value: %f", safe_speed_);
+    }
 }

@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   selfie_msgs
   selfie_scheduler
+  dynamic_reconfigure
 )
 
 ## System dependencies are found with CMake's conventions
@@ -91,10 +92,9 @@ find_package(Boost REQUIRED COMPONENTS system)
 ##     and list every .cfg file to be processed
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
-# generate_dynamic_reconfigure_options(
-#   cfg/DynReconf1.cfg
-#   cfg/DynReconf2.cfg
-# )
+generate_dynamic_reconfigure_options(
+   cfg/selfie_free_drive.cfg
+)
 
 ###################################
 ## catkin specific configuration ##
@@ -205,4 +205,4 @@ install(DIRECTORY include/${PROJECT_NAME}/
 
 add_executable(free_drive src/free_drive_action.cpp src/free_drive.cpp)
 target_link_libraries(free_drive ${catkin_LIBRARIES})
-add_dependencies(free_drive ${catkin_EXPORTED_TARGETS})
+add_dependencies(free_drive ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencfg)

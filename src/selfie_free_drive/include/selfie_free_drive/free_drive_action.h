@@ -16,6 +16,8 @@
 #include <std_msgs/Float64.h>
 #include <selfie_scheduler/scheduler_enums.h>
 #include <ackermann_msgs/AckermannDriveStamped.h>
+#include <selfie_free_drive/FreeDriveConfig.h>
+#include <dynamic_reconfigure/server.h>
 
 class FreeDriveAction
 {
@@ -47,6 +49,11 @@ protected:
 
   float max_speed_;
   int last_feedback_ {AUTONOMOUS_DRIVE};
+
+  dynamic_reconfigure::Server<selfie_free_drive::FreeDriveConfig> dr_server_;
+  dynamic_reconfigure::Server<selfie_free_drive::FreeDriveConfig>::CallbackType dr_server_CB_;
+  void reconfigureCB(selfie_free_drive::FreeDriveConfig& config, uint32_t level);
+
 
 public:
   FreeDriveAction(const ros::NodeHandle &nh, const ros::NodeHandle &pnh);

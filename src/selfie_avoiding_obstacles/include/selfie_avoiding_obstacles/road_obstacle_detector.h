@@ -11,11 +11,13 @@
 #include <geometry_msgs/PolygonStamped.h>
 #include <selfie_msgs/PolygonArray.h>
 #include <selfie_msgs/RoadMarkings.h>
+#include <std_msgs/Bool.h>
 #include <std_msgs/Float32.h>
 #include <std_msgs/Float64.h>
-#include <std_msgs/Bool.h>
 #include <std_srvs/Empty.h>
 #include <visualization_msgs/Marker.h>
+#include <dynamic_reconfigure/server.h>
+#include <selfie_avoiding_obstacles/LaneControllerConfig.h>
 
 #include <ros/console.h>
 
@@ -81,6 +83,10 @@ private:
   float pos_tolerance_;
   float return_distance_; // after passing this distance car returns on right lane
 
+  float gradual_return_distance_;         // returning from left lane should be gradual, and it should take about
+                                          // "gradual_return_distance_" meters
+  float distance_when_started_returning_; // saved when we begin returning
+
   int proof_overtake_;
   int num_proof_to_overtake_;
   int num_corners_to_detect_;
@@ -96,6 +102,11 @@ private:
   bool received_road_markings_;
   bool return_distance_calculated_;
   status status_;
+
+  dynamic_reconfigure::Server<selfie_avoiding_obstacles::LaneControllerConfig> dr_server_;
+  dynamic_reconfigure::Server<selfie_avoiding_obstacles::LaneControllerConfig>::CallbackType dr_server_CB_;
+  void reconfigureCB(selfie_avoiding_obstacles::LaneControllerConfig& config, uint32_t level);
+
 
   void filter_boxes(const selfie_msgs::PolygonArray &);           // filters boxes and saves in filtered_boxes_
   void road_markings_callback(const selfie_msgs::RoadMarkings &); // checks if boxes from filtered_boxes_ are on right lane

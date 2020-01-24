@@ -70,3 +70,7 @@ void SearchClient::getActionResult(boost::any &goal)
 {
     goal = result_;
 }
+void SearchClient::prepareAction()
+{
+
+}

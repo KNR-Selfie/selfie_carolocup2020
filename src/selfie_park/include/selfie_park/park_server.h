@@ -16,6 +16,8 @@
 #include <string>
 #include <vector>
 #include <selfie_scheduler/scheduler_enums.h>
+#include <selfie_park/ParkServerConfig.h>
+#include <dynamic_reconfigure/server.h>
 
 
 class ParkService
@@ -30,6 +32,10 @@ private:
   ros::Publisher ackermann_pub_;
   ros::Publisher right_indicator_pub_;
   ros::Publisher left_indicator_pub_;
+
+  dynamic_reconfigure::Server<selfie_park::ParkServerConfig> dr_server_;
+  dynamic_reconfigure::Server<selfie_park::ParkServerConfig>::CallbackType dr_server_CB_;
+  void reconfigureCB(selfie_park::ParkServerConfig& config, uint32_t level);
 
   void odomCallback(const nav_msgs::Odometry &msg);
   void goalCB();
