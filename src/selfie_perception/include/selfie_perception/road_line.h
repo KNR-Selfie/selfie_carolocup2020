@@ -21,7 +21,7 @@ public:
   cv::Point2f getPointNextToBottom(float min_dist_to_bottom);
   void reset();
 
-  void pfSetup(int num_particles, int num_control_points, float std);
+  void pfSetup(int num_particles, int num_control_points, float std_min, float std_max);
   void pfInit();
   bool pfExecute();
   void pfReset();
@@ -99,7 +99,8 @@ private:
   std::vector<float> coeff_;
 
   ParticleFilter pf_;
-  float pf_std_;
+  float pf_std_min_;
+  float pf_std_max_;
   int pf_num_particles_;
   int pf_num_points_;
 

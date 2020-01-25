@@ -72,9 +72,9 @@ bool LaneDetector::init()
   center_line_.setPointsDensity(points_density_);
   right_line_.setPointsDensity(points_density_);
 
-  left_line_.pfSetup(pf_num_samples_, pf_num_points_, pf_std_);
-  center_line_.pfSetup(pf_num_samples_, pf_num_points_, pf_std_);
-  right_line_.pfSetup(pf_num_samples_, pf_num_points_, pf_std_);
+  left_line_.pfSetup(pf_num_samples_, pf_num_points_, pf_std_min_, pf_std_max_);
+  center_line_.pfSetup(pf_num_samples_, pf_num_points_, pf_std_min_, pf_std_max_);
+  right_line_.pfSetup(pf_num_samples_, pf_num_points_, pf_std_min_, pf_std_max_);
 
   computeTopView();
   printInfoParams();
@@ -368,7 +368,8 @@ void LaneDetector::getParams()
 
   pnh_.getParam("pf_num_samples", pf_num_samples_);
   pnh_.getParam("pf_num_points_", pf_num_points_);
-  pnh_.getParam("pf_std", pf_std_);
+  pnh_.getParam("pf_std_min", pf_std_min_);
+  pnh_.getParam("pf_std_max", pf_std_max_);
   pnh_.getParam("pf_num_samples_vis", pf_num_samples_vis_);
 
   pnh_.getParam("obstacle_window_size", obstacle_window_size_);
@@ -753,7 +754,8 @@ void LaneDetector::printInfoParams()
 
   ROS_INFO("pf_num_samples: %d", pf_num_samples_);
   ROS_INFO("pf_num_points: %d\n", pf_num_points_);
-  ROS_INFO("pf_std: %.3f", pf_std_);
+  ROS_INFO("pf_std_min: %.3f", pf_std_min_);
+  ROS_INFO("pf_std_max: %.3f", pf_std_max_);
 }
 
 void LaneDetector::dynamicMask(cv::Mat &input_frame, cv::Mat &output_frame)

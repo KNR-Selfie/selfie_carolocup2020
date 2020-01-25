@@ -17,7 +17,6 @@
 
 struct Particle
 {
-  int id;
   std::vector<cv::Point2f> points;
   std::vector<float> coeff;
   float weight;
@@ -32,9 +31,9 @@ public:
   ParticleFilter() { };
   ~ParticleFilter() { };
 
-  void init(std::vector<cv::Point2f> points, double std);
+  void init(std::vector<cv::Point2f> points);
 
-  void prediction(double std);
+  void prediction(float std_min, float std_max);
 
   void updateWeights(std::vector<cv::Point2f> &p_obs);
 

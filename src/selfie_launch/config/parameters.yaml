@@ -4,9 +4,10 @@ detect_markings:
     real_window_size: 0.1,
 
     pf_num_points: 3,
-    pf_num_samples: 30,
+    pf_num_samples: 40,
     pf_num_samples_vis: 4,
-    pf_std: 0.02,
+    pf_std_min: 0.005,
+    pf_std_max: 0.02,
     obstacle_window_size: 0.09,
     obstacles_threshold: 200,
 

@@ -173,7 +173,8 @@ class LaneDetector
 
   int pf_num_samples_           {50};
   int pf_num_points_            {3};
-  float pf_std_                 {0.02};
+  float pf_std_min_             {0.005};
+  float pf_std_max_             {0.02};
   int pf_num_samples_vis_       {20};
 
   double isec_HL_dist_res_      {1};

@@ -9,11 +9,12 @@ RoadLine::RoadLine()
   coeff_.push_back(0);
 }
 
-void RoadLine::pfSetup(int num_particles, int num_control_points, float std)
+void RoadLine::pfSetup(int num_particles, int num_control_points, float std_min, float std_max)
 {
   pf_num_particles_ = num_particles;
   pf_num_points_ = num_control_points;
-  pf_std_ = std;
+  pf_std_min_ = std_min;
+  pf_std_max_ = std_max;
 
   pf_.setNumParticles(num_particles);
   pf_.setNumPoints(num_control_points);
@@ -48,7 +49,7 @@ void RoadLine::pfInit()
       p.y = getPolyY(coeff_, p.x);
       init_points.push_back(p);
     }
-    pf_.init(init_points, pf_std_);
+    pf_.init(init_points);
   }
 }
 
@@ -62,10 +63,8 @@ bool RoadLine::pfExecute()
     pf_.reset();
     pfInit();
   }
-  else
-  {
-    pf_.prediction(pf_std_);
-  }
+
+  pf_.prediction(pf_std_min_, pf_std_max_);
   
   pf_.updateWeights(points_);
   pf_.resample();
