@@ -10,6 +10,7 @@ from State import State
 import os
 import sys
 
+#  performing current state of every device registered
 def checkDevicesStates(devices):
     status = State.OK
     for device in devices:
@@ -19,6 +20,7 @@ def checkDevicesStates(devices):
             status = State.WARNING
     return status
 
+# performing check on all device
 def checkDevices(devices):
     msg = ""
     for device in devices:
@@ -26,6 +28,7 @@ def checkDevices(devices):
         msg += device.name + "'s status: " + device.state_.key() + " "
     pub.publish(msg)
 
+# method converting string ros msg type to actual type
 def getRosMsgType(type):
     if type == "LaserScan":
         return LaserScan
@@ -41,6 +44,7 @@ def getRosMsgType(type):
         rospy.signal_shutdown("Incorrect message type, please revise launch file")
         sys.exit(1)
 
+# method blinking selfie lights for defined time
 def blinkLights(time):
     left_blink_.publish(Bool(True))
     right_blink_.publish(Bool(True))
@@ -53,16 +57,7 @@ def shutdownPerformance():
     # self.right_blink_.publish(Bool(False))
     print("SHUTDOWN")
 
-
-if __name__ =="__main__":
-    rospy.init_node("diagnose", anonymous=True)
-    rospy.on_shutdown(shutdownPerformance)
-    pub = rospy.Publisher('~selfie_diagnostics', String, queue_size=10) # warning, errors publishers
-    left_blink_ = rospy.Publisher("/left_turn_indicator", Bool, queue_size=10)
-    right_blink_ = rospy.Publisher("/right_turn_indicator", Bool, queue_size=10)
-    print("Starting  Selfie Diagnostics")
-    # getting delay when to stop programme
-    delay = rospy.get_param("~delay",10)
+def getParameters():
     parameters = [] 
     try:
         for i in range(0,10000):
@@ -72,22 +67,43 @@ if __name__ =="__main__":
             device["topic"] = rospy.get_param("~" + str(i) + "_sensor_topic")
             device["type"] = getRosMsgType(rospy.get_param("~" + str(i) + "_sensor_datatype"))
             device["frequency"] = rospy.get_param("~" + str(i) + "_sensor_hz")
-            print("{} {} {} {} {}".format(device["name"],device["directory"], device["topic"], device["type"], device["frequency"]))
+            # print("{} {} {} {} {}".format(device["name"],device["directory"], \
+            #                               device["topic"], device["type"], device["frequency"]))
+            rospy.loginfo("%s detected", device["name"])
             parameters.append(device)
     except:
-        print("{} devices detected".format(len(parameters)))
+        rospy.loginfo("SUMMARY: %d devices detected",len(parameters))
+    return parameters
 
-    devices = []
-    for device in parameters:
-        devices.append(Tester(device["name"], device["topic"], device["directory"], device["type"], device["frequency"]))
-    # devices.append(Tester("/scan","/dev/amouse", LaserScan))
+
+if __name__ =="__main__":
+    # init and shutdown
+    rospy.init_node("diagnose", anonymous=True)
+    rospy.on_shutdown(shutdownPerformance)
+    # ros communication
+    pub = rospy.Publisher('~selfie_diagnostics', String, queue_size=10) # warning, errors publishers
+    left_blink_ = rospy.Publisher("/left_turn_indicator", Bool, queue_size=10)
+    right_blink_ = rospy.Publisher("/right_turn_indicator", Bool, queue_size=10)
+    rospy.loginfo("Starting  Selfie Diagnostics")
+    # getting delay when to stop programme
+    delay = rospy.get_param("~delay",10)
+    # debug value true -> programme spins to infinity
+    # debug value false -> delay is taken into consideration during computation
+    debug = rospy.get_param("~debug",True)
+    # reading devices from parameters server
+    parameters = getParameters()
+    # creating testers for every device
+    devices = [Tester(device["name"], device["topic"], device["directory"],\
+                      device["type"], device["frequency"]) for device in parameters]
+    # defining rate of performing diagnostics
     rate = rospy.Rate(1)
-    start_time = rospy.get_time() # czas poczatkowy dzialania programu
+    # reading start time of node, needed for
+    start_time = rospy.get_time() 
     print("Start")
     while not rospy.is_shutdown():
         checkDevices(devices)
         # checking if diagnostics ended
-        if rospy.get_time() - start_time > delay:
+        if rospy.get_time() - start_time > delay and not debug:
             print("OVERALL STATUS")
             # showing that diagnostics time is up
             blinkLights(1.0)
@@ -111,8 +127,6 @@ if __name__ =="__main__":
                 rospy.loginfo("DIAGNOSE: WTF")
             rospy.signal_shutdown("Diagnostics Done")
             sys.exit(0)         
-
-
         rate.sleep()
         pass
 
