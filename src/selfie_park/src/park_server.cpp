@@ -13,7 +13,6 @@ dr_server_CB_(boost::bind(&ParkService::reconfigureCB, this, _1, _2))
 {
   pnh_.param<std::string>("odom_topic", odom_topic_, "/odom");
   pnh_.param<std::string>("ackermann_topic", ackermann_topic_, "/drive");
-  pnh_.param<float>("minimal_start_parking_x_", minimal_start_parking_x_, -0.16);
   pnh_.param<bool>("state_msgs", state_msgs_, false);
   pnh_.param<float>("parking_speed", parking_speed_, 0.4);
   pnh_.param<float>("max_turn", max_turn_, 0.8);
@@ -306,11 +305,6 @@ void ParkService::reconfigureCB(selfie_park::ParkServerConfig& config, uint32_t 
     {
         max_turn_ = config.max_turn;
         ROS_INFO("max_turn new value: %f",max_turn_);
-    }
-    if(minimal_start_parking_x_ != (float)config.minimal_start_parking_x)
-    {
-        minimal_start_parking_x_ = config.minimal_start_parking_x;
-        ROS_INFO("minimal_start_parking_x new value: %f",minimal_start_parking_x_);
     }
     if(parking_speed_ != (float)config.parking_speed)
     {
