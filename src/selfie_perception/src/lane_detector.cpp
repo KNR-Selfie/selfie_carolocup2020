@@ -1672,19 +1672,19 @@ void LaneDetector::calcRoadWidth()
   cv::Point2f p_ahead;
   p_ahead.x = 0.7;
   p_ahead.y = getPolyY(center_line_.getCoeff(), p_ahead.x);
-  double deriative;
-  if (center_line_.getDegree() == 3)
+  float deriative;
+  if (center_line_.getCoeff().size() - 1 == 3)
     deriative = 3 * center_line_.getCoeff()[3] * pow(p_ahead.x, 2)
               + 2 * center_line_.getCoeff()[2] * p_ahead.x
               + center_line_.getCoeff()[1];
-  else if(center_line_.getDegree() == 2)
+  else if(center_line_.getCoeff().size() - 1 == 2)
     deriative = 2 * center_line_.getCoeff()[2] * p_ahead.x
               + center_line_.getCoeff()[1];
   else
     deriative = center_line_.getCoeff()[1];
 
-  double a_param_orthg = -1 / deriative;
-  double b_param_orthg = p_ahead.y - a_param_orthg * p_ahead.x;
+  float a_param_orthg = -1 / deriative;
+  float b_param_orthg = p_ahead.y - a_param_orthg * p_ahead.x;
 
   // right lane
   float r_lane_width = 0;
@@ -2164,7 +2164,12 @@ bool LaneDetector::isIntersection()
 {
   intersection_ = false;
   if (lines_out_h_world_.empty())
+  {
+    center_line_.setDegree(2);
+    right_line_.setDegree(2);
+    left_line_.setDegree(2);
     return false;
+  }
 
   bool left_intersection = false;
   bool right_intersection = false;
