@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 import rospy
-from sensor_msgs.msg import LaserScan #/scan
-from sensor_msgs.msg import Image #/image_rect
-from std_msgs.msg import Bool,String #/left_turn_indicator, /right_turn_indicator
+from sensor_msgs.msg import LaserScan, Image, Imu
+from std_msgs.msg import Bool,String 
 from enum import Enum
 
 from Tester import Tester
@@ -38,6 +37,8 @@ def getRosMsgType(type):
     return String
   elif type == "Bool":
     return Bool
+  elif type == "Imu":
+    return Imu
   else:
     rospy.logfatal("[Diagnostic Node] Incorrect message type, please revise launch file")
     # TODO Kill process
