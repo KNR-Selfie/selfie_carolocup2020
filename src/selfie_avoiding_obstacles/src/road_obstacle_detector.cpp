@@ -94,7 +94,13 @@ void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &
           time_when_started_interception_ = time_of_this_distance_measurement_;
           proof_overtake_ = 0;
           calculate_return_distance();
-          ROS_INFO("LC: OVERTAKE");
+          if (obstacle_is_moving_)
+          {
+            ROS_INFO("LC: OVERTAKE of dynamic obstacle");
+          } else
+          {
+            ROS_INFO("LC: OVERTAKE of static obstacle");
+          }
           status_ = OVERTAKE;
         }
       } else
