@@ -1,77 +1,136 @@
 #!/usr/bin/env python
 import rospy
-from sensor_msgs.msg import LaserScan #/scan
-from sensor_msgs.msg import Image #/image_rect
-from std_msgs.msg import Bool #/left_turn_indicator, /right_turn_indicator
+from sensor_msgs.msg import LaserScan, Image, Imu
+from std_msgs.msg import Bool,String 
 from enum import Enum
+
+from Tester import Tester
+from State import State
 import os
+import sys
 
-class State(Enum):
-    OK = 1
-    WARNING = 2
-    ERROR = 3
-    FATAL = 4
+class Diagnose:
+  def __init__(self):
+    # ros communication
+    self.pub = rospy.Publisher('~selfie_diagnostics', String, queue_size=10) # warning, errors publishers
+    self.left_blink_ = rospy.Publisher("/left_turn_indicator", Bool, queue_size=10)
+    self.right_blink_ = rospy.Publisher("/right_turn_indicator", Bool, queue_size=10)
+    rospy.on_shutdown(self.shutdownPerformance)
+    rospy.loginfo("[Diagnostic Node] Starting  Selfie Diagnostics")
 
-    def key(self):
-        return self.name
+  def setupDevices(self):
+    # reading devices from parameters server
+    parameters = self.getParameters()
+    # creating testers for every device
+    self.devices = [Tester(device["name"], device["topic"], device["directory"],\
+                      device["type"], device["frequency"]) for device in parameters]
 
-class Diagnostic :
-    def laserScanCallback(self, scan):
-        if(self.lidar["last_stamp"] == None):
-            self.lidar["last_stamp"] = scan.header.stamp
-        else:
-            self.lidar["frequency"] = 1/(scan.header.stamp.to_sec() - self.lidar["last_stamp"].to_sec()) # Hz
-            self.lidar["last_stamp"] = scan.header.stamp
-        pass
+  #  checking current state of every device registered
+  def checkDevicesStates(self):
+    status = State.OK
+    for device in self.devices:
+      if device.state_ == State.FATAL:
+        return State.FATAL
+      elif device.state_ == State.WARNING:
+        status = State.WARNING
+    return status
 
-    def __init__(self):
-        self.left_blink_ = rospy.Publisher("/left_turn_indicator", Bool, queue_size=10)
-        self.right_blink_ = rospy.Publisher("/right_turn_indicator", Bool, queue_size=10)
-        self.lidar_sub_ = rospy.Subscriber("/scan", LaserScan, self.laserScanCallback)
-        self.lidar = {
-            "last_stamp" : None,
-            "frequency" : 0.0,
-        }      
-        pass
+  # performing check on all device
+  def checkDevices(self):
+    msg = ""
+    for device in self.devices:
+      device.checkDevice()
+      msg += device.name + "'s status: " + device.state_.key() + " "
+    self.pub.publish(msg)
 
-    def diagnoseLidar(self):
-        #if stamp wasnt filled once
-        if(self.lidar["last_stamp"] == None):
-            print(State.ERROR.key())
-            print("1")
-            return
-        # checking if lidar stopped publishing while programme work
-        # if rospy.get_time() - self.lidar["last_stamp"].to_sec() > 3.0: #TODO testing on car, not from bag
-        #     print(State.ERROR.key())
-        #     self.lidar["frequency"] = 0.0
-        #     print("2")
-        # checking if frequency of publishing is still 0 or is publishing with wrong frequency
-        if(self.lidar["frequency"] == 0.0) or self.lidar["frequency"] > 10.5 or self.lidar["frequency"] < 9.5:
-            print(State.ERROR.key())
-            print("3 ")
-        else:
-            print(State.OK.key())
-            # count how many times system was ok
-            # condition on counter
-            # lights blink
-            self.left_blink_.publish(Bool(True))
-            self.right_blink_.publish(Bool(True))
-            rospy.sleep(2.)
-            self.left_blink_.publish(Bool(False))
-            self.right_blink_.publish(Bool(False))
-            # Node shutdown
-            rospy.signal_shutdown("Diagnose OK")
-        pass
+  # method converting string to ros msg type
+  def getRosMsgType(self,type):
+    if type == "LaserScan":
+      return LaserScan
+    elif type == "Image":
+      return Image
+    elif type == "String":
+      return String
+    elif type == "Bool":
+      return Bool
+    elif type == "Imu":
+      return Imu
+    else:
+      rospy.logfatal("[Diagnostic Node] Incorrect message type, please revise launch file")
+      rospy.signal_shutdown("[Diagnostic Node] Incorrect message type, please revise launch file")
+      sys.exit(1)
+
+  # method blinking selfie lights for defined time
+  def blinkLights(self,time):
+    self.left_blink_.publish(Bool(True))
+    self.right_blink_.publish(Bool(True))
+    rospy.sleep(time)
+    self.left_blink_.publish(Bool(False))
+    self.right_blink_.publish(Bool(False))
+
+  # turning lights off when node interrupted
+  def shutdownPerformance(self):
+    # TODO
+    self.left_blink_.publish(Bool(False))
+    self.right_blink_.publish(Bool(False))
+    print("[Diagnostic Node] DIAGNOSER SHUTDOWN")
+
+  # reading parameters from server
+  def getParameters(self):
+    parameters = [] 
+    try:
+      for i in range(0,10000):
+        device = {}
+        device["name"] = rospy.get_param("~" + str(i) + "_sensor_name")
+        device["directory"] = rospy.get_param("~" + str(i) + "_sensor_directory", None)
+        device["topic"] = rospy.get_param("~" + str(i) + "_sensor_topic")
+        device["type"] = self.getRosMsgType(rospy.get_param("~" + str(i) + "_sensor_datatype"))
+        device["frequency"] = rospy.get_param("~" + str(i) + "_sensor_hz")
+        rospy.loginfo("[Diagnostic Node] %s detected", device["name"])
+        parameters.append(device)
+    except:
+      rospy.loginfo("[Diagnostic Node] SUMMARY: %d devices detected",len(parameters))
+    return parameters
+
+  def diagnose(self):
+    # showing that diagnostics time is up
+    self.blinkLights(1.0)
+    rospy.sleep(0.5)
+    # checking overall status
+    devices_status = self.checkDevicesStates()
+    # defining diagnose
+    if devices_status == State.FATAL or devices_status == State.ERROR:
+      rospy.logfatal("[Diagnostic Node] FATAL ERROR")
+    elif devices_status == State.WARNING:
+      rospy.loginfo("[Diagnostic Node] WARNING")
+      diagnoser.blinkLights(6.0)
+    elif devices_status == State.OK:
+      rospy.loginfo("[Diagnostic Node] OK")
+      diagnoser.blinkLights(2.0)
+    else:
+      rospy.loginfo("[Diagnostic Node] WTF")
+    rospy.signal_shutdown("[Diagnostic Node] Done")
+    sys.exit(0)  
 
 
-if __name__ == "__main__":
-    ret = os.access("/opt", os.F_OK)
-    print(ret)
-    diagnoser = Diagnostic()
-    rospy.init_node("selfie_diagnostics", anonymous=True)
-    print("Starting diagnostics")
-    rate = rospy.Rate(1)
-    while not rospy.is_shutdown():
-        diagnoser.diagnoseLidar()
-        rate.sleep()
-
+if __name__ =="__main__":
+  # init
+  rospy.init_node("diagnose", anonymous=True)
+  diagnoser = Diagnose()
+  diagnoser.setupDevices()
+  # defining rate of performing diagnostics
+  rate = rospy.Rate(1)
+  # getting delay when to stop programme
+  delay = rospy.get_param("~delay",10)
+  # debug value true -> programme spins to infinity
+  # debug value false -> delay is taken into consideration during computation
+  debug = rospy.get_param("~debug",True)
+  # reading start time of node, needed for
+  start_time = rospy.get_time() 
+  while not rospy.is_shutdown():
+    # updating devices internal states
+    diagnoser.checkDevices()
+    # checking if diagnostics ended
+    if rospy.get_time() - start_time > delay and not debug:
+      diagnoser.diagnose()          
+    rate.sleep()
