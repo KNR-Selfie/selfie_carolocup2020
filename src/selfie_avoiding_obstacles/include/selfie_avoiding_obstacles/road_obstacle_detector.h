@@ -80,6 +80,7 @@ private:
   float previous_distance_to_obstacle_;
   float time_of_previous_distance_measurement_;
   float time_of_this_distance_measurement_;
+  float time_when_started_interception_;
   float speed_est_tolerance_;
   bool obstacle_is_moving_;
 

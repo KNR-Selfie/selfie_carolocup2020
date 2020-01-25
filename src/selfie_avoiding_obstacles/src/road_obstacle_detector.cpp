@@ -91,7 +91,7 @@ void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &
         if (proof_overtake_ >= num_proof_to_overtake_)
         {
           obstacle_is_moving_ = checkIfObstacleIsMoving();
-
+          time_when_started_interception_ = time_of_this_distance_measurement_;
           proof_overtake_ = 0;
           calculate_return_distance();
           ROS_INFO("LC: OVERTAKE");
@@ -247,7 +247,18 @@ void Road_obstacle_detector::visualizeBoxes()
 void Road_obstacle_detector::distanceCallback(const std_msgs::Float32 &msg)
 {
   current_distance_ = msg.data;
-  if (return_distance_calculated_ && status_ != ON_RIGHT && current_distance_ > return_distance_)
+  bool returnStatus;
+  if (obstacle_is_moving_)
+  {
+    returnStatus =
+        return_distance_calculated_ && status_ != ON_RIGHT &&
+        current_distance_ >
+            return_distance_ + speed_of_dynamic_obstacle_ * (ros::Time::now().toSec() - time_when_started_interception_);
+  } else
+  {
+    returnStatus = return_distance_calculated_ && status_ != ON_RIGHT && current_distance_ > return_distance_;
+  }
+  if (returnStatus)
   {
     status_ = RETURN;
     ROS_INFO("LC: RETURN");
