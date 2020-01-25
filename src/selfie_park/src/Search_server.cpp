@@ -196,6 +196,7 @@ void Search_server::send_goal()
 {
 
   geometry_msgs::Point32 p;
+  result.parking_spot.points.clear();
   p.x = first_free_place.bottom_left.x;
   p.y = first_free_place.bottom_left.y;
   result.parking_spot.points.push_back(p);
