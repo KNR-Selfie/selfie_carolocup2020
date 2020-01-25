@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import rospy
 from sensor_msgs.msg import LaserScan, Image, Imu
-from std_msgs.msg import Bool,String 
+from std_msgs.msg import Bool,String, Float32
 from enum import Enum
 
 from Tester import Tester
@@ -12,7 +12,7 @@ import sys
 class Diagnose:
   def __init__(self):
     # ros communication
-    self.pub = rospy.Publisher('~selfie_diagnostics', String, queue_size=10) # warning, errors publishers
+    self.pub_ = rospy.Publisher('~selfie_diagnostics', String, queue_size=10) # warning, errors publishers
     self.left_blink_ = rospy.Publisher("/left_turn_indicator", Bool, queue_size=10)
     self.right_blink_ = rospy.Publisher("/right_turn_indicator", Bool, queue_size=10)
     rospy.on_shutdown(self.shutdownPerformance)
@@ -22,13 +22,13 @@ class Diagnose:
     # reading devices from parameters server
     parameters = self.getParameters()
     # creating testers for every device
-    self.devices = [Tester(device["name"], device["topic"], device["directory"],\
+    self.devices_ = [Tester(device["name"], device["topic"], device["directory"],\
                       device["type"], device["frequency"]) for device in parameters]
 
   #  checking current state of every device registered
   def checkDevicesStates(self):
     status = State.OK
-    for device in self.devices:
+    for device in self.devices_:
       if device.state_ == State.FATAL:
         return State.FATAL
       elif device.state_ == State.WARNING:
@@ -38,10 +38,10 @@ class Diagnose:
   # performing check on all device
   def checkDevices(self):
     msg = ""
-    for device in self.devices:
+    for device in self.devices_:
       device.checkDevice()
       msg += device.name + "'s status: " + device.state_.key() + " "
-    self.pub.publish(msg)
+    self.pub_.publish(msg)
 
   # method converting string to ros msg type
   def getRosMsgType(self,type):
@@ -51,6 +51,8 @@ class Diagnose:
       return Image
     elif type == "String":
       return String
+    elif type == "Float32":
+      return Float32
     elif type == "Bool":
       return Bool
     elif type == "Imu":
@@ -109,6 +111,9 @@ class Diagnose:
       diagnoser.blinkLights(2.0)
     else:
       rospy.loginfo("[Diagnostic Node] WTF")
+    # unregistering subscribers
+    for device in self.devices_:
+      device.sub_.unregister()
     rospy.signal_shutdown("[Diagnostic Node] Done")
     sys.exit(0)  
 

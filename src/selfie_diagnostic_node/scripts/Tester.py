@@ -3,7 +3,7 @@ import rospy
 import os
 from sensor_msgs.msg import LaserScan #/scan
 from sensor_msgs.msg import Image #/image_rect
-from std_msgs.msg import Bool, String #/left_turn_indicator, /right_turn_indicator
+from std_msgs.msg import Bool, String, Float32 #/left_turn_indicator, /right_turn_indicator
 from State import State
 
 class Tester:
@@ -19,11 +19,19 @@ class Tester:
     self.state_ = State.UNDEFINED
       
   def callback(self, data):
-    if(self.last_stamp_ == None):
-      self.last_stamp_ = data.header.stamp
-    else:
-      self.frequency_ = 1/(data.header.stamp.to_sec() - self.last_stamp_.to_sec()) # Hz
-      self.last_stamp_ = data.header.stamp
+    try:
+      if(self.last_stamp_ == None):
+        self.last_stamp_ = data.header.stamp
+      else:
+        self.frequency_ = 1/(data.header.stamp.to_sec() - self.last_stamp_.to_sec()) # Hz
+        self.last_stamp_ = data.header.stamp
+    except:
+      if(self.last_stamp_ == None):
+        self.last_stamp_ = rospy.get_rostime()
+      else:
+        now = rospy.get_rostime()
+        self.frequency_ = 1/(now.to_sec() - self.last_stamp_.to_sec()) # Hz
+        self.last_stamp_ = now
     pass
 
   def checkDeviceAvailability(self):
@@ -58,7 +66,7 @@ class Tester:
       elif self.frequency_ == 0.0:
         msg += self.name + " stopped publishing "
         self.state_ = State.ERROR
-      elif self.frequency_ < self.desired_frequency_ - 0.1 or self.frequency_ > self.desired_frequency_ + 0.1:
+      elif self.frequency_ < self.desired_frequency_ - 0.5 or self.frequency_ > self.desired_frequency_ + 0.5:
         msg += self.name + " publishes with wrong frequency "
         msg = self.name + " rate: " + str(self.frequency_) + " " + msg
         self.state_ = State.WARNING
