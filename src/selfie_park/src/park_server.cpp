@@ -20,11 +20,13 @@ dr_server_CB_(boost::bind(&ParkService::reconfigureCB, this, _1, _2))
   pnh_.param<float>("idle_time", idle_time_, 2.);
   pnh_.param<float>("iter_distance",iter_distance_,0.2);
   pnh_.param<float>("angle_coeff", angle_coeff_, 1./2.);
-  pnh_.param<float>("back_to_base_", back_to_base_, 0.15);
+  pnh_.param<float>("back_to_base_", back_to_base_, 0.18);
+  pnh_.param<float>("turn delay",turn_delay_, 0.1);
 
   park_spot_middle_ = 0.;
   front_target_ = 0.;
   back_target_ = 0.;
+  delay_end_ = ros::Time::now();
   dr_server_.setCallback(dr_server_CB_);
   move_state_ = first_phase;
   parking_state_ = not_parking;
@@ -50,6 +52,7 @@ void ParkService::distanceCallback(const std_msgs::Float32 &msg)
         if (toParkingSpot())
         {
             prev_dist_ = actual_dist_;
+            delay_end_ = ros::Time::now() + ros::Duration(turn_delay_);
             parking_state_ = going_in;
 
         }
@@ -154,6 +157,7 @@ bool ParkService::toParkingSpot()
 {
     if(actual_dist_ > back_target_)
     {
+        drive(0., -max_turn_);
         return true;
     }
     drive(parking_speed_, 0.);
@@ -172,9 +176,10 @@ bool ParkService::park()
             if(actual_dist_ > front_target_)
             {
                 move_state_ = second_phase;
+                delay_end_ = ros::Time::now() + ros::Duration(turn_delay_);
                 drive(0., max_turn_);
             }
-            else
+            else if(ros::Time::now() > delay_end_)
             {
                 drive(parking_speed_, -max_turn_);
             }
@@ -195,9 +200,10 @@ bool ParkService::park()
             if(actual_dist_ < back_target_)
             {
                 move_state_ = first_phase;
+                delay_end_ = ros::Time::now() + ros::Duration(turn_delay_);
                 drive(0., -max_turn_);
             }
-            else
+            else if(ros::Time::now() > delay_end_)
             {
                 drive(-parking_speed_, max_turn_);
             }
@@ -216,6 +222,7 @@ bool ParkService::park()
 
 bool ParkService::leave()
 {
+    static ros::Time delay_end;
 
     park_spot_dist_ += angle_coeff_*std::sin(max_turn_)*std::abs(actual_dist_ - prev_dist_);
     bool in_pos = park_spot_dist_ < park_spot_dist_ini_;
@@ -226,9 +233,10 @@ bool ParkService::leave()
             if(actual_dist_ > front_target_)
             {
                 move_state_ = second_phase;
+                delay_end = ros::Time::now() + ros::Duration(turn_delay_);
                 drive(0., -max_turn_);
             }
-            else
+            else if(ros::Time::now() > delay_end)
             {
                 drive(parking_speed_, max_turn_);
             }
@@ -249,9 +257,10 @@ bool ParkService::leave()
             if(actual_dist_ < back_target_)
             {
                 move_state_ = first_phase;
+                delay_end = ros::Time::now() + ros::Duration(turn_delay_);
                 drive(0., max_turn_);
             }
-            else
+            else if(ros::Time::now() > delay_end)
             {
                 drive(-parking_speed_, -max_turn_);
             }

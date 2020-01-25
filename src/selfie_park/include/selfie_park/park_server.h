@@ -79,6 +79,8 @@ private:
   float front_target_;
   float back_target_;
   float park_spot_middle_;
+  ros::Time delay_end_;
+
 
 
   enum Move_State
@@ -100,4 +102,5 @@ private:
   float back_to_base_;
   std::string odom_topic_;
   float angle_coeff_;
+  float turn_delay_;
 };
