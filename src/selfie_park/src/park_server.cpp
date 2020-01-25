@@ -15,15 +15,11 @@ dr_server_CB_(boost::bind(&ParkService::reconfigureCB, this, _1, _2))
   pnh_.param<std::string>("ackermann_topic", ackermann_topic_, "/drive");
   pnh_.param<float>("minimal_start_parking_x_", minimal_start_parking_x_, -0.16);
   pnh_.param<bool>("state_msgs", state_msgs_, false);
-  pnh_.param<float>("max_rot", max_rot_, 0.8);
-  pnh_.param<float>("dist_turn", dist_turn_, 0.17);
   pnh_.param<float>("parking_speed", parking_speed_, 0.4);
-  pnh_.param<float>("odom_to_laser", odom_to_laser_, 0.2);
-  pnh_.param<float>("odom_to_front", odom_to_front_, 0.18);
-  pnh_.param<float>("odom_to_back", odom_to_back_, -0.33);
   pnh_.param<float>("max_turn", max_turn_, 0.8);
   pnh_.param<float>("idle_time", idle_time_, 2.);
   pnh_.param<float>("iter_distance",iter_distance_,0.2);
+  pnh_.param<float>("angle_coeff", angle_coeff_, 1./2.);
 
   car_length_ = 0.5;
   front_target_ = 0.;
@@ -57,7 +53,6 @@ void ParkService::distanceCallback(const std_msgs::Float32 &msg)
 
         }
         if (state_msgs_) ROS_INFO_THROTTLE(5, "go_to_parking_spot");
-        std::cout<<"go to parking spot"<<std::endl;
         blinkRight(true);
         blinkLeft(false);
         break;
@@ -67,7 +62,6 @@ void ParkService::distanceCallback(const std_msgs::Float32 &msg)
         if (park()) parking_state_ = parked;
         blinkRight(true);
         blinkLeft(false);
-        std::cout<<"going in"<<std::endl;
         break;
 
       case parked:
@@ -78,7 +72,6 @@ void ParkService::distanceCallback(const std_msgs::Float32 &msg)
         blinkRight(true);
         ros::Duration(idle_time_).sleep();
         parking_state_ = going_out;
-        std::cout<<"parked"<<std::endl;
         break;
 
       case going_out:
@@ -86,7 +79,6 @@ void ParkService::distanceCallback(const std_msgs::Float32 &msg)
         blinkRight(false);
         if (state_msgs_) ROS_INFO_THROTTLE(5, "get_out");
         if (leave()) parking_state_ = out;
-        std::cout<<"going out"<<std::endl;
         break;
 
       case out:
@@ -102,14 +94,12 @@ void ParkService::distanceCallback(const std_msgs::Float32 &msg)
         result.done = true;
         as_.setSucceeded(result);
         parking_state_ = not_parking;
-        std::cout<<"go to parking spot"<<std::endl;
         break;
     }
 }
 
 void ParkService::goalCB()
 {
-  std::cout<<"got goal"<<std::endl;
   selfie_msgs::parkGoal goal = *as_.acceptNewGoal();
   initParkingSpot(goal.parking_spot);
   selfie_msgs::parkFeedback feedback;
@@ -137,16 +127,12 @@ void ParkService::initParkingSpot(const geometry_msgs::Polygon &msg)
     {
         if(it->x < min_point_dist) min_point_dist = it->x;
         sum+= it->y;
-        std::cout<<"y "<<it->y<<std::endl;
     }
     park_spot_dist_ini_ = std::abs(sum/msg.points.size());
     park_spot_dist_ = park_spot_dist_ini_;
 
     back_target_ = actual_dist_ + min_point_dist + car_length_;
     front_target_ = back_target_ + iter_distance_;
-    std::cout<<"init parking spot"<<std::endl;
-    std::cout<<"dist "<<back_target_ - actual_dist_<<std::endl;
-    std::cout<<park_spot_dist_ini_<<" park dist"<<std::endl;
 }
 
 
@@ -162,7 +148,6 @@ void ParkService::drive(float speed, float steering_angle)
 
 bool ParkService::toParkingSpot()
 {
-    std::cout<<"target "<<back_target_<<" actual "<<actual_dist_<<std::endl;
     if(actual_dist_ > back_target_)
     {
         return true;
@@ -173,13 +158,12 @@ bool ParkService::toParkingSpot()
 
 bool ParkService::park()
 {
-    park_spot_dist_ -= 1./2.*std::sin(max_turn_)*std::abs(actual_dist_ - prev_dist_);
-    std::cout<<"sin "<<sin(max_turn_)<<std::endl;
-    std::cout<<"diff "<<actual_dist_ - prev_dist_<<std::endl;
-    std::cout<<"park spot dist "<<park_spot_dist_<<std::endl;
+    park_spot_dist_ -= angle_coeff_*std::sin(max_turn_)*std::abs(actual_dist_ - prev_dist_); 
+    bool in_pos = park_spot_dist_ > 0.f;
+
     if(move_state_ == first_phase)
     {
-        if(park_spot_dist_ > 0.)
+        if(in_pos)
         {
             if(actual_dist_ > front_target_)
             {
@@ -194,6 +178,7 @@ bool ParkService::park()
         }
         else
         {
+            move_state_ = second_phase;
             return true;
         }
         
@@ -201,7 +186,7 @@ bool ParkService::park()
     }
     else
     {
-        if(park_spot_dist_ > 0.)
+        if(in_pos)
         {
             if(actual_dist_ < back_target_)
             {
@@ -216,6 +201,7 @@ bool ParkService::park()
         }
         else
         {
+            move_state_ = first_phase;
             return true;
         }
         
@@ -227,11 +213,11 @@ bool ParkService::park()
 bool ParkService::leave()
 {
 
-    park_spot_dist_ += 1./2.*std::sin(max_turn_)*std::abs(actual_dist_ - prev_dist_);
-    std::cout<<"leaving dist "<<park_spot_dist_<<std::endl;
+    park_spot_dist_ += angle_coeff_*std::sin(max_turn_)*std::abs(actual_dist_ - prev_dist_);
+    bool in_pos = park_spot_dist_ < park_spot_dist_ini_;
     if(move_state_ == first_phase)
     {
-    if(park_spot_dist_ < park_spot_dist_ini_)
+        if(in_pos)
         {
             if(actual_dist_ > front_target_)
             {
@@ -246,6 +232,7 @@ bool ParkService::leave()
         }
         else
         {
+            move_state_ = second_phase;
             return true;
         }
         
@@ -253,7 +240,7 @@ bool ParkService::leave()
     }
     else
     {
-        if(park_spot_dist_ < park_spot_dist_ini_)
+        if(in_pos)
         {
             if(actual_dist_ < back_target_)
             {
@@ -268,6 +255,7 @@ bool ParkService::leave()
         }
         else
         {
+            move_state_ = first_phase;
             return true;
         }
         
@@ -296,20 +284,10 @@ void ParkService::blinkRight(bool on)
 
 void ParkService::reconfigureCB(selfie_park::ParkServerConfig& config, uint32_t level)
 {
-    if(dist_turn_ != (float)config.dist_turn)
-    {
-        dist_turn_ = config.dist_turn;
-        ROS_INFO("dist_turn new value: %f",dist_turn_);
-    }
     if(idle_time_ != (float)config.idle_time)
     {
         idle_time_ = config.idle_time;
         ROS_INFO("idle_time_ new value: %f",idle_time_);
-    }
-    if(max_rot_ != (float)config.max_rot)
-    {
-        max_rot_ = config.max_rot;
-        ROS_INFO("max_rot_ new value: %f",max_rot_);
     }
     if(max_turn_ != (float)config.max_turn)
     {
@@ -325,6 +303,16 @@ void ParkService::reconfigureCB(selfie_park::ParkServerConfig& config, uint32_t 
     {
         parking_speed_ = config.parking_speed;
         ROS_INFO("parking_speed_ new value: %f",parking_speed_);
+    }
+    if(angle_coeff_ != (float)config.angle_coeff)
+    {
+        angle_coeff_ = config.angle_coeff;
+        ROS_INFO("angle coeff new value: %f", angle_coeff_);
+    }
+    if(iter_distance_!= (float)config.iter_distance)
+    {
+        iter_distance_ = config.iter_distance;
+        ROS_INFO("iter distance new value: %f", iter_distance_);
     }
 
 }

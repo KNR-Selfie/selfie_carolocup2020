@@ -67,14 +67,7 @@ private:
 
   feedback_variable action_status_;
 
-  float front_wall_;
-  float back_wall_;
-  float middle_of_parking_spot_y_;
-  float middle_of_parking_spot_x_;
-  float parking_spot_width_;
-  float leaving_target_;
   float parking_speed_;
-  float mid_y_;
 
   float actual_dist_;
   float prev_dist_;
@@ -99,15 +92,11 @@ private:
   std::string ackermann_topic_;
   float minimal_start_parking_x_;
   bool state_msgs_;
-  float max_rot_;
   float max_distance_to_wall_;
-  float dist_turn_;
-  float odom_to_front_;
-  float odom_to_back_;
-  float odom_to_laser_;
   float max_turn_;
   float idle_time_;
   float iter_distance_;
   float car_length_;
   std::string odom_topic_;
+  float angle_coeff_;
 };
