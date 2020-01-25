@@ -11,10 +11,10 @@
         <param name="0_sensor_datatype" value="LaserScan" />
         <param name="0_sensor_hz" value="10" />
 
-        <param name="1_sensor_name" value="unknown" />
+        <!-- <param name="1_sensor_name" value="unknown" />
         <param name="1_sensor_directory" value="/dev/amouse" />
         <param name="1_sensor_topic" value="/topiccc" />
         <param name="1_sensor_datatype" value="LaserScan" />
-        <param name="1_sensor_hz" value="10" />
+        <param name="1_sensor_hz" value="10" /> -->
     </node>
 </launch>
