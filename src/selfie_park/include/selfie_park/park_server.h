@@ -20,6 +20,7 @@
 #include <dynamic_reconfigure/server.h>
 #include <std_msgs/Float32.h>
 #include <algorithm>
+#include <std_srvs/Empty.h>
 
 
 class ParkService
@@ -35,6 +36,8 @@ private:
   ros::Publisher ackermann_pub_;
   ros::Publisher right_indicator_pub_;
   ros::Publisher left_indicator_pub_;
+  ros::ServiceClient steering_mode_set_parallel_;
+  ros::ServiceClient steering_mode_set_front_axis_;
 
   dynamic_reconfigure::Server<selfie_park::ParkServerConfig> dr_server_;
   dynamic_reconfigure::Server<selfie_park::ParkServerConfig>::CallbackType dr_server_CB_;
