@@ -22,6 +22,7 @@ dr_server_CB_(boost::bind(&ParkService::reconfigureCB, this, _1, _2))
   pnh_.param<float>("angle_coeff", angle_coeff_, 1./2.);
   pnh_.param<float>("back_to_base_", back_to_base_, 0.25);
 
+  park_spot_middle_ = 0.;
   front_target_ = 0.;
   back_target_ = 0.;
   dr_server_.setCallback(dr_server_CB_);
@@ -122,16 +123,19 @@ void ParkService::preemptCB()
 void ParkService::initParkingSpot(const geometry_msgs::Polygon &msg)
 {
     float min_point_dist = 10000.f;
-    float sum = 0.;
+    float sumx = 0.;
+    float sumy = 0.;
     for(auto it = msg.points.begin();it<msg.points.end();++it)
     {
         if(it->x < min_point_dist) min_point_dist = it->x;
-        sum+= it->y;
+        sumy+= it->y;
+        sumx+= it->x;
     }
-    park_spot_dist_ini_ = std::abs(sum/msg.points.size());
+    park_spot_dist_ini_ = std::abs(sumy/msg.points.size());
+    park_spot_middle_ = sumx / msg.points.size();
     park_spot_dist_ = park_spot_dist_ini_;
 
-    back_target_ = actual_dist_ + min_point_dist + back_to_base_;
+    back_target_ = actual_dist_ + park_spot_middle_ + iter_distance_/2.;
     front_target_ = back_target_ + iter_distance_;
 }
 

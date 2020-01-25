@@ -78,6 +78,7 @@ private:
 
   float front_target_;
   float back_target_;
+  float park_spot_middle_;
 
 
   enum Move_State
