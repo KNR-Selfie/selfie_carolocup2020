@@ -4,7 +4,10 @@
 ParkClient::ParkClient(std::string name, const ros::NodeHandle &pnh):
     ac_(name, true),
     pnh_(pnh),
-    parking_steering_mode_(ACKERMANN)
+    result_(0),
+    parking_steering_mode_(ACKERMANN),
+    sucessful_park_counter_(0),
+    park_atttempts_counter_(0)
 {
     next_action_ = DRIVING;
     result_flag_ = EMPTY;
@@ -36,6 +39,7 @@ void ParkClient::setGoal(boost::any goal)
     ac_.sendGoal(goal_, boost::bind(&ParkClient::doneCb, this, _1, _2),
                 boost::bind(&ParkClient::activeCb, this),
                 boost::bind(&ParkClient::feedbackCb, this, _1));
+    park_atttempts_counter_++;
 }
 bool ParkClient::waitForResult(float timeout)
 {
@@ -57,8 +61,14 @@ void ParkClient::doneCb(const actionlib::SimpleClientGoalState& state,
     }
     else
     {
-        result_ = result->done;
         result_flag_ = SUCCESS;
+        sucessful_park_counter_++;
+    }
+
+    //todo implement more logic 
+    if(sucessful_park_counter_ == 2)
+    {
+        result_ = PARKING_COMPLETE;
     }
 
 }

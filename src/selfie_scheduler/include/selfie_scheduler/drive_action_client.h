@@ -13,6 +13,7 @@ protected:
     bool result_;
     bool drive_mode_;
     int drive_steering_mode_;
+    bool park_complete_;
 
     ros::ServiceClient visionReset_ ;
     ros::ServiceClient resetLaneController_;
@@ -24,6 +25,7 @@ protected:
     ros::ServiceClient avoidingObstSetActive_;
 
     ros::NodeHandle pnh_;
+    void checkParkCounter(boost::any goal);
 
 public:
     DriveClient(std::string name, const ros::NodeHandle &pnh);

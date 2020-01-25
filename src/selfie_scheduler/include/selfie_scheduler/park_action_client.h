@@ -10,12 +10,15 @@ class ParkClient : public ClientInterface
 protected:
     actionlib::SimpleActionClient<selfie_msgs::parkAction> ac_;
     selfie_msgs::parkGoal goal_;
-    bool result_;
+    int result_;
     ros::NodeHandle pnh_;
     int parking_steering_mode_;
     ros::ServiceClient cmdCreatorStopPub_;
     ros::ServiceClient steeringModeSetAckermann_;
     ros::ServiceClient steeringModeSetParallel_;
+
+    int sucessful_park_counter_;
+    int park_atttempts_counter_;
 
 public:
     ParkClient(std::string name, const ros::NodeHandle &pnh);
