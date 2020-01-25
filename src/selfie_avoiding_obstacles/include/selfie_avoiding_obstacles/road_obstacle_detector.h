@@ -56,6 +56,9 @@ private:
   ros::ServiceServer active_mode_service_;
   ros::ServiceServer reset_node_service_;
   ros::Timer timer_;
+  // Services used to change steering mode
+  ros::ServiceClient steering_mode_set_parallel_;
+  ros::ServiceClient steering_mode_set_front_axis_;
   // Polymonial coefficients describing road markings
   float left_line_[4];
   float center_line_[4];

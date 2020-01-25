@@ -40,6 +40,8 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
   passive_mode_service_ = nh_.advertiseService("/avoiding_obst_set_passive", &Road_obstacle_detector::switchToPassive, this);
   active_mode_service_ = nh_.advertiseService("/avoiding_obst_set_active", &Road_obstacle_detector::switchToActive, this);
   reset_node_service_ = nh_.advertiseService("/resetLaneControl", &Road_obstacle_detector::reset_node, this);
+  steering_mode_set_parallel_ = nh_.serviceClient<std_srvs::Empty>("steering_parallel");
+  steering_mode_set_front_axis_ = nh_.serviceClient<std_srvs::Empty>("steering_front_axis");
   setpoint_pub_ = nh_.advertise<std_msgs::Float64>("/setpoint", 1);
   speed_pub_ = nh_.advertise<std_msgs::Float64>("/max_speed", 1);
   right_indicator_pub_ = nh_.advertise<std_msgs::Bool>("right_turn_indicator", 20);
@@ -88,6 +90,8 @@ void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &
           proof_overtake_ = 0;
           calculate_return_distance();
           ROS_INFO("LC: OVERTAKE");
+          std_srvs::Empty r;
+          steering_mode_set_parallel_.call(r);
           status_ = OVERTAKE;
         }
       } else
@@ -264,6 +268,9 @@ void Road_obstacle_detector::posOffsetCallback(const std_msgs::Float64 &msg)
   } else if (status_ == RETURN && current_offset_ < right_lane_ + pos_tolerance_)
   {
     status_ = ON_RIGHT;
+
+    std_srvs::Empty r;
+    steering_mode_set_front_axis_.call(r);
     ROS_INFO("LC: ON_RIGHT");
     blinkRight(false);
     selfie_msgs::PolygonArray temp;
