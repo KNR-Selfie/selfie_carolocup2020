@@ -142,7 +142,7 @@ class LaneDetector
 
   int starting_line_timeout_    {0};
   bool init_imageCallback_      {true};
-  float min_length_search_line_ {0.08};
+  float min_length_search_line_ {0.1};
   float max_delta_y_lane_       {0.08};
   float min_length_to_2aprox_   {0.56};
   float left_lane_width_        {0.4};

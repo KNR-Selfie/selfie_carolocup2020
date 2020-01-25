@@ -899,7 +899,8 @@ void LaneDetector::filterSmallLines()
 {
   for (int i = 0; i < lines_vector_converted_.size(); ++i)
   {
-    float sum = arcLength(lines_vector_converted_[i], false);
+    //float sum = arcLength(lines_vector_converted_[i], false);
+    float sum = lines_vector_converted_[i][lines_vector_converted_[i].size() - 1].x - lines_vector_converted_[i][0].x;
     if (sum < min_length_search_line_)
     {
       lines_vector_converted_.erase(lines_vector_converted_.begin() + i);
