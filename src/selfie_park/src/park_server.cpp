@@ -13,6 +13,7 @@ dr_server_CB_(boost::bind(&ParkService::reconfigureCB, this, _1, _2))
 {
   pnh_.param<std::string>("odom_topic", odom_topic_, "/odom");
   pnh_.param<std::string>("ackermann_topic", ackermann_topic_, "/drive");
+  
   pnh_.param<bool>("state_msgs", state_msgs_, false);
   pnh_.param<float>("parking_speed", parking_speed_, 0.4);
   pnh_.param<float>("max_turn", max_turn_, 0.8);
