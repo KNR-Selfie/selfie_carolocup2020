@@ -18,8 +18,9 @@ class Tester:
 
     def checkDeviceAvailability(self):
         if self.directory_ == None:
-            return
-        self.is_plugged_ = os.path.exists(self.directory_)
+            self.is_plugged_ = None
+        else:
+            self.is_plugged_ = os.path.exists(self.directory_)
     
     def checkDevice(self):
         msg = ""
