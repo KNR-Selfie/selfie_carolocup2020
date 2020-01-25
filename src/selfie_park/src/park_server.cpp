@@ -135,7 +135,7 @@ void ParkService::initParkingSpot(const geometry_msgs::Polygon &msg)
     park_spot_middle_ = sumx / msg.points.size();
     park_spot_dist_ = park_spot_dist_ini_;
 
-    back_target_ = actual_dist_ + park_spot_middle_ + iter_distance_/2.;
+    back_target_ = actual_dist_ + park_spot_middle_ - iter_distance_/2.;
     front_target_ = back_target_ + iter_distance_;
 }
 
