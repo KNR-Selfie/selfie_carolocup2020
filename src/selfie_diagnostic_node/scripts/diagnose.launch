@@ -1,0 +1,12 @@
+<launch>
+
+    <node name="diagnose" pkg="selfie_diagnostic_node" type="main.py" output="screen">
+        <param name="delay" value="100" />
+
+        <param name="0_sensor_name" value="lidar" />
+        <param name="0_sensor_directory" value="/dev/amouse" />
+        <param name="0_sensor_topic" value="/scan" />
+        <param name="0_sensor_datatype" value="LaserScan" />
+        <param name="0_sensor_hz" value="10" />
+    </node>
+</launch>

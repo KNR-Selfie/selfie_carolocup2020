@@ -19,13 +19,18 @@ class Tester:
     def checkDeviceAvailability(self, directory):
         print("Mouse: " + str(os.path.exists(directory)))
         return os.path.exists(directory)
+    
+    def checkDevice(self):
+        
 
-    def __init__(self, topic, directory, msg_type):
+    def __init__(self, name, topic, directory, msg_type, desired_frequency):
+        self.name = name
         self.sub_ = rospy.Subscriber(topic, msg_type, self.callback)
         if(directory != None):
             self.is_plugged_ = self.checkDeviceAvailability(directory)
         else:
             self.is_plugged_ = None
+        self.desired_frequency_ = desired_frequency
         self.last_stamp_ = None
         self.frequency_ = None
         self.state_ = State.UNDEFINED
