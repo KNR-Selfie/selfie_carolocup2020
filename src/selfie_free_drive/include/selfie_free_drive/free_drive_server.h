@@ -3,8 +3,8 @@
 *This code is licensed under BSD license (see LICENSE for details)
 **/ 
 
-#ifndef FREE_DRIVE_ACTION_H
-#define FREE_DRIVE_ACTION_H
+#ifndef FREE_DRIVE_SERVER_H
+#define FREE_DRIVE_SERVER_H
 
 #include <ros/ros.h>
 #include <selfie_msgs/drivingAction.h> // Note: "Action" is appended
@@ -19,13 +19,12 @@
 #include <selfie_free_drive/FreeDriveConfig.h>
 #include <dynamic_reconfigure/server.h>
 
-class FreeDriveAction
+class FreeDriveServer
 {
 protected:
   ros::NodeHandle nh_;
   ros::NodeHandle pnh_;
   actionlib::SimpleActionServer<selfie_msgs::drivingAction> as_; // NodeHandle instance must be created before this line. Otherwise strange error occurs.
-  std::string action_name_;
 
   // create messages that are used to published feedback/result
   selfie_msgs::drivingFeedback feedback_;
@@ -35,6 +34,7 @@ protected:
   //subscribers
   ros::Subscriber starting_line_sub_;
   ros::Subscriber intersection_sub_;
+  ros::Subscriber distance_sub_;
 
   //publishers
   ros::Publisher max_speed_pub_;
@@ -47,6 +47,10 @@ protected:
   float starting_line_distance_to_end_;
   float intersection_distance_to_end_;
 
+  bool event_verified_                 {true};
+  float distance_on_last_event_        {0.0};
+  float distance_to_verify_event_      {2.0};
+
   float max_speed_;
   int last_feedback_ {AUTONOMOUS_DRIVE};
 
@@ -56,8 +60,8 @@ protected:
 
 
 public:
-  FreeDriveAction(const ros::NodeHandle &nh, const ros::NodeHandle &pnh);
-  ~FreeDriveAction(void);
+  FreeDriveServer(const ros::NodeHandle &nh, const ros::NodeHandle &pnh);
+  ~FreeDriveServer(void);
 
   inline void publishFeedback(feedback_variable program_state);
   inline void maxSpeedPub();
@@ -67,5 +71,6 @@ public:
   void preemptCB();
   void startingLineCB(const std_msgs::Float32 &msg);
   void intersectionCB(const std_msgs::Float32 &msg);
+  void distanceCB(const std_msgs::Float32 &msg);
 };
-#endif // FREE_DRIVE_ACTION_H
+#endif // FREE_DRIVE_SERVER_H

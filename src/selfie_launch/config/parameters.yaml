@@ -35,9 +35,10 @@ extract_road_features:
   }
 free_drive: 
   {
-    max_speed: 5.0,
+    max_speed: 3.0,
     starting_line_distance_to_end: 0.6,
-    intersection_distance_to_end: 0.008
+    intersection_distance_to_end: 1.2,
+    distance_to_verify_event_: 2.0
   }
 lane_controller:
   {
