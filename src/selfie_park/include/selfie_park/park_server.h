@@ -96,7 +96,7 @@ private:
   float max_turn_;
   float idle_time_;
   float iter_distance_;
-  float car_length_;
+  float back_to_base_;
   std::string odom_topic_;
   float angle_coeff_;
 };
