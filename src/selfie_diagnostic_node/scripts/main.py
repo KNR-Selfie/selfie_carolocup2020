@@ -13,25 +13,8 @@ import sys
 def checkDevices(devices):
     msg = ""
     for device in devices:
-        # checking if device is plugged
-        if device.is_plugged_ != None:
-            if device.is_plugged_ == False:
-                msg += device.name + " is not plugged! "
-                device.state = State.FATAL
-        # checking msg rates
-        if device.frequency_ == None:
-            msg += device.name + " hasn't published messages from the beginning! "
-        else:
-            msg = device.name + " rate: " + str(device.frequency_) + " " + msg
-        # check topic frequency
-        # check last message time
-        if device.last_stamp_ != None :
-            if rospy.get_time() - device.last_stamp_.to_sec() > 3 :
-                device.frequency_ = 0.0
-                print(device.name + " stopped publishing ")
-                # msg += "Lidar stopped publishing! "
-        # check if plugged
-    msg = device.name + " status:" + device.state_.key() + " " + msg
+        device.checkDevice()
+        msg += device.name + "'s status: " + device.state_.key() + " "
     pub.publish(msg)
 
 def getRosMsgType(type):
@@ -78,7 +61,6 @@ if __name__ =="__main__":
     print("Start")
     while not rospy.is_shutdown():
         checkDevices(devices)        
-        
         rate.sleep()
         pass
 
