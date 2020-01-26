@@ -35,6 +35,8 @@ public:
 
   void prediction(float std_min, float std_max);
 
+  void calculateBest();
+
   void updateWeights(std::vector<cv::Point2f> &p_obs);
 
   void resample();

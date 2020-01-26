@@ -120,7 +120,7 @@ void ParticleFilter::resample()
     resampled_particles.push_back(particles_[i]);
   }
   particles_ = resampled_particles;
-
+/*
   int max_index = 0;
   float max = 0;
   for (int i = 0; i < particles_.size(); ++i)
@@ -132,6 +132,8 @@ void ParticleFilter::resample()
     }
   }
   best_particle_ = particles_[max_index];
+*/
+  calculateBest();
 }
 
 std::vector<float> ParticleFilter::getCoeff(int particle_id)
@@ -202,6 +204,27 @@ float ParticleFilter::getDistance(cv::Point2f p1, cv::Point2f p2)
   float dx = (p1.x - p2.x);
   float dy = (p1.y - p2.y);
   return sqrtf(dx * dx + dy * dy);
+}
+
+void ParticleFilter::calculateBest()
+{
+  std::vector<cv::Point2f> points_tab;
+  points_tab.resize(num_control_points_);
+  for (int i = 0; i < particles_.size(); ++i)
+  {
+    for (int j = 0; j < num_control_points_; ++j)
+    {
+      points_tab[j].x += particles_[i].points[j].x;
+      points_tab[j].y += particles_[i].points[j].y;
+    }
+  }
+  for (int j = 0; j < num_control_points_; ++j)
+  {
+    points_tab[j].x /= num_particles_;
+    points_tab[j].y /= num_particles_;
+  }
+  polyfit(points_tab, 2, best_particle_.coeff);
+  best_particle_.poly_degree = 2;
 }
 
 void ParticleFilter::reset()
