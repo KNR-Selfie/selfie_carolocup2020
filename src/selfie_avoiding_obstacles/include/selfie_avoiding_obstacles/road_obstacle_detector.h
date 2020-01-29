@@ -74,6 +74,7 @@ private:
 
   float max_speed_;
   float safe_speed_;
+  float lane_change_speed_;
   std_msgs::Float64 speed_message_;
 
   float maximum_distance_to_obstacle_; // to avoid changing lane too early
@@ -91,6 +92,7 @@ private:
 
   int proof_overtake_;
   int num_proof_to_overtake_;
+  int num_proof_to_slowdown_;
   int num_corners_to_detect_;
 
   std::list<Box> filtered_boxes_; // boxes are sorted by x valule

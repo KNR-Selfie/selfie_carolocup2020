@@ -31,9 +31,11 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
   pnh_.param<float>("left_lane_setpoint", left_lane_, 0.2);
   pnh_.param<float>("maximum_speed", max_speed_, 0.3);
   pnh_.param<float>("safe_speed", safe_speed_, 0.1);
+  pnh_.param<float>("lane_change_speed", lane_change_speed_, 0.1);
   pnh_.param<float>("safety_margin", safety_margin_, 1.15);
   pnh_.param<float>("pos_tolerance", pos_tolerance_, 0.01);
   pnh_.param<int>("num_proof_to_overtake", num_proof_to_overtake_, 3);
+  pnh_.param<int>("num_proof_to_slowdown", num_proof_to_slowdown_, 2);
   pnh_.param<int>("num_corners_to_detect", num_corners_to_detect_, 3);
   pnh_.param<float>("lane_change_distance", lane_change_distance_, 0.9);
 
@@ -117,10 +119,10 @@ void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &
   case ON_RIGHT:
     setpoint_value_.data = right_lane_;
 
-    if (proof_overtake_ == 0)
-      speed_message_.data = max_speed_;
-    else
+    if (proof_overtake_ >= num_proof_to_slowdown_)
       speed_message_.data = safe_speed_;
+    else
+      speed_message_.data = max_speed_;
 
     break;
   case OVERTAKE:
@@ -130,16 +132,11 @@ void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &
       setpoint_value_.data = left_lane_;
     else
       setpoint_value_.data = 0;
-    speed_message_.data = safe_speed_;
+    speed_message_.data = lane_change_speed_;
     break;
   case ON_LEFT:
     setpoint_value_.data = left_lane_;
-
-    if (proof_overtake_ == 0)
-      speed_message_.data = max_speed_;
-    else
-      speed_message_.data = safe_speed_;
-
+    speed_message_.data = max_speed_;
     break;
   case RETURN:
     blinkRight(true);
@@ -148,7 +145,7 @@ void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &
       setpoint_value_.data = right_lane_;
     else
       setpoint_value_.data = 0;
-    speed_message_.data = safe_speed_;
+    speed_message_.data = lane_change_speed_;
     break;
   case PASSIVE:
     return;
