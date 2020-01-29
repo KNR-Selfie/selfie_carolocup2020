@@ -44,7 +44,7 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
   speed_pub_ = nh_.advertise<std_msgs::Float64>("/max_speed", 1);
   right_indicator_pub_ = nh_.advertise<std_msgs::Bool>("right_turn_indicator", 20);
   left_indicator_pub_ = nh_.advertise<std_msgs::Bool>("left_turn_indicator", 20);
-  
+
   speed_message_.data = max_speed_;
 
   if (visualization_)
@@ -328,55 +328,56 @@ void Road_obstacle_detector::blinkRight(bool on)
   right_indicator_pub_.publish(msg);
   return;
 }
-void Road_obstacle_detector::reconfigureCB(selfie_avoiding_obstacles::LaneControllerConfig& config, uint32_t level){
-    if(left_lane_ != (float)config.left_lane_setpoint)
-    {
-        left_lane_ = config.left_lane_setpoint;
-        ROS_INFO("Left lane setpoint new value: %f",left_lane_);
-    }
-    if(maximum_distance_to_obstacle_ != (float)config.maximum_distance_to_obstacle)
-    {
-        maximum_distance_to_obstacle_ = config.maximum_distance_to_obstacle;
-        ROS_INFO("Maximum_distance_to_obstacle new value: %f", maximum_distance_to_obstacle_);
-    }
-    if(maximum_length_of_obstacle_ != (float)config.maximum_length_of_obstacle)
-    {
-        maximum_length_of_obstacle_ = config.maximum_length_of_obstacle;
-        ROS_INFO("Maximum_length_of_obstacle new value: %f", maximum_length_of_obstacle_);
-    }
-    if(max_speed_ != (float)config.maximum_speed)
-    {
-        max_speed_ = config.maximum_speed;
-        ROS_INFO("max_speed new value: %f", max_speed_);
-    }
-    if(num_corners_to_detect_ != config.num_corners_to_detect)
-    {
-        num_corners_to_detect_ = config.num_corners_to_detect;
-        ROS_INFO("num_corners_to_detect new value: %d", num_corners_to_detect_);
-    }
-    if(num_proof_to_overtake_ != config.num_proof_to_overtake)
-    {
-        num_proof_to_overtake_ = config.num_proof_to_overtake;
-        ROS_INFO("num_proof_to_overtake new value: %d", num_proof_to_overtake_);
-    }
-    if(pos_tolerance_ != (float)config.pos_tolerance)
-    {
-        pos_tolerance_ = config.pos_tolerance;
-        ROS_INFO("pos_tolerance new value: %f", pos_tolerance_);
-    }
-    if(right_lane_ != (float)config.right_lane_setpoint)
-    {
-        right_lane_ = config.right_lane_setpoint;
-        ROS_INFO("right_lane_setpoint new value: %f", right_lane_);
-    }
-    if(safety_margin_ != (float)config.safety_margin)
-    {
-        safety_margin_ = config.safety_margin;
-        ROS_INFO("safety_margin new value: %f", safety_margin_);
-    }
-    if(safe_speed_ != (float)config.safe_speed)
-    {
-        safe_speed_ = config.safe_speed;
-        ROS_INFO("safe_speed new value: %f", safe_speed_);
-    }
+void Road_obstacle_detector::reconfigureCB(selfie_avoiding_obstacles::LaneControllerConfig &config, uint32_t level)
+{
+  if (left_lane_ != (float)config.left_lane_setpoint)
+  {
+    left_lane_ = config.left_lane_setpoint;
+    ROS_INFO("Left lane setpoint new value: %f", left_lane_);
+  }
+  if (maximum_distance_to_obstacle_ != (float)config.maximum_distance_to_obstacle)
+  {
+    maximum_distance_to_obstacle_ = config.maximum_distance_to_obstacle;
+    ROS_INFO("Maximum_distance_to_obstacle new value: %f", maximum_distance_to_obstacle_);
+  }
+  if (maximum_length_of_obstacle_ != (float)config.maximum_length_of_obstacle)
+  {
+    maximum_length_of_obstacle_ = config.maximum_length_of_obstacle;
+    ROS_INFO("Maximum_length_of_obstacle new value: %f", maximum_length_of_obstacle_);
+  }
+  if (max_speed_ != (float)config.maximum_speed)
+  {
+    max_speed_ = config.maximum_speed;
+    ROS_INFO("max_speed new value: %f", max_speed_);
+  }
+  if (num_corners_to_detect_ != config.num_corners_to_detect)
+  {
+    num_corners_to_detect_ = config.num_corners_to_detect;
+    ROS_INFO("num_corners_to_detect new value: %d", num_corners_to_detect_);
+  }
+  if (num_proof_to_overtake_ != config.num_proof_to_overtake)
+  {
+    num_proof_to_overtake_ = config.num_proof_to_overtake;
+    ROS_INFO("num_proof_to_overtake new value: %d", num_proof_to_overtake_);
+  }
+  if (pos_tolerance_ != (float)config.pos_tolerance)
+  {
+    pos_tolerance_ = config.pos_tolerance;
+    ROS_INFO("pos_tolerance new value: %f", pos_tolerance_);
+  }
+  if (right_lane_ != (float)config.right_lane_setpoint)
+  {
+    right_lane_ = config.right_lane_setpoint;
+    ROS_INFO("right_lane_setpoint new value: %f", right_lane_);
+  }
+  if (safety_margin_ != (float)config.safety_margin)
+  {
+    safety_margin_ = config.safety_margin;
+    ROS_INFO("safety_margin new value: %f", safety_margin_);
+  }
+  if (safe_speed_ != (float)config.safe_speed)
+  {
+    safe_speed_ = config.safe_speed;
+    ROS_INFO("safe_speed new value: %f", safe_speed_);
+  }
 }
