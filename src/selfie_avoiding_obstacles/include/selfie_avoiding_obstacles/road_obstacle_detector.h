@@ -45,7 +45,6 @@ private:
   ros::Subscriber obstacles_sub_;
   ros::Subscriber markings_sub_;
   ros::Subscriber distance_sub_;
-  ros::Subscriber pos_offset_sub_;
   ros::Publisher speed_pub_;
   ros::Publisher visualizer_;
   ros::Publisher setpoint_pub_;
@@ -86,9 +85,9 @@ private:
   float pos_tolerance_;
   float return_distance_; // after passing this distance car returns on right lane
 
-  float gradual_return_distance_;         // returning from left lane should be gradual, and it should take about
-                                          // "gradual_return_distance_" meters
-  float distance_when_started_returning_; // saved when we begin returning
+  float lane_change_distance_;         // returning from left lane should be gradual, and it should take about
+                                          // "lane_change_distance_" meters
+  float distance_when_started_changing_lane_; // saved when we begin changing lane
 
   int proof_overtake_;
   int num_proof_to_overtake_;
@@ -116,7 +115,6 @@ private:
   void road_markings_callback(const selfie_msgs::RoadMarkings &); // checks if boxes from filtered_boxes_ are on right lane
   void obstacle_callback(const selfie_msgs::PolygonArray &);
   void distanceCallback(const std_msgs::Float32 &);
-  void posOffsetCallback(const std_msgs::Float64 &);
   void calculate_return_distance();
 
   bool switchToActive(std_srvs::Empty::Request &, std_srvs::Empty::Response &);

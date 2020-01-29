@@ -53,5 +53,5 @@ rosrun selfie_avoiding_obstacles lane_controller
    - how many times in a row car should discover obstacle to start intersecting (it is used to avoid overtaking caused by static)
  - `num_corners_to_detect` (*int*)
    - how many corners of box should be in area of interest to consider it as obstacle to avoid
- - `gradual_return_distance` (*float*)
-   - how many meters it should take to return from left to right lane
+ - `lane_change_distance` (*float*)
+   - how many meters it should take to change lane
