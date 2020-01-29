@@ -19,7 +19,7 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
     , pos_tolerance_(0.01)
     , dr_server_CB_(boost::bind(&Road_obstacle_detector::reconfigureCB, this, _1, _2))
 {
-  pnh_.param<bool>("visualization", visualization_, false);
+  pnh_.param<bool>("visualization", visualization_, true);
   pnh_.param<float>("maximum_length_of_obstacle", maximum_length_of_obstacle_, 0.8);
   pnh_.param<float>("maximum_distance_to_obstacle", maximum_distance_to_obstacle_, 0.5);
   pnh_.param<float>("ROI_min_x", ROI_min_x_, 0.3);
