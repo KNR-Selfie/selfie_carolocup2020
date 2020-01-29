@@ -45,6 +45,8 @@ rosrun selfie_avoiding_obstacles lane_controller
   - safety margin considering inaccurations in measuring distance, used to calculate 
  - `visualization` (*bool*, default: true)
    - Whether or not visualization topics are active
+ - `ackermann_mode` (*bool*, default: false)
+   - set if ackermann mode is active (if not then front_axis_steering_mode is used)
  - `pos_tolerance` (*float*)
    - tolerance for received offset
  - `num_proof_to_overtake` (*int*)

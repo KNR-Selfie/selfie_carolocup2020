@@ -45,6 +45,8 @@ lane_controller:
     right_lane_setpoint: -0.22,
     left_lane_setpoint: 0.18,
 
+    ackermann_mode: false,
+
     maximum_speed: 2.0,
     safe_speed: 0.8,
     maximum_length_of_obstacle: 0.4,

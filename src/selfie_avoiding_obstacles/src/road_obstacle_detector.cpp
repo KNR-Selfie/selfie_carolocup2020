@@ -20,6 +20,7 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
     , dr_server_CB_(boost::bind(&Road_obstacle_detector::reconfigureCB, this, _1, _2))
 {
   pnh_.param<bool>("visualization", visualization_, true);
+  pnh_.param<bool>("ackermann_mode", ackermann_mode_, false);
   pnh_.param<float>("maximum_length_of_obstacle", maximum_length_of_obstacle_, 0.8);
   pnh_.param<float>("maximum_distance_to_obstacle", maximum_distance_to_obstacle_, 0.5);
   pnh_.param<float>("ROI_min_x", ROI_min_x_, 0.3);
@@ -87,6 +88,11 @@ void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &
         {
           proof_overtake_ = 0;
           calculate_return_distance();
+          if (ackermann_mode_)
+          {
+            std_srvs::Empty e;
+            ackerman_steering_service_.call(e);
+          }
           ROS_INFO("LC: OVERTAKE");
           status_ = OVERTAKE;
         }
@@ -240,6 +246,11 @@ void Road_obstacle_detector::distanceCallback(const std_msgs::Float32 &msg)
   current_distance_ = msg.data;
   if (return_distance_calculated_ && status_ != ON_RIGHT && current_distance_ > return_distance_)
   {
+    if (ackermann_mode_)
+    {
+      std_srvs::Empty e;
+      ackerman_steering_service_.call(e);
+    }
     status_ = RETURN;
     ROS_INFO("LC: RETURN");
     return_distance_calculated_ = false;
@@ -254,6 +265,11 @@ void Road_obstacle_detector::posOffsetCallback(const std_msgs::Float64 &msg)
   current_offset_ = msg.data;
   if (status_ == OVERTAKE && current_offset_ > left_lane_ - pos_tolerance_)
   {
+    if (ackermann_mode_)
+    {
+      std_srvs::Empty e;
+      front_axis_steering_service_.call(e);
+    }
     status_ = ON_LEFT;
     ROS_INFO("LC: ON_LEFT");
     blinkLeft(false);
@@ -261,6 +277,11 @@ void Road_obstacle_detector::posOffsetCallback(const std_msgs::Float64 &msg)
     obstacle_callback(temp);
   } else if (status_ == RETURN && current_offset_ < right_lane_ + pos_tolerance_)
   {
+    if (ackermann_mode_)
+    {
+      std_srvs::Empty e;
+      front_axis_steering_service_.call(e);
+    }
     status_ = ON_RIGHT;
     ROS_INFO("LC: ON_RIGHT");
     blinkRight(false);
@@ -287,6 +308,11 @@ bool Road_obstacle_detector::switchToActive(std_srvs::Empty::Request &request, s
   proof_overtake_ = 0;
   timer_.stop();
   status_ = ON_RIGHT;
+  if (ackermann_mode_)
+  {
+    ackerman_steering_service_ = nh_.serviceClient<std_srvs::Empty>("steering_ackerman");
+    front_axis_steering_service_ = nh_.serviceClient<std_srvs::Empty>("steering_front_axis");
+  }
   ROS_INFO("Lane control active mode");
   return true;
 }

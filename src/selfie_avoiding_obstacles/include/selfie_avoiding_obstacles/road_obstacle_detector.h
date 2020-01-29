@@ -56,6 +56,9 @@ private:
   ros::ServiceServer active_mode_service_;
   ros::ServiceServer reset_node_service_;
   ros::Timer timer_;
+  //services used for switching ackermann mode
+  ros::ServiceClient ackerman_steering_service_;
+  ros::ServiceClient front_axis_steering_service_;
   // Polymonial coefficients describing road markings
   float left_line_[4];
   float center_line_[4];
@@ -97,6 +100,7 @@ private:
   std_msgs::Float64 setpoint_value_;
 
   bool visualization_;
+  bool ackermann_mode_;
   visualization_msgs::Marker empty_marker_;
   Box area_of_interest_box_;
   bool received_road_markings_;
