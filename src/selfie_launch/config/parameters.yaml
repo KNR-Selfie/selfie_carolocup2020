@@ -50,6 +50,7 @@ lane_controller:
     maximum_speed: 2.0,
     safe_speed: 0.8,
     lane_change_speed: 0.7,
+    lane_change_distance: 0.9,
     maximum_length_of_obstacle: 0.4,
     maximum_distance_to_obstacle: 0.8,
     safety_margin: 1.0,

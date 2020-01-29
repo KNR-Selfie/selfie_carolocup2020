@@ -401,5 +401,13 @@ void Road_obstacle_detector::reconfigureCB(selfie_avoiding_obstacles::LaneContro
   {
     safe_speed_ = config.safe_speed;
     ROS_INFO("safe_speed new value: %f", safe_speed_);
+  }if (lane_change_distance_ != (float)config.lane_change_distance)
+  {
+    lane_change_distance_ = config.lane_change_distance;
+    ROS_INFO("lane_change_distance new value: %f", lane_change_distance_);
+  }if (num_proof_to_slowdown_ != (int)config.num_proof_to_slowdown)
+  {
+    num_proof_to_slowdown_ = config.num_proof_to_slowdown;
+    ROS_INFO("num_proof_to_slowdown new value: %d", num_proof_to_slowdown_);
   }
 }
