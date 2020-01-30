@@ -90,7 +90,7 @@ private:
                                           // "lane_change_distance_" meters
   float distance_when_started_changing_lane_; // saved when we begin changing lane
 
-  int proof_overtake_;
+  int proof_slowdown_;
   int num_proof_to_slowdown_;
   int num_corners_to_detect_;
 

@@ -10,7 +10,7 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
     , pnh_(pnh)
     , received_road_markings_(false)
     , maximum_distance_to_obstacle_(0.5)
-    , proof_overtake_(0)
+    , proof_slowdown_(0)
     , num_corners_to_detect_(3)
     , current_distance_(0)
     , current_offset_(0)
@@ -80,11 +80,11 @@ void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &
     filter_boxes(msg);
     if (!filtered_boxes_.empty())
     {
-      ++proof_overtake_;
+      ++proof_slowdown_;
       if (nearest_box_in_front_of_car_->bottom_left.x <= maximum_distance_to_obstacle_ ||
           nearest_box_in_front_of_car_->bottom_right.x <= maximum_distance_to_obstacle_)
       {
-        proof_overtake_ = 0;
+        proof_slowdown_ = 0;
         calculate_return_distance();
         if (ackermann_mode_)
         {
@@ -97,9 +97,9 @@ void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &
       }
     } else
     {
-      if (proof_overtake_ > 0)
+      if (proof_slowdown_ > 0)
       {
-        --proof_overtake_;
+        --proof_slowdown_;
       }
     }
   }
@@ -108,7 +108,7 @@ void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &
   case ON_RIGHT:
     setpoint_value_.data = right_lane_;
 
-    if (proof_overtake_ >= num_proof_to_slowdown_)
+    if (proof_slowdown_ >= num_proof_to_slowdown_)
       speed_message_.data = slowdown_speed_;
     else
       speed_message_.data = max_speed_;
@@ -294,7 +294,7 @@ bool Road_obstacle_detector::switchToActive(std_srvs::Empty::Request &request, s
   blinkLeft(false);
   blinkRight(false);
   return_distance_calculated_ = false;
-  proof_overtake_ = 0;
+  proof_slowdown_ = 0;
   timer_.stop();
   status_ = ON_RIGHT;
   if (ackermann_mode_)
