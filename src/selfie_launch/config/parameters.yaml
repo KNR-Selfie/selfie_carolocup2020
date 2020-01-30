@@ -55,7 +55,6 @@ lane_controller:
     maximum_distance_to_obstacle: 0.8,
     safety_margin: 1.0,
     pos_tolerance: 0.01,
-    num_proof_to_overtake: 3,
     num_proof_to_slowdown: 2,
     num_corners_to_detect: 3,
 

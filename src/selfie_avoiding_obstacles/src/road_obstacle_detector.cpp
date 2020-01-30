@@ -11,7 +11,6 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
     , received_road_markings_(false)
     , maximum_distance_to_obstacle_(0.5)
     , proof_overtake_(0)
-    , num_proof_to_overtake_(3)
     , num_corners_to_detect_(3)
     , current_distance_(0)
     , current_offset_(0)
@@ -34,7 +33,6 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
   pnh_.param<float>("lane_change_speed", lane_change_speed_, 0.1);
   pnh_.param<float>("safety_margin", safety_margin_, 1.15);
   pnh_.param<float>("pos_tolerance", pos_tolerance_, 0.01);
-  pnh_.param<int>("num_proof_to_overtake", num_proof_to_overtake_, 3);
   pnh_.param<int>("num_proof_to_slowdown", num_proof_to_slowdown_, 2);
   pnh_.param<int>("num_corners_to_detect", num_corners_to_detect_, 3);
   pnh_.param<float>("lane_change_distance", lane_change_distance_, 0.9);
@@ -82,29 +80,20 @@ void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &
     filter_boxes(msg);
     if (!filtered_boxes_.empty())
     {
+      ++proof_overtake_;
       if (nearest_box_in_front_of_car_->bottom_left.x <= maximum_distance_to_obstacle_ ||
           nearest_box_in_front_of_car_->bottom_right.x <= maximum_distance_to_obstacle_)
       {
-        ++proof_overtake_;
-        if (proof_overtake_ >= num_proof_to_overtake_)
+        proof_overtake_ = 0;
+        calculate_return_distance();
+        if (ackermann_mode_)
         {
-          proof_overtake_ = 0;
-          calculate_return_distance();
-          if (ackermann_mode_)
-          {
-            std_srvs::Empty e;
-            ackerman_steering_service_.call(e);
-          }
-          distance_when_started_changing_lane_ = current_distance_;
-          ROS_INFO("LC: OVERTAKE");
-          status_ = OVERTAKE;
+          std_srvs::Empty e;
+          ackerman_steering_service_.call(e);
         }
-      } else
-      {
-        if (proof_overtake_ > 0)
-        {
-          --proof_overtake_;
-        }
+        distance_when_started_changing_lane_ = current_distance_;
+        ROS_INFO("LC: OVERTAKE");
+        status_ = OVERTAKE;
       }
     } else
     {
@@ -377,11 +366,6 @@ void Road_obstacle_detector::reconfigureCB(selfie_avoiding_obstacles::LaneContro
     num_corners_to_detect_ = config.num_corners_to_detect;
     ROS_INFO("num_corners_to_detect new value: %d", num_corners_to_detect_);
   }
-  if (num_proof_to_overtake_ != config.num_proof_to_overtake)
-  {
-    num_proof_to_overtake_ = config.num_proof_to_overtake;
-    ROS_INFO("num_proof_to_overtake new value: %d", num_proof_to_overtake_);
-  }
   if (pos_tolerance_ != (float)config.pos_tolerance)
   {
     pos_tolerance_ = config.pos_tolerance;
@@ -401,11 +385,13 @@ void Road_obstacle_detector::reconfigureCB(selfie_avoiding_obstacles::LaneContro
   {
     safe_speed_ = config.safe_speed;
     ROS_INFO("safe_speed new value: %f", safe_speed_);
-  }if (lane_change_distance_ != (float)config.lane_change_distance)
+  }
+  if (lane_change_distance_ != (float)config.lane_change_distance)
   {
     lane_change_distance_ = config.lane_change_distance;
     ROS_INFO("lane_change_distance new value: %f", lane_change_distance_);
-  }if (num_proof_to_slowdown_ != (int)config.num_proof_to_slowdown)
+  }
+  if (num_proof_to_slowdown_ != (int)config.num_proof_to_slowdown)
   {
     num_proof_to_slowdown_ = config.num_proof_to_slowdown;
     ROS_INFO("num_proof_to_slowdown new value: %d", num_proof_to_slowdown_);
