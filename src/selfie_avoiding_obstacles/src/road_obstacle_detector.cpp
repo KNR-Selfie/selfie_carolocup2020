@@ -9,7 +9,7 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
     : nh_(nh)
     , pnh_(pnh)
     , received_road_markings_(false)
-    , maximum_distance_to_obstacle_(0.5)
+    , max_distance_to_obstacle_(0.5)
     , proof_slowdown_(0)
     , num_corners_to_detect_(3)
     , current_distance_(0)
@@ -20,8 +20,8 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
 {
   pnh_.param<bool>("visualization", visualization_, true);
   pnh_.param<bool>("ackermann_mode", ackermann_mode_, false);
-  pnh_.param<float>("maximum_length_of_obstacle", maximum_length_of_obstacle_, 0.8);
-  pnh_.param<float>("maximum_distance_to_obstacle", maximum_distance_to_obstacle_, 0.5);
+  pnh_.param<float>("max_length_of_obstacle", max_length_of_obstacle_, 0.8);
+  pnh_.param<float>("max_distance_to_obstacle", max_distance_to_obstacle_, 0.5);
   pnh_.param<float>("ROI_min_x", ROI_min_x_, 0.3);
   pnh_.param<float>("ROI_max_x", ROI_max_x_, 1.1);
   pnh_.param<float>("ROI_min_y", ROI_min_y_, -1.3);
@@ -81,8 +81,8 @@ void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &
     if (!filtered_boxes_.empty())
     {
       ++proof_slowdown_;
-      if (nearest_box_in_front_of_car_->bottom_left.x <= maximum_distance_to_obstacle_ ||
-          nearest_box_in_front_of_car_->bottom_right.x <= maximum_distance_to_obstacle_)
+      if (nearest_box_in_front_of_car_->bottom_left.x <= max_distance_to_obstacle_ ||
+          nearest_box_in_front_of_car_->bottom_right.x <= max_distance_to_obstacle_)
       {
         proof_slowdown_ = 0;
         calculate_return_distance();
@@ -219,7 +219,7 @@ bool Road_obstacle_detector::is_on_right_lane(const Point &point)
 void Road_obstacle_detector::calculate_return_distance()
 {
   return_distance_calculated_ = true;
-  return_distance_ = safety_margin_ * (maximum_length_of_obstacle_ + nearest_box_in_front_of_car_->bottom_left.x) +
+  return_distance_ = safety_margin_ * (max_length_of_obstacle_ + nearest_box_in_front_of_car_->bottom_left.x) +
                      current_distance_ + lane_change_distance_;
   ROS_INFO("LC: return_distance_: %f", return_distance_);
 }
@@ -349,15 +349,15 @@ void Road_obstacle_detector::reconfigureCB(selfie_avoiding_obstacles::LaneContro
     left_lane_ = config.left_lane_setpoint;
     ROS_INFO("Left lane setpoint new value: %f", left_lane_);
   }
-  if (maximum_distance_to_obstacle_ != (float)config.maximum_distance_to_obstacle)
+  if (max_distance_to_obstacle_ != (float)config.max_distance_to_obstacle)
   {
-    maximum_distance_to_obstacle_ = config.maximum_distance_to_obstacle;
-    ROS_INFO("Maximum_distance_to_obstacle new value: %f", maximum_distance_to_obstacle_);
+    max_distance_to_obstacle_ = config.max_distance_to_obstacle;
+    ROS_INFO("max_distance_to_obstacle new value: %f", max_distance_to_obstacle_);
   }
-  if (maximum_length_of_obstacle_ != (float)config.maximum_length_of_obstacle)
+  if (max_length_of_obstacle_ != (float)config.max_length_of_obstacle)
   {
-    maximum_length_of_obstacle_ = config.maximum_length_of_obstacle;
-    ROS_INFO("Maximum_length_of_obstacle new value: %f", maximum_length_of_obstacle_);
+    max_length_of_obstacle_ = config.max_length_of_obstacle;
+    ROS_INFO("max_length_of_obstacle new value: %f", max_length_of_obstacle_);
   }
   if (max_speed_ != (float)config.maximum_speed)
   {

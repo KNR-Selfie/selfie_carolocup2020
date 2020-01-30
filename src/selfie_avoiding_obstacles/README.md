@@ -34,7 +34,7 @@ rosrun selfie_avoiding_obstacles lane_controller
 ## Parameters
  - `ROI_min_x`,`ROI_min_y`,`ROI_max_x`,`ROI_max_x` (*float*)
    - describing area of interest
- - `maximum_length_of_obstacle` (*float*, default: 0.8)
+ - `max_length_of_obstacle` (*float*, default: 0.8)
    - How long can be approached obstacle (described in regulations)
  - `right_lane_setpoint`,`left_lane_setpoint` (*float*, default: -0.2,0.2)
    - How far from middle of road is middle of right and left lane

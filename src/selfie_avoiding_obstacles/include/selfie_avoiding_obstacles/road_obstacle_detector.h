@@ -77,8 +77,8 @@ private:
   float lane_change_speed_;
   std_msgs::Float64 speed_message_;
 
-  float maximum_distance_to_obstacle_; // to avoid changing lane too early
-  float maximum_length_of_obstacle_;
+  float max_distance_to_obstacle_; // to avoid changing lane too early
+  float max_length_of_obstacle_;
 
   float safety_margin_; // safety margin considering inaccurations in measuring distance etc..
   float current_distance_;
