@@ -184,17 +184,18 @@ void Road_obstacle_detector::filter_boxes(const selfie_msgs::PolygonArray &msg)
 void Road_obstacle_detector::road_markings_callback(const selfie_msgs::RoadMarkings &msg)
 {
   int size = msg.left_line.size();
-  for (int i = 0; i < size; i++)
+  int i = 0;
+  for (; i < size; i++)
   {
     left_line_[i] = msg.left_line[i];
     center_line_[i] = msg.center_line[i];
     right_line_[i] = msg.right_line[i];
   }
-  if (size == 3)
+  for (; i < 4; i++)
   {
-    left_line_[3] = 0;
-    center_line_[3] = 0;
-    right_line_[3] = 0;
+    left_line_[i] = 0;
+    center_line_[i] = 0;
+    right_line_[i] = 0;
   }
   received_road_markings_ = true;
 }
