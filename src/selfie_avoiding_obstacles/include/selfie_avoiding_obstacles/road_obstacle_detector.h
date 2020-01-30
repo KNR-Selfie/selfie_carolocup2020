@@ -73,7 +73,7 @@ private:
   float left_lane_;
 
   float max_speed_;
-  float safe_speed_;
+  float slowdown_speed_;
   float lane_change_speed_;
   std_msgs::Float64 speed_message_;
 

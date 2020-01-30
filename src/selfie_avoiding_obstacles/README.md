@@ -39,7 +39,9 @@ rosrun selfie_avoiding_obstacles lane_controller
  - `right_lane_setpoint`,`left_lane_setpoint` (*float*, default: -0.2,0.2)
    - How far from middle of road is middle of right and left lane
  - `maximum_speed` (*float*)
- - `safe_speed` (*float*)
+ - `slowdown_speed` (*float*)
+   - Speed used before lane is being changed
+ - `lane_change_speed_` (*float*)
    - Speed used when lane is being changed
  - `safety_margin` (*float*)
   - safety margin considering inaccurations in measuring distance, used to calculate 

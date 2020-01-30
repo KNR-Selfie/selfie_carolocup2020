@@ -29,7 +29,7 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
   pnh_.param<float>("right_lane_setpoint", right_lane_, -0.2);
   pnh_.param<float>("left_lane_setpoint", left_lane_, 0.2);
   pnh_.param<float>("maximum_speed", max_speed_, 0.3);
-  pnh_.param<float>("safe_speed", safe_speed_, 0.1);
+  pnh_.param<float>("slowdown_speed", slowdown_speed_, 0.1);
   pnh_.param<float>("lane_change_speed", lane_change_speed_, 0.1);
   pnh_.param<float>("safety_margin", safety_margin_, 1.15);
   pnh_.param<float>("pos_tolerance", pos_tolerance_, 0.01);
@@ -109,7 +109,7 @@ void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &
     setpoint_value_.data = right_lane_;
 
     if (proof_overtake_ >= num_proof_to_slowdown_)
-      speed_message_.data = safe_speed_;
+      speed_message_.data = slowdown_speed_;
     else
       speed_message_.data = max_speed_;
 
@@ -381,10 +381,10 @@ void Road_obstacle_detector::reconfigureCB(selfie_avoiding_obstacles::LaneContro
     safety_margin_ = config.safety_margin;
     ROS_INFO("safety_margin new value: %f", safety_margin_);
   }
-  if (safe_speed_ != (float)config.safe_speed)
+  if (slowdown_speed_ != (float)config.slowdown_speed)
   {
-    safe_speed_ = config.safe_speed;
-    ROS_INFO("safe_speed new value: %f", safe_speed_);
+    slowdown_speed_ = config.slowdown_speed;
+    ROS_INFO("slowdown_speed new value: %f", slowdown_speed_);
   }
   if (lane_change_distance_ != (float)config.lane_change_distance)
   {
