@@ -430,6 +430,6 @@ void Road_obstacle_detector::reconfigureCB(selfie_avoiding_obstacles::LaneContro
   if (lane_change_kp_ != (int)config.lane_change_kp)
   {
     lane_change_kp_ = config.lane_change_kp;
-    ROS_INFO("lane_change_kp new value: %d", lane_change_kp_);
+    ROS_INFO("lane_change_kp new value: %lf", lane_change_kp_);
   }
 }
