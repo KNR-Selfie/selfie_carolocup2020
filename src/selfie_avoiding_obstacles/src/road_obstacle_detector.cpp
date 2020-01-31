@@ -278,6 +278,29 @@ void Road_obstacle_detector::distanceCallback(const std_msgs::Float32 &msg)
   }
 }
 
+void Road_obstacle_detector::changePidSettings(float Kp)
+{
+  double temp;
+  if (ros::param::get("/pid_controller/Kd", temp))
+  {
+    if (temp != lane_change_kp_)
+    {
+      old_Kp_ = temp;
+    }
+  } else
+  {
+    ROS_WARN_THROTTLE(1, "Can't get param: /pid_controller/Kd");
+  }
+
+  double_param_.name = "Kp";
+  double_param_.value = Kp;
+  conf_.doubles.push_back(double_param_);
+
+  srv_req_.config = conf_;
+
+  ros::service::call("/pid_controller/set_parameters", srv_req_, srv_resp_);
+}
+
 void Road_obstacle_detector::passive_timer_cb(const ros::TimerEvent &time)
 {
   setpoint_value_.data = right_lane_;

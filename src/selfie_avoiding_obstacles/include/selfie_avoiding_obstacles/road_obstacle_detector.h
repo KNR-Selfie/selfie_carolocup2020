@@ -7,8 +7,13 @@
 #include <list>
 #include <ros/ros.h>
 
+#include <dynamic_reconfigure/Config.h>
+#include <dynamic_reconfigure/Reconfigure.h>
+#include <dynamic_reconfigure/server.h>
 #include <geometry_msgs/Polygon.h>
 #include <geometry_msgs/PolygonStamped.h>
+#include <pid/PidConfig.h>
+#include <selfie_avoiding_obstacles/LaneControllerConfig.h>
 #include <selfie_msgs/PolygonArray.h>
 #include <selfie_msgs/RoadMarkings.h>
 #include <std_msgs/Bool.h>
@@ -16,8 +21,6 @@
 #include <std_msgs/Float64.h>
 #include <std_srvs/Empty.h>
 #include <visualization_msgs/Marker.h>
-#include <dynamic_reconfigure/server.h>
-#include <selfie_avoiding_obstacles/LaneControllerConfig.h>
 
 #include <ros/console.h>
 
@@ -55,7 +58,7 @@ private:
   ros::ServiceServer active_mode_service_;
   ros::ServiceServer reset_node_service_;
   ros::Timer timer_;
-  //services used for switching ackermann mode
+  // services used for switching ackermann mode
   ros::ServiceClient ackerman_steering_service_;
   ros::ServiceClient front_axis_steering_service_;
   // Polymonial coefficients describing road markings
@@ -86,8 +89,8 @@ private:
   float pos_tolerance_;
   float return_distance_; // after passing this distance car returns on right lane
 
-  float lane_change_distance_;         // returning from left lane should be gradual, and it should take about
-                                          // "lane_change_distance_" meters
+  float lane_change_distance_;                // returning from left lane should be gradual, and it should take about
+                                              // "lane_change_distance_" meters
   float distance_when_started_changing_lane_; // saved when we begin changing lane
 
   int proof_slowdown_;
@@ -109,14 +112,22 @@ private:
 
   dynamic_reconfigure::Server<selfie_avoiding_obstacles::LaneControllerConfig> dr_server_;
   dynamic_reconfigure::Server<selfie_avoiding_obstacles::LaneControllerConfig>::CallbackType dr_server_CB_;
-  void reconfigureCB(selfie_avoiding_obstacles::LaneControllerConfig& config, uint32_t level);
+  // variables used for changing settings of PID
+  dynamic_reconfigure::ReconfigureRequest srv_req_;
+  dynamic_reconfigure::ReconfigureResponse srv_resp_;
+  dynamic_reconfigure::DoubleParameter double_param_;
+  dynamic_reconfigure::Config conf_;
+  double old_Kp_;
+  double lane_change_kp_;
 
+  void reconfigureCB(selfie_avoiding_obstacles::LaneControllerConfig &config, uint32_t level);
 
   void filter_boxes(const selfie_msgs::PolygonArray &);           // filters boxes and saves in filtered_boxes_
   void road_markings_callback(const selfie_msgs::RoadMarkings &); // checks if boxes from filtered_boxes_ are on right lane
   void obstacle_callback(const selfie_msgs::PolygonArray &);
   void distanceCallback(const std_msgs::Float32 &);
   void calculate_return_distance();
+  void changePidSettings(float);
 
   bool switchToActive(std_srvs::Empty::Request &, std_srvs::Empty::Response &);
   bool switchToPassive(std_srvs::Empty::Request &, std_srvs::Empty::Response &);
