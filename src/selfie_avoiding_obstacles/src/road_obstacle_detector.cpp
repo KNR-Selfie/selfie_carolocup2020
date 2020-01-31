@@ -432,4 +432,35 @@ void Road_obstacle_detector::reconfigureCB(selfie_avoiding_obstacles::LaneContro
     lane_change_kp_ = config.lane_change_kp;
     ROS_INFO("lane_change_kp new value: %lf", lane_change_kp_);
   }
+  bool ROI_changed = false;
+  if (ROI_min_x_ != (int)config.ROI_min_x)
+  {
+    ROI_changed = true;
+    ROI_min_x_ = config.ROI_min_x;
+    ROS_INFO("ROI_min_x new value: %lf", ROI_min_x_);
+  }
+  if (ROI_max_x_ != (int)config.ROI_max_x)
+  {
+    ROI_changed = true;
+    ROI_max_x_ = config.ROI_max_x;
+    ROS_INFO("ROI_max_x new value: %lf", ROI_max_x_);
+  }
+  if (ROI_min_y_ != (int)config.ROI_min_y)
+  {
+    ROI_changed = true;
+    ROI_min_y_ = config.ROI_min_y;
+    ROS_INFO("ROI_min_y new value: %lf", ROI_min_y_);
+  }
+  if (ROI_max_y_ != (int)config.ROI_max_y)
+  {
+    ROI_changed = true;
+    ROI_max_y_ = config.ROI_max_y;
+    ROS_INFO("ROI_max_y new value: %lf", ROI_max_y_);
+  }
+
+  if (ROI_changed)
+  {
+    area_of_interest_box_ = Box(Point(ROI_min_x_, ROI_max_y_), Point(ROI_min_x_, ROI_min_y_), Point(ROI_max_x_, ROI_max_y_),
+                                Point(ROI_max_x_, ROI_min_y_));
+  }
 }
