@@ -93,6 +93,7 @@ void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &
           ackerman_steering_service_.call(e);
         }
         distance_when_started_changing_lane_ = current_distance_;
+        changePidSettings(lane_change_kp_);
         ROS_INFO("LC: OVERTAKE");
         status_ = OVERTAKE;
       }
@@ -247,6 +248,7 @@ void Road_obstacle_detector::distanceCallback(const std_msgs::Float32 &msg)
       ackerman_steering_service_.call(e);
     }
     status_ = RETURN;
+    changePidSettings(lane_change_kp_);
     ROS_INFO("LC: RETURN");
     return_distance_calculated_ = false;
     distance_when_started_changing_lane_ = current_distance_;
@@ -260,6 +262,7 @@ void Road_obstacle_detector::distanceCallback(const std_msgs::Float32 &msg)
       front_axis_steering_service_.call(e);
     }
     status_ = ON_LEFT;
+    changePidSettings(old_Kp_);
     ROS_INFO("LC: ON_LEFT");
     blinkLeft(false);
     selfie_msgs::PolygonArray temp;
@@ -272,6 +275,7 @@ void Road_obstacle_detector::distanceCallback(const std_msgs::Float32 &msg)
       front_axis_steering_service_.call(e);
     }
     status_ = ON_RIGHT;
+    changePidSettings(old_Kp_);
     ROS_INFO("LC: ON_RIGHT");
     blinkRight(false);
     selfie_msgs::PolygonArray temp;
