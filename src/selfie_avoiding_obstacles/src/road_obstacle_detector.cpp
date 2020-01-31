@@ -36,6 +36,7 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
   pnh_.param<int>("num_proof_to_slowdown", num_proof_to_slowdown_, 2);
   pnh_.param<int>("num_corners_to_detect", num_corners_to_detect_, 3);
   pnh_.param<float>("lane_change_distance", lane_change_distance_, 0.9);
+  pnh_.param<double>("lane_change_kp", lane_change_kp_, 0.05);
 
   dr_server_.setCallback(dr_server_CB_);
   passive_mode_service_ = nh_.advertiseService("/avoiding_obst_set_passive", &Road_obstacle_detector::switchToPassive, this);
@@ -421,5 +422,10 @@ void Road_obstacle_detector::reconfigureCB(selfie_avoiding_obstacles::LaneContro
   {
     num_proof_to_slowdown_ = config.num_proof_to_slowdown;
     ROS_INFO("num_proof_to_slowdown new value: %d", num_proof_to_slowdown_);
+  }
+  if (lane_change_kp_ != (int)config.lane_change_kp)
+  {
+    lane_change_kp_ = config.lane_change_kp;
+    ROS_INFO("lane_change_kp new value: %d", lane_change_kp_);
   }
 }

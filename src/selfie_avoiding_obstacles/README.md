@@ -57,3 +57,6 @@ rosrun selfie_avoiding_obstacles lane_controller
    - how many corners of box should be in area of interest to consider it as obstacle to avoid
  - `lane_change_distance` (*float*)
    - how many meters it should take to change lane
+ - `lane_change_kp` (*float*)
+   - desired Kp value for pid used while changing lane
+   
