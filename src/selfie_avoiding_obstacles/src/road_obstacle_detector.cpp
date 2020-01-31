@@ -119,10 +119,7 @@ void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &
   case OVERTAKE:
     blinkRight(false);
     blinkLeft(true);
-    if (current_distance_ - distance_when_started_changing_lane_ >= lane_change_distance_ / 2)
-      setpoint_value_.data = left_lane_;
-    else
-      setpoint_value_.data = 0;
+    setpoint_value_.data = left_lane_;
     speed_message_.data = lane_change_speed_;
     break;
   case ON_LEFT:
@@ -132,10 +129,7 @@ void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &
   case RETURN:
     blinkRight(true);
     blinkLeft(false);
-    if (current_distance_ - distance_when_started_changing_lane_ >= lane_change_distance_ / 2)
-      setpoint_value_.data = right_lane_;
-    else
-      setpoint_value_.data = 0;
+    setpoint_value_.data = right_lane_;
     speed_message_.data = lane_change_speed_;
     break;
   case PASSIVE:
