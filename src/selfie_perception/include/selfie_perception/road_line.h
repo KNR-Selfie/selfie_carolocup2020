@@ -59,6 +59,7 @@ public:
   void setDegree(int degree)
   {
     degree_ = degree;
+    pf_.setPolyDegree_(degree);
   }
 
   void setCoeff(std::vector<float> coeff)

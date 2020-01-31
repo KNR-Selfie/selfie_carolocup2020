@@ -223,8 +223,8 @@ void ParticleFilter::calculateBest()
     points_tab[j].x /= num_particles_;
     points_tab[j].y /= num_particles_;
   }
-  polyfit(points_tab, 2, best_particle_.coeff);
-  best_particle_.poly_degree = 2;
+  polyfit(points_tab, poly_degree_, best_particle_.coeff);
+  best_particle_.poly_degree = poly_degree_;
 }
 
 void ParticleFilter::reset()
