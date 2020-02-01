@@ -55,7 +55,7 @@ Visualization Manager:
       Center Line Color: 255; 85; 127
       Class: selfie_rviz/RoadMarkings
       Enabled: true
-      Max X: 1.3
+      Max X: 1.45
       Min X: 0.300000012
       Name: RoadMarkings
       Rendering Step: 0.100000001

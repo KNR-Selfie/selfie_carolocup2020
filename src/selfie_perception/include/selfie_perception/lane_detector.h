@@ -142,7 +142,7 @@ class LaneDetector
 
   int starting_line_timeout_    {0};
   bool init_imageCallback_      {true};
-  float min_length_search_line_ {0.08};
+  float min_length_search_line_ {0.1};
   float max_delta_y_lane_       {0.08};
   float min_length_to_2aprox_   {0.56};
   float left_lane_width_        {0.4};
@@ -151,6 +151,7 @@ class LaneDetector
   int proof_start_line_         {0};
   float intersection_line_dist_ {-1};
   bool intersection_            {false};
+  bool waiting_for_stabilize_   {false};
 
 // parameterized
   std::string config_file_      {""};
@@ -173,7 +174,8 @@ class LaneDetector
 
   int pf_num_samples_           {50};
   int pf_num_points_            {3};
-  float pf_std_                 {0.02};
+  float pf_std_min_             {0.005};
+  float pf_std_max_             {0.02};
   int pf_num_samples_vis_       {20};
 
   double isec_HL_dist_res_      {1};
