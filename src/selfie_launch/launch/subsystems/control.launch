@@ -7,4 +7,6 @@
   <node name="offset_combiner" pkg="selfie_control" type="offset_combiner.py" respawn="true" output="screen" />
 
   <node name="cmd_creator" type="cmd_creator" pkg="selfie_control" respawn="true" output="screen" />
+
+  <node name="pid_tuner" type="pid_tuner" pkg="selfie_control" respawn="true" />
 </launch>
