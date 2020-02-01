@@ -282,6 +282,9 @@ void Road_obstacle_detector::changePidSettings(float Kp)
 {
   double temp, temp_scale;
   double scale = 1;
+  std_srvs::Empty e;
+  turn_off_speed_tuner_.call(e);
+
   if (!old_pid_saved_)
   {
     old_pid_saved_ = true;
@@ -349,6 +352,9 @@ void Road_obstacle_detector::restorePidSettings()
   srv_req_.config = conf_;
 
   ros::service::call("/pid_controller/set_parameters", srv_req_, srv_resp_);
+
+  std_srvs::Empty e;
+  turn_on_speed_tuner_.call(e);
 }
 
 void Road_obstacle_detector::passive_timer_cb(const ros::TimerEvent &time)
@@ -367,6 +373,8 @@ bool Road_obstacle_detector::switchToActive(std_srvs::Empty::Request &request, s
   obstacles_sub_ = nh_.subscribe("/obstacles", 1, &Road_obstacle_detector::obstacle_callback, this);
   markings_sub_ = nh_.subscribe("/road_markings", 1, &Road_obstacle_detector::road_markings_callback, this);
   distance_sub_ = nh_.subscribe("/distance", 1, &Road_obstacle_detector::distanceCallback, this);
+  turn_on_speed_tuner_ = nh_.serviceClient<std_srvs::Empty>("/PID_tuner_start");
+  turn_off_speed_tuner_ = nh_.serviceClient<std_srvs::Empty>("/PID_tuner_stop");
   blinkLeft(false);
   blinkRight(false);
   return_distance_calculated_ = false;

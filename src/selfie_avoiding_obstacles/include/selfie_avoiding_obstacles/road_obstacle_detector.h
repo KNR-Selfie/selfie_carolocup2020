@@ -122,6 +122,9 @@ private:
   double lane_change_kp_;
   bool old_pid_saved_;
 
+  ros::ServiceClient turn_on_speed_tuner_;
+  ros::ServiceClient turn_off_speed_tuner_;
+
   void reconfigureCB(selfie_avoiding_obstacles::LaneControllerConfig &config, uint32_t level);
 
   void filter_boxes(const selfie_msgs::PolygonArray &);           // filters boxes and saves in filtered_boxes_
