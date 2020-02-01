@@ -307,14 +307,13 @@ void Road_obstacle_detector::changePidSettings(float Kp)
     }
   }
 
-  while (Kp > 1 || Kp <= 0.1)
+  while (Kp > 1 || Kp < 0.1)
   {
     if (Kp > 1)
     {
       Kp = Kp / 10;
       scale = scale * 10;
-    }
-    if (Kp <= 0.1)
+    } else if (Kp < 0.1)
     {
       Kp = Kp * 10;
       scale = scale / 10;
