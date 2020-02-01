@@ -39,7 +39,7 @@ void setKp(float Kp)
     }
   }
 
-  conf_.clear();
+  conf_.doubles.clear();
   double_param_.name = "Kp";
   double_param_.value = Kp;
   conf_.doubles.push_back(double_param_);
@@ -135,7 +135,7 @@ void reconfigureCB(selfie_control::PIDTunerConfig& config, uint32_t level)
   if(speed_base != config.speed_base)
   {
     speed_base = config.speed_base;
-    ROS_INFO("speed_base new value: %f", max_speed_);
+    ROS_INFO("speed_base new value: %f", speed_base);
   }
   if(coeff != config.coeff)
   {
