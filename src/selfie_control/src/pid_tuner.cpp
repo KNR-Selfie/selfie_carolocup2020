@@ -9,6 +9,7 @@
 
 float act_speed = 1.0;
 bool running = true;
+bool act_speed_changed = false;
 
 float kp_base = 1.0;
 float speed_base = 1.0;
@@ -55,7 +56,11 @@ void setKp(float Kp)
 
 void speedCallback(const std_msgs::Float32 &msg)
 {
-  act_speed = msg.data;
+  if (std::abs(act_speed - msg.data) > 0.3)
+  {
+    act_speed = msg.data;
+    act_speed_changed = true;
+  }
 }
 
 bool startRunningCallback(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
@@ -110,8 +115,9 @@ int main(int argc, char** argv)
     // check for incoming messages
     ros::spinOnce();
 
-    if(running)
+    if(running && act_speed > 0.5 && act_speed_changed)
     {
+      act_speed_changed = false;
       float speed_diff = act_speed - speed_base;
       float kp_diff = speed_diff * coeff;
       if (std::abs(kp_diff) > deadzone)
