@@ -16,6 +16,42 @@ float coeff = 0.5;
 float deadzone = 0.1;
 float kp_base_scale = 1;
 
+// variables used for changing settings of PID
+dynamic_reconfigure::ReconfigureRequest srv_req_;
+dynamic_reconfigure::ReconfigureResponse srv_resp_;
+dynamic_reconfigure::DoubleParameter double_param_;
+dynamic_reconfigure::Config conf_;
+
+void setKp(bool Kp)
+{
+  bool scale = 1;
+  while (Kp > 1 || Kp <= 0.1)
+  {
+    if (Kp > 1)
+    {
+      Kp = Kp / 10;
+      scale = scale * 10;
+    }
+    if (Kp <= 0.1)
+    {
+      Kp = Kp * 10;
+      scale = scale / 10;
+    }
+  }
+
+  double_param_.name = "Kp";
+  double_param_.value = Kp;
+  conf_.doubles.push_back(double_param_);
+
+  double_param_.name = "Kp_scale";
+  double_param_.value = scale;
+  conf_.doubles.push_back(double_param_);
+
+  srv_req_.config = conf_;
+
+  ros::service::call("/pid_controller/set_parameters", srv_req_, srv_resp_);
+}
+
 void speedCallback(const std_msgs::Float32 &msg)
 {
   act_speed = msg.data;
@@ -64,11 +100,7 @@ int main(int argc, char** argv)
   dr_server_CB_ = boost::bind(&reconfigureCB, _1, _2);
   dr_server_.setCallback(dr_server_CB_);
 
-  // variables used for changing settings of PID
-  dynamic_reconfigure::ReconfigureRequest srv_req_;
-  dynamic_reconfigure::ReconfigureResponse srv_resp_;
-  dynamic_reconfigure::DoubleParameter double_param_;
-  dynamic_reconfigure::Config conf_;
+
 
   ros::Rate loop_rate(10);
 
@@ -84,6 +116,7 @@ int main(int argc, char** argv)
       if (std::abs(kp_diff) > deadzone)
       {
         float new_kp = kp_base + kp_diff;
+        setKp(new_kp);
       }
     }
 
