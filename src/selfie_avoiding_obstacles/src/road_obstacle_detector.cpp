@@ -310,7 +310,8 @@ bool Road_obstacle_detector::switchToActive(std_srvs::Empty::Request &request, s
 {
   if (status_ != PASSIVE)
   {
-    switchToPassive();
+    ROS_WARN("Switched to active when node is active");
+    return false;
   }
   obstacles_sub_ = nh_.subscribe("/obstacles", 1, &Road_obstacle_detector::obstacle_callback, this);
   markings_sub_ = nh_.subscribe("/road_markings", 1, &Road_obstacle_detector::road_markings_callback, this);
