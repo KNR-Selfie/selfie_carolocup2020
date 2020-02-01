@@ -18,6 +18,7 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
     , pos_tolerance_(0.01)
     , dr_server_CB_(boost::bind(&Road_obstacle_detector::reconfigureCB, this, _1, _2))
     , old_pid_saved_(false)
+    , df_pid_client_("cont", boost::bind(&Road_obstacle_detector::pidDynamicReconfigureCb, this, _1))
 {
   pnh_.param<bool>("visualization", visualization_, true);
   pnh_.param<bool>("ackermann_mode", ackermann_mode_, false);
@@ -366,6 +367,7 @@ void Road_obstacle_detector::passive_timer_cb(const ros::TimerEvent &time)
   setpoint_pub_.publish(setpoint_value_);
 }
 
+
 bool Road_obstacle_detector::switchToActive(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response)
 {
   if (status_ != PASSIVE)
@@ -433,6 +435,17 @@ void Road_obstacle_detector::blinkRight(bool on)
   right_indicator_pub_.publish(msg);
   return;
 }
+
+void Road_obstacle_detector::pidDynamicReconfigureCb(const PidConfig &config) 
+{
+  pnh_.setParam("/pid_controller/Kd",(float)config.Kd);
+  pnh_.setParam("/pid_controller/Kp",(float)config.Kp);
+  pnh_.setParam("/pid_controller/Ki",(float)config.Ki);
+  pnh_.setParam("/pid_controller/Kd_scale",(float)config.Kd_scale);
+  pnh_.setParam("/pid_controller/Kp_scale",(float)config.Kp_scale);
+  pnh_.setParam("/pid_controller/Ki_scale",(float)config.Ki_scale);
+}
+
 void Road_obstacle_detector::reconfigureCB(selfie_avoiding_obstacles::LaneControllerConfig &config, uint32_t level)
 {
   if (left_lane_ != (float)config.left_lane_setpoint)

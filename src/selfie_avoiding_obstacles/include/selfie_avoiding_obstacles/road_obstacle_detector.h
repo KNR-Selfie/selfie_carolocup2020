@@ -9,10 +9,12 @@
 
 #include <dynamic_reconfigure/Config.h>
 #include <dynamic_reconfigure/Reconfigure.h>
+#include <dynamic_reconfigure/client.h>
 #include <dynamic_reconfigure/server.h>
 #include <geometry_msgs/Polygon.h>
 #include <geometry_msgs/PolygonStamped.h>
 #include <pid/PidConfig.h>
+#include <pid/pid.h>
 #include <selfie_avoiding_obstacles/LaneControllerConfig.h>
 #include <selfie_msgs/PolygonArray.h>
 #include <selfie_msgs/RoadMarkings.h>
@@ -27,6 +29,9 @@
 #include <selfie_park/shapes.h>
 
 using namespace std;
+using namespace pid;
+using namespace pid_ns;
+using namespace dynamic_reconfigure;
 
 class Road_obstacle_detector
 {
@@ -117,6 +122,7 @@ private:
   dynamic_reconfigure::ReconfigureResponse srv_resp_;
   dynamic_reconfigure::DoubleParameter double_param_;
   dynamic_reconfigure::Config conf_;
+  Client<PidConfig> df_pid_client_;
   double old_Kp_;
   double old_kp_scale_;
   double lane_change_kp_;
@@ -132,8 +138,10 @@ private:
   void obstacle_callback(const selfie_msgs::PolygonArray &);
   void distanceCallback(const std_msgs::Float32 &);
   void calculate_return_distance();
+
   void changePidSettings(float);
   void restorePidSettings();
+  void pidDynamicReconfigureCb(const PidConfig &);
 
   bool switchToActive(std_srvs::Empty::Request &, std_srvs::Empty::Response &);
   bool switchToPassive(std_srvs::Empty::Request &, std_srvs::Empty::Response &);
