@@ -22,9 +22,9 @@ dynamic_reconfigure::ReconfigureResponse srv_resp_;
 dynamic_reconfigure::DoubleParameter double_param_;
 dynamic_reconfigure::Config conf_;
 
-void setKp(bool Kp)
+void setKp(float Kp)
 {
-  bool scale = 1;
+  float scale = 1.0;
   while (Kp > 1 || Kp <= 0.1)
   {
     if (Kp > 1)
