@@ -524,4 +524,11 @@ void Road_obstacle_detector::reconfigureCB(selfie_avoiding_obstacles::LaneContro
     area_of_interest_box_ = Box(Point(ROI_min_x_, ROI_max_y_), Point(ROI_min_x_, ROI_min_y_), Point(ROI_max_x_, ROI_max_y_),
                                 Point(ROI_max_x_, ROI_min_y_));
   }
+
+
+  if (lane_change_speed_ != (int)config.lane_change_speed)
+  {
+    lane_change_speed_ = config.lane_change_speed;
+    ROS_INFO("lane_change_kp new value: %lf", lane_change_speed_);
+  }
 }
