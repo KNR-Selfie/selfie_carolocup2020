@@ -23,7 +23,7 @@ dynamic_reconfigure::ReconfigureResponse srv_resp_;
 dynamic_reconfigure::DoubleParameter double_param_;
 dynamic_reconfigure::Config conf_;
 
-void setKp(float Kp)
+void setKp(float Kp, ros::NodeHandle &pnh)
 {
   float scale = 1.0;
   while (Kp > 1 || Kp <= 0.1)
@@ -52,6 +52,9 @@ void setKp(float Kp)
   srv_req_.config = conf_;
 
   ros::service::call("/pid_controller/set_parameters", srv_req_, srv_resp_);
+
+  pnh.setParam("/pid_controller/Kp",Kp);
+  pnh.setParam("/pid_controller/Kp_scale",scale);
 }
 
 void speedCallback(const std_msgs::Float32 &msg)
@@ -123,7 +126,7 @@ int main(int argc, char** argv)
       if (std::abs(kp_diff) > deadzone)
       {
         float new_kp = kp_base + kp_diff;
-        setKp(new_kp);
+        setKp(new_kp, pnh);
       }
     }
 
