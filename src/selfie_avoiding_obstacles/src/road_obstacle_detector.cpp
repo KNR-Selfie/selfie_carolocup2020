@@ -320,6 +320,7 @@ void Road_obstacle_detector::changePidSettings(float Kp)
     }
   }
 
+  conf_.doubles.clear();
   double_param_.name = "Kp";
   double_param_.value = Kp;
   conf_.doubles.push_back(double_param_);
@@ -340,6 +341,7 @@ void Road_obstacle_detector::restorePidSettings()
     ROS_ERROR("old pid is not saved");
     return;
   }
+  conf_.doubles.clear();
   double_param_.name = "Kp";
   double_param_.value = old_Kp_;
   conf_.doubles.push_back(double_param_);
