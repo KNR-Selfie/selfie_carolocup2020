@@ -83,8 +83,8 @@ void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &
     if (!filtered_boxes_.empty())
     {
       ++proof_slowdown_;
-      if (nearest_box_in_front_of_car_->bottom_left.x <= max_distance_to_obstacle_ ||
-          nearest_box_in_front_of_car_->bottom_right.x <= max_distance_to_obstacle_)
+      if (status_ == ON_RIGHT && (nearest_box_in_front_of_car_->bottom_left.x <= max_distance_to_obstacle_ ||
+                                  nearest_box_in_front_of_car_->bottom_right.x <= max_distance_to_obstacle_))
       {
         proof_slowdown_ = 0;
         calculate_return_distance();
@@ -524,7 +524,6 @@ void Road_obstacle_detector::reconfigureCB(selfie_avoiding_obstacles::LaneContro
     area_of_interest_box_ = Box(Point(ROI_min_x_, ROI_max_y_), Point(ROI_min_x_, ROI_min_y_), Point(ROI_max_x_, ROI_max_y_),
                                 Point(ROI_max_x_, ROI_min_y_));
   }
-
 
   if (lane_change_speed_ != (int)config.lane_change_speed)
   {
