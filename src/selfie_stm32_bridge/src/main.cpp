@@ -30,8 +30,10 @@ std_msgs::Empty empty_msg;
 
 float ackermann_offset_front;
 float ackermann_offset_back;
-float parallel_offset_front;
-float paralell_offset_back;
+float parallel_offset_front_left;
+float parallel_offset_back_left;
+float parallel_offset_front_right;
+float parallel_offset_back_right;
 float front_axis_offset;
 
 int main(int argc, char **argv)
@@ -45,8 +47,10 @@ int main(int argc, char **argv)
     dr_server_.setCallback(dr_server_CB_);
     pnh.getParam("ackermann_offset_front", ackermann_offset_front);
     pnh.getParam("ackermann_offset_back", ackermann_offset_back);
-    pnh.getParam("parallel_offset_front", parallel_offset_front);
-    pnh.getParam("paralell_offset_back", paralell_offset_back);
+    pnh.getParam("parallel_offset_front_right", parallel_offset_front_right);
+    pnh.getParam("parallel_offset_back_right", parallel_offset_back_right);
+     pnh.getParam("parallel_offset_front_left", parallel_offset_front_left);
+    pnh.getParam("parallel_offset_back_left", parallel_offset_back_left);
     pnh.getParam("front_axis_offset", front_axis_offset);
 
     ros::Publisher imu_publisher = n.advertise<sensor_msgs::Imu>("imu", 100);
@@ -99,13 +103,13 @@ void ackermanCallback(const ackermann_msgs::AckermannDriveStamped::ConstPtr& msg
         float tmp_parallel_offset_front;
         if (msg->drive.steering_angle < 0)
         {
-            tmp_paralell_offset_back = -paralell_offset_back;
-            tmp_parallel_offset_front = -parallel_offset_front;
+            tmp_paralell_offset_back = parallel_offset_back_left;
+            tmp_parallel_offset_front = parallel_offset_front_left;
         }
         else
         {
-            tmp_paralell_offset_back = paralell_offset_back;
-            tmp_parallel_offset_front = parallel_offset_front;
+            tmp_paralell_offset_back = parallel_offset_back_right;
+            tmp_parallel_offset_front = parallel_offset_front_right;
         }
         sub_messages.ackerman.steering_angle_front = msg->drive.steering_angle + tmp_parallel_offset_front;
         sub_messages.ackerman.steering_angle_back = msg->drive.steering_angle + tmp_paralell_offset_back;
@@ -171,16 +175,30 @@ void reconfigureCB(selfie_stm32_bridge::StmBridgeConfig& config, uint32_t level)
         ackermann_offset_front = (float)config.ackermann_offset_front;
         ROS_INFO("ackermann_offset_front new value: %f", ackermann_offset_front);
     }
-    if(paralell_offset_back != (float)config.paralell_offset_back)
+
+    if(parallel_offset_back_right != (float)config.parallel_offset_back_right)
     {
-        paralell_offset_back = (float)config.paralell_offset_back;
-        ROS_INFO("paralell_offset_back end new value %f", paralell_offset_back);
+        parallel_offset_back_right = (float)config.parallel_offset_back_right;
+        ROS_INFO("parallel_offset_back_right end new value %f", parallel_offset_back_right);
     }
-    if(parallel_offset_front != (float)config.parallel_offset_front)
+    if(parallel_offset_front_right != (float)config.parallel_offset_front_right)
     {
-        parallel_offset_front = (float)config.parallel_offset_front;
-        ROS_INFO("parallel_offset_front end new value %f", parallel_offset_front);
+        parallel_offset_front_right = (float)config.parallel_offset_front_right;
+        ROS_INFO("parallel_offset_front_right end new value %f", parallel_offset_front_right);
     }
+    if(parallel_offset_back_left != (float)config.parallel_offset_back_left)
+    {
+        parallel_offset_back_left = (float)config.parallel_offset_back_left;
+        ROS_INFO("paralell_offset_back_left end new value %f", parallel_offset_back_left);
+    }
+    if(parallel_offset_front_left != (float)config.parallel_offset_front_left)
+    {
+        parallel_offset_front_left = (float)config.parallel_offset_front_left;
+        ROS_INFO("parallel_offset_front_left end new value %f", parallel_offset_front_left);
+    }
+
+
+
     if(front_axis_offset != (float)config.front_axis_offset)
     {
         front_axis_offset = (float)config.front_axis_offset;

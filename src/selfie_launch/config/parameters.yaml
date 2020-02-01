@@ -136,7 +136,9 @@ stm32_bridge:
   {
     ackermann_offset_front: 0.0,
     ackermann_offset_back: 0.0,
-    parallel_offset_front: 0.0,
-    paralell_offset_back: 0.0,
+    parallel_offset_front_right: 0.0,
+    parallel_offset_back_right: 0.0,
+    parallel_offset_front_left: 0.0,
+    parallel_offset_back_left: 0.0,
     front_axis_offset: 0.0
   }
