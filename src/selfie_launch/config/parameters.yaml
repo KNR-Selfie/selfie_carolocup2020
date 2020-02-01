@@ -134,3 +134,11 @@ qr_decoder:
     min_detect_rate: 0.3,
     interations_to_vaild: 2
   }
+selfie_stm32_bridge:
+  {
+    ackermann_offset_front: 0.0,
+    ackermann_offset_back: 0.0,
+    parallel_offset_front: 0.0,
+    paralell_offset_back: 0.0,
+    front_axis_offset: 0.0
+  }
