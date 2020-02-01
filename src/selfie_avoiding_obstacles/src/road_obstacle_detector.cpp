@@ -83,8 +83,9 @@ void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &
     if (!filtered_boxes_.empty())
     {
       ++proof_slowdown_;
-      if (status_ == ON_RIGHT && (nearest_box_in_front_of_car_->bottom_left.x <= max_distance_to_obstacle_ ||
-                                  nearest_box_in_front_of_car_->bottom_right.x <= max_distance_to_obstacle_))
+      if ((status_ == ON_RIGHT || status_ == RETURN) &&
+          (nearest_box_in_front_of_car_->bottom_left.x <= max_distance_to_obstacle_ ||
+           nearest_box_in_front_of_car_->bottom_right.x <= max_distance_to_obstacle_))
       {
         proof_slowdown_ = 0;
         calculate_return_distance();
