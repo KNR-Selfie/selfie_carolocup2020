@@ -204,9 +204,13 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
 
     if(!isIntersection())
     {
-      right_line_.addBottomPoint();
-      center_line_.addBottomPoint();
-      left_line_.addBottomPoint();
+      if (waiting_for_stabilize_)
+      {
+        // sprawdzić pierwsze punkty konturów. Jeśli są ponieżej jakiejś wartości to waiting for stable = false
+      }
+      right_line_.addBottomPoint(waiting_for_stabilize_);
+      center_line_.addBottomPoint(waiting_for_stabilize_);
+      left_line_.addBottomPoint(waiting_for_stabilize_);
 
       right_line_.calcParams();
       center_line_.calcParams();
@@ -525,7 +529,7 @@ void LaneDetector::recognizeLinesNew()
 {
   float checking_length = 0.4;
   float max_cost = 0.05;
-  if (intersection_)
+  if (intersection_ || waiting_for_stabilize_)
     max_cost = 0.1;
   float ratio = 0.4;
   center_line_.clearPoints();
@@ -2163,7 +2167,6 @@ void LaneDetector::tuneParams(const ros::TimerEvent &time)
 
 bool LaneDetector::isIntersection()
 {
-  intersection_ = false;
   if (lines_out_h_world_.empty())
   {
     center_line_.setDegree(2);
@@ -2297,12 +2300,16 @@ bool LaneDetector::isIntersection()
   {
     if (center_line_.getPoints()[0].x > ((TOPVIEW_MIN_X + TOPVIEW_MAX_X) / 2))
     {
+      if (intersection_)
+        waiting_for_stabilize_ = true;
+      intersection_ = false;
       center_line_.setDegree(2);
       right_line_.setDegree(2);
       left_line_.setDegree(2);
       return false;
     }
     intersection_ = true;
+    waiting_for_stabilize_ = false;
     ROS_INFO_THROTTLE(2, "INTERSECTION");
     if (intersection_line_dist_ != -1)
     {
@@ -2350,6 +2357,9 @@ bool LaneDetector::isIntersection()
   }
   else
   {
+    if (intersection_)
+        waiting_for_stabilize_ = true;
+    intersection_ = false;
     center_line_.setDegree(2);
     right_line_.setDegree(2);
     left_line_.setDegree(2);
