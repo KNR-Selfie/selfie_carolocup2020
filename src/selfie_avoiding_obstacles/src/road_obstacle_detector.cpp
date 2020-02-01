@@ -218,8 +218,7 @@ bool Road_obstacle_detector::is_on_right_lane(const Point &point)
 void Road_obstacle_detector::calculate_return_distance()
 {
   return_distance_calculated_ = true;
-  return_distance_ = safety_margin_ * (max_length_of_obstacle_ + nearest_box_in_front_of_car_->bottom_left.x) +
-                     current_distance_ + lane_change_distance_;
+  return_distance_ = safety_margin_ * (max_length_of_obstacle_) + current_distance_ + lane_change_distance_;
   ROS_INFO("LC: return_distance_: %f", return_distance_);
 }
 
