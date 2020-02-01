@@ -341,7 +341,6 @@ void Search_server::endAction() // shutting donw unnecesary subscribers and publ
 {
   obstacles_sub.shutdown();
   distance_sub_.shutdown();
-  speed_publisher.shutdown();
   max_distance_calculated_ = false;
 }
 void Search_server::reconfigureCB(selfie_park::DetectParkingSpotConfig& config, uint32_t level){
