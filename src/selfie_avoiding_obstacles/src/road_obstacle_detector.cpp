@@ -357,6 +357,7 @@ void Road_obstacle_detector::restorePidSettings()
 
   std_srvs::Empty e;
   turn_on_speed_tuner_.call(e);
+  old_pid_saved_ = false;
 }
 
 void Road_obstacle_detector::passive_timer_cb(const ros::TimerEvent &time)
