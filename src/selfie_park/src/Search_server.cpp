@@ -44,6 +44,7 @@ bool Search_server::init()
   obstacles_sub = nh_.subscribe("/obstacles", 1, &Search_server::manager, this);
   distance_sub_ = nh_.subscribe("/distance", 1, &Search_server::distanceCb, this);
 
+  speed_current.data = default_speed_in_parking_zone;
   speed_publisher.publish(speed_current);
   min_spot_lenght = search_server_.acceptNewGoal()->min_spot_lenght;
   publishFeedback(START_SEARCHING_PLACE);
