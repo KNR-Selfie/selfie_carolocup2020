@@ -87,7 +87,7 @@ void Search_server::manager(const selfie_msgs::PolygonArray &msg)
       if (first_free_place.bottom_left.x <= max_distance_to_free_place_)
       {
         publishFeedback(FIND_PROPER_PLACE);
-        speed_current.data = 0; // when we found proper place we should stop
+        speed_current.data = default_speed_in_parking_zone;
       }
       speed_publisher.publish(speed_current);
     } else
