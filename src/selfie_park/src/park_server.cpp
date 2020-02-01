@@ -21,7 +21,7 @@ dr_server_CB_(boost::bind(&ParkService::reconfigureCB, this, _1, _2))
   pnh_.param<float>("iter_distance",iter_distance_,0.2);
   pnh_.param<float>("angle_coeff", angle_coeff_, 1./2.);
   pnh_.param<float>("back_to_base_", back_to_base_, 0.18);
-  pnh_.param<float>("turn delay",turn_delay_, 0.1);
+  pnh_.param<float>("turn_delay",turn_delay_, 0.1);
 
   park_spot_middle_ = 0.;
   front_target_ = 0.;
@@ -33,6 +33,8 @@ dr_server_CB_(boost::bind(&ParkService::reconfigureCB, this, _1, _2))
   action_status_ = READY_TO_DRIVE;
   as_.registerGoalCallback(boost::bind(&ParkService::goalCB, this));
   as_.registerPreemptCallback(boost::bind(&ParkService::preemptCB, this));
+  steering_mode_set_parallel_ = nh_.serviceClient<std_srvs::Empty>("steering_parallel");
+  steering_mode_set_front_axis_ = nh_.serviceClient<std_srvs::Empty>("steering_front_axis");
   as_.start();
   dist_sub_ = nh_.subscribe("/distance", 1, &ParkService::distanceCallback, this);
   ackermann_pub_ = nh_.advertise<ackermann_msgs::AckermannDriveStamped>(ackermann_topic_, 10);
@@ -53,6 +55,8 @@ void ParkService::distanceCallback(const std_msgs::Float32 &msg)
         {
             prev_dist_ = actual_dist_;
             delay_end_ = ros::Time::now() + ros::Duration(turn_delay_);
+            std_srvs::Empty empty = std_srvs::Empty();
+            steering_mode_set_parallel_.call(empty);
             parking_state_ = going_in;
 
         }
@@ -110,6 +114,8 @@ void ParkService::goalCB()
   feedback.action_status = START_PARK;
   as_.publishFeedback(feedback);
   parking_state_ = go_to_parking_spot;
+  std_srvs::Empty empty = std_srvs::Empty();
+  steering_mode_set_front_axis_.call(empty);
 }
 
 void ParkService::preemptCB()
@@ -307,6 +313,7 @@ void ParkService::reconfigureCB(selfie_park::ParkServerConfig& config, uint32_t 
         max_turn_ = config.max_turn;
         ROS_INFO("max_turn new value: %f",max_turn_);
     }
+  
     if(parking_speed_ != (float)config.parking_speed)
     {
         parking_speed_ = config.parking_speed;
