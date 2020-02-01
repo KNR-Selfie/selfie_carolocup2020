@@ -385,8 +385,8 @@ bool Road_obstacle_detector::switchToActive(std_srvs::Empty::Request &request, s
   status_ = ON_RIGHT;
   if (ackermann_mode_)
   {
-    ackerman_steering_service_ = nh_.serviceClient<std_srvs::Empty>("steering_ackerman");
-    front_axis_steering_service_ = nh_.serviceClient<std_srvs::Empty>("steering_front_axis");
+    ackerman_steering_service_ = nh_.serviceClient<std_srvs::Empty>("/steering_ackerman");
+    front_axis_steering_service_ = nh_.serviceClient<std_srvs::Empty>("/steering_front_axis");
   }
   ROS_INFO("Lane control active mode");
   return true;
