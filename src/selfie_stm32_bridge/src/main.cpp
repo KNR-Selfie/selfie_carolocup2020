@@ -107,8 +107,8 @@ void ackermanCallback(const ackermann_msgs::AckermannDriveStamped::ConstPtr& msg
             tmp_paralell_offset_back = paralell_offset_back;
             tmp_parallel_offset_front = parallel_offset_front;
         }
-        sub_messages.ackerman.steering_angle_front = msg->drive.steering_angle + parallel_offset_front;
-        sub_messages.ackerman.steering_angle_back = msg->drive.steering_angle + paralell_offset_back;
+        sub_messages.ackerman.steering_angle_front = msg->drive.steering_angle + tmp_parallel_offset_front;
+        sub_messages.ackerman.steering_angle_back = msg->drive.steering_angle + tmp_paralell_offset_back;
     }
     else if(steering_mode == ACKERMANN)
     {   
