@@ -142,3 +142,10 @@ stm32_bridge:
     parallel_offset_back_left: 0.2,
     front_axis_offset: 0.15
   }
+pid_tuner:
+  {
+    kp_base: 1.5,
+    speed_base: 1.0,
+    coeff: -0.5,
+    deadzone: 0.1
+  }

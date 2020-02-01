@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
 
 generate_dynamic_reconfigure_options(
   cfg/HeadingCoeff.cfg
+  cfg/pidTuner.cfg
 )
 
 include_directories(include ${catkin_INCLUDE_DIRS})
@@ -20,3 +21,7 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 add_executable(cmd_creator src/cmd_creator.cpp)
 target_link_libraries(cmd_creator ${catkin_LIBRARIES})
 add_dependencies(cmd_creator ${selfie_control_EXPORTED_TARGETS})
+
+add_executable(pid_tuner src/pid_tuner.cpp)
+target_link_libraries(pid_tuner ${catkin_LIBRARIES})
+add_dependencies(pid_tuner ${selfie_control_EXPORTED_TARGETS})
