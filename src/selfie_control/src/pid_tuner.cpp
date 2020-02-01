@@ -23,6 +23,40 @@ dynamic_reconfigure::ReconfigureResponse srv_resp_;
 dynamic_reconfigure::DoubleParameter double_param_;
 dynamic_reconfigure::Config conf_;
 
+void setKd(float Kd, ros::NodeHandle &pnh)
+{
+  float scale = 1.0;
+  while (Kd > 1 || Kd <= 0.1)
+  {
+    if (Kd > 1)
+    {
+      Kd = Kd / 10;
+      scale = scale * 10;
+    }
+    else if (Kd <= 0.1)
+    {
+      Kd = Kd * 10;
+      scale = scale / 10;
+    }
+  }
+
+  conf_.doubles.clear();
+  double_param_.name = "Kd";
+  double_param_.value = Kd;
+  conf_.doubles.push_back(double_param_);
+
+  double_param_.name = "Kd_scale";
+  double_param_.value = scale;
+  conf_.doubles.push_back(double_param_);
+
+  srv_req_.config = conf_;
+
+  ros::service::call("/pid_controller/set_parameters", srv_req_, srv_resp_);
+
+  pnh.setParam("/pid_controller/Kd",Kd);
+  pnh.setParam("/pid_controller/Kd_scale",scale);
+}
+
 void setKp(float Kp, ros::NodeHandle &pnh)
 {
   float scale = 1.0;
