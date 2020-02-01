@@ -17,6 +17,7 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
     , return_distance_calculated_(false)
     , pos_tolerance_(0.01)
     , dr_server_CB_(boost::bind(&Road_obstacle_detector::reconfigureCB, this, _1, _2))
+    , old_pid_saved_(false)
 {
   pnh_.param<bool>("visualization", visualization_, true);
   pnh_.param<bool>("ackermann_mode", ackermann_mode_, false);
@@ -256,7 +257,7 @@ void Road_obstacle_detector::distanceCallback(const std_msgs::Float32 &msg)
       front_axis_steering_service_.call(e);
     }
     status_ = ON_LEFT;
-    changePidSettings(old_Kp_);
+    restorePidSettings();
     ROS_INFO("LC: ON_LEFT");
     blinkLeft(false);
     selfie_msgs::PolygonArray temp;
@@ -269,7 +270,7 @@ void Road_obstacle_detector::distanceCallback(const std_msgs::Float32 &msg)
       front_axis_steering_service_.call(e);
     }
     status_ = ON_RIGHT;
-    changePidSettings(old_Kp_);
+    restorePidSettings();
     ROS_INFO("LC: ON_RIGHT");
     blinkRight(false);
     selfie_msgs::PolygonArray temp;
@@ -279,20 +280,70 @@ void Road_obstacle_detector::distanceCallback(const std_msgs::Float32 &msg)
 
 void Road_obstacle_detector::changePidSettings(float Kp)
 {
-  double temp;
-  if (ros::param::get("/pid_controller/Kd", temp))
+  double temp, temp_scale;
+  double scale = 1;
+  if (!old_pid_saved_)
   {
-    if (temp != lane_change_kp_)
+    old_pid_saved_ = true;
+    if (ros::param::get("/pid_controller/Kp_scale", temp_scale))
+    {
+      old_kp_scale_ = temp_scale;
+    } else
+    {
+      ROS_WARN_THROTTLE(1, "Can't get param: /pid_controller/Kp_scale");
+      old_pid_saved_ = false;
+    }
+
+    if (ros::param::get("/pid_controller/Kp", temp))
     {
       old_Kp_ = temp;
+    } else
+    {
+      ROS_WARN_THROTTLE(1, "Can't get param: /pid_controller/Kp");
+      old_pid_saved_ = false;
     }
-  } else
+  }
+
+  while (Kp > 1 || Kp <= 0.1)
   {
-    ROS_WARN_THROTTLE(1, "Can't get param: /pid_controller/Kd");
+    if (Kp > 1)
+    {
+      Kp = Kp / 10;
+      scale = scale * 10;
+    }
+    if (Kp <= 0.1)
+    {
+      Kp = Kp * 10;
+      scale = scale / 10;
+    }
   }
 
   double_param_.name = "Kp";
   double_param_.value = Kp;
+  conf_.doubles.push_back(double_param_);
+
+  double_param_.name = "Kp_scale";
+  double_param_.value = scale;
+  conf_.doubles.push_back(double_param_);
+
+  srv_req_.config = conf_;
+
+  ros::service::call("/pid_controller/set_parameters", srv_req_, srv_resp_);
+}
+
+void Road_obstacle_detector::restorePidSettings()
+{
+  if (!old_pid_saved_)
+  {
+    ROS_ERROR("old pid is not saved");
+    return;
+  }
+  double_param_.name = "Kp";
+  double_param_.value = old_Kp_;
+  conf_.doubles.push_back(double_param_);
+
+  double_param_.name = "Kp_scale";
+  double_param_.value = old_kp_scale_;
   conf_.doubles.push_back(double_param_);
 
   srv_req_.config = conf_;
@@ -319,6 +370,7 @@ bool Road_obstacle_detector::switchToActive(std_srvs::Empty::Request &request, s
   blinkLeft(false);
   blinkRight(false);
   return_distance_calculated_ = false;
+  old_pid_saved_ = false;
   proof_slowdown_ = 0;
   timer_.stop();
   status_ = ON_RIGHT;

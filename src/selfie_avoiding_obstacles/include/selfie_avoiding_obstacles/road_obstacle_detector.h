@@ -118,7 +118,9 @@ private:
   dynamic_reconfigure::DoubleParameter double_param_;
   dynamic_reconfigure::Config conf_;
   double old_Kp_;
+  double old_kp_scale_;
   double lane_change_kp_;
+  bool old_pid_saved_;
 
   void reconfigureCB(selfie_avoiding_obstacles::LaneControllerConfig &config, uint32_t level);
 
@@ -128,6 +130,7 @@ private:
   void distanceCallback(const std_msgs::Float32 &);
   void calculate_return_distance();
   void changePidSettings(float);
+  void restorePidSettings();
 
   bool switchToActive(std_srvs::Empty::Request &, std_srvs::Empty::Response &);
   bool switchToPassive(std_srvs::Empty::Request &, std_srvs::Empty::Response &);
