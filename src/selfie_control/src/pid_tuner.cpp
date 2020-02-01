@@ -127,5 +127,24 @@ int main(int argc, char** argv)
 
 void reconfigureCB(selfie_control::PIDTunerConfig& config, uint32_t level)
 {
-  ;
+  if(kp_base != config.kp_base)
+  {
+    kp_base = config.kp_base;
+    ROS_INFO("kp_base to end new value: %f", kp_base);
+  }
+  if(speed_base != config.speed_base)
+  {
+    speed_base = config.speed_base;
+    ROS_INFO("speed_base new value: %f", max_speed_);
+  }
+  if(coeff != config.coeff)
+  {
+    coeff = config.coeff;
+    ROS_INFO("coeff to end new value %f", coeff);
+  }
+  if(deadzone != config.deadzone)
+  {
+    deadzone = config.deadzone;
+    ROS_INFO("deadzone new value %f", deadzone);
+  }
 }
