@@ -20,7 +20,7 @@ dr_server_CB_(boost::bind(&ParkService::reconfigureCB, this, _1, _2))
   pnh_.param<float>("idle_time", idle_time_, 2.);
   pnh_.param<float>("iter_distance",iter_distance_,0.2);
   pnh_.param<float>("angle_coeff", angle_coeff_, 1./2.);
-  pnh_.param<float>("back_to_base_", back_to_base_, 0.18);
+  pnh_.param<float>("back_to_mid", back_to_mid_, 0.18);
   pnh_.param<float>("turn_delay",turn_delay_, 0.1);
 
   park_spot_middle_ = 0.;
@@ -144,7 +144,7 @@ void ParkService::initParkingSpot(const geometry_msgs::Polygon &msg)
     park_spot_middle_ = sumx / msg.points.size();
     park_spot_dist_ = park_spot_dist_ini_;
 
-    back_target_ = actual_dist_ + park_spot_middle_ - iter_distance_/2. - back_to_base_;
+    back_target_ = actual_dist_ + park_spot_middle_ - iter_distance_/2. - back_to_mid_;
     front_target_ = back_target_ + iter_distance_;
 }
 
@@ -328,6 +328,11 @@ void ParkService::reconfigureCB(selfie_park::ParkServerConfig& config, uint32_t 
     {
         iter_distance_ = config.iter_distance;
         ROS_INFO("iter distance new value: %f", iter_distance_);
+    }
+    if(turn_delay_!= (float)config.turn_delay)
+    {
+        turn_delay_= config.turn_delay;
+        ROS_INFO("iter distance new value: %f", turn_delay_);
     }
 
 }

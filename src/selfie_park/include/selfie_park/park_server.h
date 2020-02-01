@@ -102,7 +102,7 @@ private:
   float max_turn_;
   float idle_time_;
   float iter_distance_;
-  float back_to_base_;
+  float back_to_mid_;
   std::string odom_topic_;
   float angle_coeff_;
   float turn_delay_;
