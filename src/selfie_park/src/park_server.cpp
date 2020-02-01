@@ -134,8 +134,8 @@ void ParkService::initParkingSpot(const geometry_msgs::Polygon &msg)
     float min_point_dist = 10000.f;
     float sumx = 0.;
     float sumy = 0.;
-    park_spot_middle_ = (msg[0].x + msg[3].x)/2.;
-    park_spot_dist_ini_ = std::abs(msg[2].y + msg[3].y)/2.;
+    park_spot_middle_ = (msg.points[0].x + msg.points[3].x)/2.;
+    park_spot_dist_ini_ = std::abs(msg.points[2].y + msg.points[3].y)/2.;
 
     park_spot_dist_ = park_spot_dist_ini_;
 
