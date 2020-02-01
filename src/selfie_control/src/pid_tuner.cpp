@@ -32,13 +32,14 @@ void setKp(bool Kp)
       Kp = Kp / 10;
       scale = scale * 10;
     }
-    if (Kp <= 0.1)
+    else if (Kp <= 0.1)
     {
       Kp = Kp * 10;
       scale = scale / 10;
     }
   }
 
+  conf_.clear();
   double_param_.name = "Kp";
   double_param_.value = Kp;
   conf_.doubles.push_back(double_param_);
