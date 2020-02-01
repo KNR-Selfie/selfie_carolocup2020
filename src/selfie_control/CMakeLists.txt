@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   roscpp
   std_msgs
+  pid
 )
 
 generate_dynamic_reconfigure_options(
