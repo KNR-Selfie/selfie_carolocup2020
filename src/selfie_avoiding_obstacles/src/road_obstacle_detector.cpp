@@ -309,7 +309,9 @@ void Road_obstacle_detector::passive_timer_cb(const ros::TimerEvent &time)
 bool Road_obstacle_detector::switchToActive(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response)
 {
   if (status_ != PASSIVE)
-    return false;
+  {
+    switchToPassive();
+  }
   obstacles_sub_ = nh_.subscribe("/obstacles", 1, &Road_obstacle_detector::obstacle_callback, this);
   markings_sub_ = nh_.subscribe("/road_markings", 1, &Road_obstacle_detector::road_markings_callback, this);
   distance_sub_ = nh_.subscribe("/distance", 1, &Road_obstacle_detector::distanceCallback, this);
@@ -334,6 +336,9 @@ bool Road_obstacle_detector::switchToPassive(std_srvs::Empty::Request &request, 
   obstacles_sub_.shutdown();
   distance_sub_.shutdown();
   setpoint_value_.data = right_lane_;
+  speed_message_.data = max_speed_;
+  setpoint_pub_.publish(setpoint_value_);
+  speed_pub_.publish(speed_message_);
   status_ = PASSIVE;
   timer_.start();
   ROS_INFO("Lane control passive mode");
