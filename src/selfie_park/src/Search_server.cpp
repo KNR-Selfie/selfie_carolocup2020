@@ -28,6 +28,8 @@ Search_server::Search_server(const ros::NodeHandle &nh, const ros::NodeHandle &p
   pnh_.param<float>("length_of_parking_area", length_of_parking_area_, 2.5);
   tangens_of_box_angle_ = tan(tangens_of_box_angle_ * M_PI / 180);
 
+  speed_publisher = nh_.advertise<std_msgs::Float64>("/max_speed", 5);
+
   speed_current.data = default_speed_in_parking_zone;
   if (visualization)
   {
@@ -41,7 +43,6 @@ bool Search_server::init()
 {
   obstacles_sub = nh_.subscribe("/obstacles", 1, &Search_server::manager, this);
   distance_sub_ = nh_.subscribe("/distance", 1, &Search_server::distanceCb, this);
-  speed_publisher = nh_.advertise<std_msgs::Float64>("/max_speed", 0.5);
 
   speed_publisher.publish(speed_current);
   min_spot_lenght = search_server_.acceptNewGoal()->min_spot_lenght;
@@ -196,6 +197,7 @@ void Search_server::send_goal()
 {
 
   geometry_msgs::Point32 p;
+  result.parking_spot.points.clear();
   p.x = first_free_place.bottom_left.x;
   p.y = first_free_place.bottom_left.y;
   result.parking_spot.points.push_back(p);
