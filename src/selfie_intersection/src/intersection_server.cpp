@@ -10,10 +10,12 @@ IntersectionServer::IntersectionServer(const ros::NodeHandle &nh, const ros::Nod
     , pnh_(pnh)
     , intersectionServer_(nh_, "intersection", false)
     , point_max_x_(0.95) // Width of road
+    , dr_server_CB_(boost::bind(&IntersectionServer::reconfigureCB, this, _1, _2))
 {
   intersectionServer_.registerGoalCallback(boost::bind(&IntersectionServer::init, this));
   intersectionServer_.registerPreemptCallback(boost::bind(&IntersectionServer::preemptCb, this));
   intersectionServer_.start();
+  dr_server_.setCallback(dr_server_CB_);
   pnh_.param<float>("distance_to_intersection", max_distance_to_intersection_, 0.7);
   pnh_.param<float>("road_width", road_width_, 0.95);
   pnh_.param<float>("point_min_y", point_min_y_, -2);
@@ -175,4 +177,10 @@ void IntersectionServer::preemptCb()
   obstacles_sub_.shutdown();
   intersection_subscriber_.shutdown();
   intersectionServer_.setAborted();
+}
+
+
+void IntersectionServer::reconfigureCB(selfie_intersection::IntesectionServerConfig& config, uint32_t level)
+{
+  
 }
