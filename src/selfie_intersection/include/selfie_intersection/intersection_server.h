@@ -50,8 +50,8 @@ private:
 
   actionlib::SimpleActionServer<selfie_msgs::intersectionAction> intersectionServer_;
 
-  dynamic_reconfigure::Server<selfie_intersection::IntesectionServerConfig> dr_server_CB_;
-  dynamic_reconfigure::Server<selfie_intersection::IntesectionServerConfig>::CallbackType dr_server_CB_;
+  dynamic_reconfigure::Server<selfie_intersection::IntersectionServerConfig> dr_server_;
+  dynamic_reconfigure::Server<selfie_intersection::IntersectionServerConfig>::CallbackType dr_server_CB_;
 
   void init();
   void preemptCb();
@@ -60,7 +60,7 @@ private:
   void filter_boxes(const selfie_msgs::PolygonArray &);
   void publishFeedback(program_state newStatus);
   void send_goal();
-  void reconfigureCB(selfie_intersection::IntesectionServerConfig &config, uint32_t level);
+  void reconfigureCB(selfie_intersection::IntersectionServerConfig &config, uint32_t level);
 
   void visualizeBoxes(std::list<Box> boxes, float r, float g, float b);
 };

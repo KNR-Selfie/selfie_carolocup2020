@@ -180,7 +180,36 @@ void IntersectionServer::preemptCb()
 }
 
 
-void IntersectionServer::reconfigureCB(selfie_intersection::IntesectionServerConfig& config, uint32_t level)
+void IntersectionServer::reconfigureCB(selfie_intersection::IntersectionServerConfig& config, uint32_t level)
 {
-  
+  if(max_distance_to_intersection_ != (float)config.distance_to_intersection)
+  {
+    max_distance_to_intersection_ = (float)config.distance_to_intersection;
+    ROS_INFO("New max_distance_to_intersection_ value %f",max_distance_to_intersection_);
+  }
+  if(num_corners_to_detect_ != config.num_corners_to_detect)
+  { 
+    num_corners_to_detect_ = config.num_corners_to_detect;
+    ROS_INFO("New num_corners_to_detect_ value %d",num_corners_to_detect_);
+  }
+  if(point_max_y_ != (float)config.point_max_y)
+  {
+    point_max_y_ = (float)config.point_max_y;
+    ROS_INFO("New point_max_y_ value %f",point_max_y_);
+  }
+  if(point_min_y_ != (float)config.point_min_y)
+  { 
+    point_min_y_ = (float)config.point_min_y;
+    ROS_INFO("New point_min_y value %f",point_min_y_);
+  }
+  if(speed_default_ != (float)config.speed_default)
+  {
+    speed_default_ = (float)config.speed_default;
+    ROS_INFO("New speed_default value %f",speed_default_);
+  }
+  if(stop_time_ != (float)config.stop_time)
+  {
+    stop_time_ = (float)config.stop_time;
+    ROS_INFO("New stop_time value %f",stop_time_);
+  }
 }
