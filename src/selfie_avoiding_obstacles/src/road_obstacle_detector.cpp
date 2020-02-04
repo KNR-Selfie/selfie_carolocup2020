@@ -111,6 +111,20 @@ void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &
         --proof_slowdown_;
       }
     }
+  } else if (status_ == ON_LEFT && !is_obstacle_next_to_car(msg))
+  {
+    if (ackermann_mode_)
+    {
+      std_srvs::Empty e;
+      ackerman_steering_service_.call(e);
+    }
+    status_ = RETURN;
+    changePidSettings(lane_change_kp_);
+    ROS_INFO("LC: RETURN");
+    return_distance_calculated_ = false;
+    distance_when_started_changing_lane_ = current_distance_;
+    selfie_msgs::PolygonArray temp;
+    obstacle_callback(temp);
   }
   switch (status_)
   {
@@ -272,6 +286,7 @@ void Road_obstacle_detector::visualizeBoxes()
 void Road_obstacle_detector::distanceCallback(const std_msgs::Float32 &msg)
 {
   current_distance_ = msg.data;
+  /*
   if (status_ == ON_LEFT && return_distance_calculated_ && current_distance_ > return_distance_)
   {
     if (ackermann_mode_)
@@ -286,7 +301,8 @@ void Road_obstacle_detector::distanceCallback(const std_msgs::Float32 &msg)
     distance_when_started_changing_lane_ = current_distance_;
     selfie_msgs::PolygonArray temp;
     obstacle_callback(temp);
-  } else if (status_ == OVERTAKE && current_distance_ - distance_when_started_changing_lane_ > lane_change_distance_)
+  } else */
+  if (status_ == OVERTAKE && current_distance_ - distance_when_started_changing_lane_ > lane_change_distance_)
   {
     if (ackermann_mode_)
     {
