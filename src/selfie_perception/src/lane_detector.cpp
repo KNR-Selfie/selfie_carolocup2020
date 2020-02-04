@@ -207,12 +207,18 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
       if (waiting_for_stabilize_)
       {
         float half_of_image = (TOPVIEW_MIN_X + TOPVIEW_MAX_X) / 2.0;
-        if (right_line_.isExist() && right_line_.getPoints()[0].x < half_of_image && right_line_.getPoints()[right_line_.pointsSize()].x > half_of_image)
-          waiting_for_stabilize_ = false;
-        else if (left_line_.isExist() && left_line_.getPoints()[0].x < half_of_image && left_line_.getPoints()[left_line_.pointsSize()].x > half_of_image)
-          waiting_for_stabilize_ = false;
-        else if (center_line_.isExist() && center_line_.getPoints()[0].x < half_of_image && center_line_.getPoints()[center_line_.pointsSize()].x > half_of_image)
-          waiting_for_stabilize_ = false;
+        if (right_line_.isExist() && right_line_.getPoints()[0].x < half_of_image && right_line_.getPoints()[right_line_.pointsSize()].x > half_of_image
+         || left_line_.isExist() && left_line_.getPoints()[0].x < half_of_image && left_line_.getPoints()[left_line_.pointsSize()].x > half_of_image
+         || center_line_.isExist() && center_line_.getPoints()[0].x < half_of_image && center_line_.getPoints()[center_line_.pointsSize()].x > half_of_image)
+        {
+            waiting_for_stabilize_ = false;
+            center_line_.setDegree(2);
+            right_line_.setDegree(2);
+            left_line_.setDegree(2);
+            center_line_.pfReset();
+            right_line_.pfReset();
+            left_line_.pfReset();
+        }
       }
       right_line_.addBottomPoint(waiting_for_stabilize_);
       center_line_.addBottomPoint(waiting_for_stabilize_);
@@ -2176,10 +2182,12 @@ bool LaneDetector::isIntersection()
 {
   if (lines_out_h_world_.empty())
   {
-    center_line_.setDegree(2);
-    right_line_.setDegree(2);
-    left_line_.setDegree(2);
-    return false;
+    if (intersection_)
+      waiting_for_stabilize_ = true;
+    intersection_ = false;
+    //center_line_.setDegree(2);
+    //right_line_.setDegree(2);
+    //left_line_.setDegree(2);
   }
 
   bool left_intersection = false;
@@ -2310,9 +2318,9 @@ bool LaneDetector::isIntersection()
       if (intersection_)
         waiting_for_stabilize_ = true;
       intersection_ = false;
-      center_line_.setDegree(2);
-      right_line_.setDegree(2);
-      left_line_.setDegree(2);
+      //center_line_.setDegree(2);
+      //right_line_.setDegree(2);
+      //left_line_.setDegree(2);
       return false;
     }
     intersection_ = true;
@@ -2367,9 +2375,9 @@ bool LaneDetector::isIntersection()
     if (intersection_)
       waiting_for_stabilize_ = true;
     intersection_ = false;
-    center_line_.setDegree(2);
-    right_line_.setDegree(2);
-    left_line_.setDegree(2);
+    //center_line_.setDegree(2);
+    //right_line_.setDegree(2);
+    //left_line_.setDegree(2);
     return false;
   }
 }
