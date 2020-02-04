@@ -415,7 +415,10 @@ bool Road_obstacle_detector::reset_node(std_srvs::Empty::Request &request, std_s
 {
   ROS_INFO("Lane control reset");
   if (status_ != PASSIVE)
+  {
+    switchToPassive(request, response);
     switchToActive(request, response);
+  }
 
   return true;
 }
