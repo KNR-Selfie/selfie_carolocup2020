@@ -69,6 +69,10 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
     // Initializing Box describing area of interest
     area_of_interest_box_ = Box(Point(ROI_min_x_, ROI_max_y_), Point(ROI_min_x_, ROI_min_y_), Point(ROI_max_x_, ROI_max_y_),
                                 Point(ROI_max_x_, ROI_min_y_));
+    // Initializing Box describing area of searching right box
+    right_obst_area_box_ =
+        Box(Point(right_obst_area_min_x_, right_obst_area_max_y_), Point(right_obst_area_min_x_, right_obst_area_min_y_),
+            Point(right_obst_area_max_x_, right_obst_area_max_y_), Point(right_obst_area_max_x_, right_obst_area_min_y_));
   }
   status_ = PASSIVE;
   setpoint_value_.data = right_lane_;
@@ -222,6 +226,7 @@ bool Road_obstacle_detector::is_obstacle_next_to_car(const selfie_msgs::PolygonA
         if (visualization_)
         {
           temp_box.visualize(visualizer_, "box_on_right", 0.9, 0.2, 0.3);
+          right_obst_area_box_.visualize(visualizer_, "area_of_right_boxes", 1, 0.9, 0.7);
         }
         return true;
       }
@@ -618,6 +623,13 @@ void Road_obstacle_detector::reconfigureCB(selfie_avoiding_obstacles::LaneContro
     right_obst_area_changed = true;
     right_obst_area_max_y_ = config.right_obst_area_max_y;
     ROS_INFO("right_obst_area_max_y new value: %lf", right_obst_area_max_y_);
+  }
+
+  if (right_obst_area_changed)
+  {
+    right_obst_area_box_ =
+        Box(Point(right_obst_area_min_x_, right_obst_area_max_y_), Point(right_obst_area_min_x_, right_obst_area_min_y_),
+            Point(right_obst_area_max_x_, right_obst_area_max_y_), Point(right_obst_area_max_x_, right_obst_area_min_y_));
   }
 
   if (lane_change_speed_ != (int)config.lane_change_speed)

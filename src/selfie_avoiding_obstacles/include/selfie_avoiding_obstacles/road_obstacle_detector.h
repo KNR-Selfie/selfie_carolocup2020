@@ -117,6 +117,7 @@ private:
   bool ackermann_mode_;
   visualization_msgs::Marker empty_marker_;
   Box area_of_interest_box_;
+  Box right_obst_area_box_;
   bool received_road_markings_;
   bool return_distance_calculated_;
   status status_;
