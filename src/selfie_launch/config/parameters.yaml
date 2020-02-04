@@ -62,7 +62,12 @@ lane_controller:
     ROI_min_x: 0.0,
     ROI_max_x: 1.1,
     ROI_min_y: -1.0,
-    ROI_max_y: 1.0
+    ROI_max_y: 1.0,
+
+    right_obst_area_min_x: -0.5,
+    right_obst_area_max_x: 1.1,
+    right_obst_area_min_y: -1.3,
+    right_obst_area_max_y: -0.1,
   }
 lidar: 
   {

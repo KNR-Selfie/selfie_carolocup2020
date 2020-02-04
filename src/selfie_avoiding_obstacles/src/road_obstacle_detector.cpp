@@ -28,6 +28,10 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
   pnh_.param<float>("ROI_max_x", ROI_max_x_, 1.1);
   pnh_.param<float>("ROI_min_y", ROI_min_y_, -1.3);
   pnh_.param<float>("ROI_max_y", ROI_max_y_, 1.3);
+  pnh_.param<float>("right_obst_area_min_x", right_obst_area_min_x_, -0.5);
+  pnh_.param<float>("right_obst_area_max_x", right_obst_area_max_x_, 1);
+  pnh_.param<float>("right_obst_area_min_y", right_obst_area_min_y_, 0.1);
+  pnh_.param<float>("right_obst_area_max_y", right_obst_area_max_y_, 1.3);
   pnh_.param<float>("right_lane_setpoint", right_lane_, -0.2);
   pnh_.param<float>("left_lane_setpoint", left_lane_, 0.2);
   pnh_.param<float>("maximum_speed", max_speed_, 0.3);
@@ -572,6 +576,32 @@ void Road_obstacle_detector::reconfigureCB(selfie_avoiding_obstacles::LaneContro
   {
     area_of_interest_box_ = Box(Point(ROI_min_x_, ROI_max_y_), Point(ROI_min_x_, ROI_min_y_), Point(ROI_max_x_, ROI_max_y_),
                                 Point(ROI_max_x_, ROI_min_y_));
+  }
+
+  bool right_obst_area_changed = false;
+  if (right_obst_area_min_x_ != (int)config.right_obst_area_min_x)
+  {
+    right_obst_area_changed = true;
+    right_obst_area_min_x_ = config.right_obst_area_min_x;
+    ROS_INFO("right_obst_area_min_x new value: %lf", right_obst_area_min_x_);
+  }
+  if (right_obst_area_max_x_ != (int)config.right_obst_area_max_x)
+  {
+    right_obst_area_changed = true;
+    right_obst_area_max_x_ = config.right_obst_area_max_x;
+    ROS_INFO("right_obst_area_max_x new value: %lf", right_obst_area_max_x_);
+  }
+  if (right_obst_area_min_y_ != (int)config.right_obst_area_min_y)
+  {
+    right_obst_area_changed = true;
+    right_obst_area_min_y_ = config.right_obst_area_min_y;
+    ROS_INFO("right_obst_area_min_y new value: %lf", right_obst_area_min_y_);
+  }
+  if (right_obst_area_max_y_ != (int)config.right_obst_area_max_y)
+  {
+    right_obst_area_changed = true;
+    right_obst_area_max_y_ = config.right_obst_area_max_y;
+    ROS_INFO("right_obst_area_max_y new value: %lf", right_obst_area_max_y_);
   }
 
   if (lane_change_speed_ != (int)config.lane_change_speed)

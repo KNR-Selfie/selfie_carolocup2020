@@ -76,6 +76,12 @@ private:
   float ROI_max_x_;
   float ROI_min_y_;
   float ROI_max_y_;
+
+  // area of interest for checking if there is any car on right (while overtaking)
+  float right_obst_area_min_x_;
+  float right_obst_area_max_x_;
+  float right_obst_area_min_y_;
+  float right_obst_area_max_y_;
   // Setpoints for lanes
   float right_lane_;
   float left_lane_;
