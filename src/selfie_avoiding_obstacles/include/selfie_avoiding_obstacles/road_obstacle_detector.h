@@ -151,6 +151,7 @@ private:
   void blinkRight(bool on);
 
   bool is_on_right_lane(const Point &);
+  bool is_obstacle_next_to_car(const selfie_msgs::PolygonArray &);
   void passive_timer_cb(const ros::TimerEvent &);
 
   void visualizeBoxes();

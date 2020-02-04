@@ -180,6 +180,38 @@ void Road_obstacle_detector::filter_boxes(const selfie_msgs::PolygonArray &msg)
   }
 }
 
+bool Road_obstacle_detector::is_obstacle_next_to_car(const selfie_msgs::PolygonArray &msg)
+{
+  if (!msg.polygons.empty())
+  {
+    geometry_msgs::Polygon polygon;
+    for (int box_nr = msg.polygons.size() - 1; box_nr >= 0; box_nr--)
+    {
+      polygon = msg.polygons[box_nr];
+      int corners_ok = 0;
+      for (int a = 0; a < 4; ++a)
+      {
+        Point p(polygon.points[a]);
+
+        if (p.check_position(right_obst_area_min_x_, right_obst_area_max_x_, right_obst_area_min_y_, right_obst_area_max_y_))
+        {
+          ++corners_ok;
+        }
+      }
+      if (corners_ok >= num_corners_to_detect_)
+      {
+        Box temp_box(polygon);
+        if (visualization_)
+        {
+          temp_box.visualize(visualizer_, "box_on_right", 0.9, 0.2, 0.3);
+        }
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 void Road_obstacle_detector::road_markings_callback(const selfie_msgs::RoadMarkings &msg)
 {
   int size = msg.left_line.size();
