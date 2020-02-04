@@ -131,9 +131,6 @@ void ParkService::preemptCB()
 
 void ParkService::initParkingSpot(const geometry_msgs::Polygon &msg)
 {
-    float min_point_dist = 10000.f;
-    float sumx = 0.;
-    float sumy = 0.;
     park_spot_middle_ = (msg.points[0].x + msg.points[3].x)/2.;
     park_spot_dist_ini_ = std::abs(msg.points[2].y + msg.points[3].y)/2.;
 
@@ -317,17 +314,22 @@ void ParkService::reconfigureCB(selfie_park::ParkServerConfig& config, uint32_t 
     if(angle_coeff_ != (float)config.angle_coeff)
     {
         angle_coeff_ = config.angle_coeff;
-        ROS_INFO("angle coeff new value: %f", angle_coeff_);
+        ROS_INFO("angle_coeff_ new value: %f", angle_coeff_);
     }
     if(iter_distance_!= (float)config.iter_distance)
     {
         iter_distance_ = config.iter_distance;
-        ROS_INFO("iter distance new value: %f", iter_distance_);
+        ROS_INFO("iter_distance_ new value: %f", iter_distance_);
     }
     if(turn_delay_!= (float)config.turn_delay)
     {
         turn_delay_= config.turn_delay;
-        ROS_INFO("iter distance new value: %f", turn_delay_);
+        ROS_INFO("turn_delay_ new value: %f", turn_delay_);
+    }
+    if(back_to_mid_!= (float)config.back_to_mid)
+    {
+        back_to_mid_= config.back_to_mid;
+        ROS_INFO("back_to_mid_ new value: %f", back_to_mid_);
     }
 
 }
