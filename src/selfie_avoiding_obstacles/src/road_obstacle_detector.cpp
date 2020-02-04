@@ -78,7 +78,7 @@ Road_obstacle_detector::~Road_obstacle_detector() {}
 
 void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &msg)
 {
-  if (status_ != OVERTAKE && status != ON_LEFT)
+  if (status_ != OVERTAKE && status_ != ON_LEFT)
   {
     filter_boxes(msg);
     if (!filtered_boxes_.empty())
