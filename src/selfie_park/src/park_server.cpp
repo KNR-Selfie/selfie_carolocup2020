@@ -40,6 +40,7 @@ dr_server_CB_(boost::bind(&ParkService::reconfigureCB, this, _1, _2))
   ackermann_pub_ = nh_.advertise<ackermann_msgs::AckermannDriveStamped>(ackermann_topic_, 10);
   right_indicator_pub_ = nh_.advertise<std_msgs::Bool>("right_turn_indicator", 20);
   left_indicator_pub_ = nh_.advertise<std_msgs::Bool>("left_turn_indicator", 20);
+  markings_sub_ = nh_.subscribe("/road_markings", 10, &ParkService::markingsCallback,this);
 }
 
 void ParkService::distanceCallback(const std_msgs::Float32 &msg)
@@ -132,7 +133,15 @@ void ParkService::preemptCB()
 void ParkService::initParkingSpot(const geometry_msgs::Polygon &msg)
 {
     park_spot_middle_ = (msg.points[0].x + msg.points[3].x)/2.;
-    park_spot_dist_ini_ = std::abs(msg.points[2].y + msg.points[3].y)/2.;
+    float mid_on_lane(0.);
+    float powered_x = 1.;
+    for(float &coef:right_line_)
+    {
+        mid_on_lane += coef * powered_x;
+        powered_x *= park_spot_middle_;
+    }
+    park_spot_dist_ini_ = mid_on_lane - PARK_SPOT_WIDTH/2.;
+    std::cout<<"PARK SPOT DIST: "<<park_spot_dist_ini_<<std::endl;
 
     park_spot_dist_ = park_spot_dist_ini_;
 
@@ -154,11 +163,9 @@ void ParkService::drive(float speed, float steering_angle)
 bool ParkService::toParkingSpot()
 {
     if(actual_dist_ > back_target_)
-    {
-        drive(0., -max_turn_);
-        return true;
-    }
-    drive(parking_speed_, 0.);
+    { drive(0., -max_turn_);
+               return true;
+    } drive(parking_speed_, 0.);
     return false;
 }
 
@@ -274,6 +281,16 @@ bool ParkService::leave()
     prev_dist_ = actual_dist_;
     return false;
 
+}
+
+void ParkService::markingsCallback(const selfie_msgs::RoadMarkings &msg)
+{
+    if(parking_state_ == not_parking)
+    {
+    
+        right_line_ = msg.right_line;
+        std::cout<<right_line_[0]<<std::endl;
+    }
 }
 
 
