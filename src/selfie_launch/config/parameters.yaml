@@ -1,14 +1,15 @@
 detect_markings: 
   {
-    threshold_c: -25,
-    real_window_size: 0.05,
+    threshold_c: -45,
+    real_window_size: 0.1,
 
     pf_num_points: 3,
-    pf_num_samples: 30,
+    pf_num_samples: 40,
     pf_num_samples_vis: 4,
-    pf_std: 0.02,
+    pf_std_min: 0.01,
+    pf_std_max: 0.02,
     obstacle_window_size: 0.09,
-    obstacles_threshold: 195,
+    obstacles_threshold: 205,
 
     max_mid_line_distance: 0.15,
     max_mid_line_gap: 0.38
@@ -76,6 +77,16 @@ park_server:
     angle_coeff: 0.5,
     turn_delay: 0.1
   }
+intersection_server: 
+  {
+    distance_to_intersection: 0.7,
+    road_width: 0.95,
+    point_min_y: -1.5,
+    point_max_y: 1.5,
+    stop_time: 3,
+    speed_default: 0.3,
+    num_corners_to_detect: 3,
+  }
 pid_controller: 
   {
     Kd: 0.01,
@@ -89,6 +100,8 @@ scheduler:
   {
     begin_action: 1,
     parking_spot: 0.6,
+    parking_steering_mode: 1, # 0 - ackermann 1 - paralell
+    drive_steering_mode: 2, # 0 - ackermann  1 - paralell 2 - front axis only 
     starting_distance: 1.0
   }
 detect_obstacles: 

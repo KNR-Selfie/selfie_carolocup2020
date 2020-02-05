@@ -9,11 +9,12 @@ RoadLine::RoadLine()
   coeff_.push_back(0);
 }
 
-void RoadLine::pfSetup(int num_particles, int num_control_points, float std)
+void RoadLine::pfSetup(int num_particles, int num_control_points, float std_min, float std_max)
 {
   pf_num_particles_ = num_particles;
   pf_num_points_ = num_control_points;
-  pf_std_ = std;
+  pf_std_min_ = std_min;
+  pf_std_max_ = std_max;
 
   pf_.setNumParticles(num_particles);
   pf_.setNumPoints(num_control_points);
@@ -48,7 +49,7 @@ void RoadLine::pfInit()
       p.y = getPolyY(coeff_, p.x);
       init_points.push_back(p);
     }
-    pf_.init(init_points, pf_std_);
+    pf_.init(init_points);
   }
 }
 
@@ -62,10 +63,8 @@ bool RoadLine::pfExecute()
     pf_.reset();
     pfInit();
   }
-  else
-  {
-    pf_.prediction(pf_std_);
-  }
+
+  pf_.prediction(pf_std_min_, pf_std_max_);
   
   pf_.updateWeights(points_);
   pf_.resample();
@@ -82,7 +81,13 @@ void RoadLine::pfReset()
 
 void RoadLine::aprox()
 {
-  polyfit(points_, degree_, coeff_);
+  if(!polyfit(points_, degree_, coeff_))
+  {
+    coeff_.clear();
+    coeff_.push_back(0.2);
+    coeff_.push_back(0);
+    coeff_.push_back(0);
+  }
 }
 
 int RoadLine::pointsSize()
@@ -110,16 +115,23 @@ void RoadLine::calcParams()
     is_short_ = true;
 }
 
-void RoadLine::addBottomPoint()
+void RoadLine::addBottomPoint(bool force)
 {
   if (!exist_)
     return;
 
-  if (points_[0].x < ((TOPVIEW_MIN_X + TOPVIEW_MAX_X) / 3))
+  if (force || points_[0].x < ((TOPVIEW_MIN_X + TOPVIEW_MAX_X) / 3))
   {
     cv::Point2f p;
     p.x = TOPVIEW_MIN_X;
-    p.y = points_[0].y;
+    if (force)
+    {
+      p.y = points_[pointsSize()].y;
+    }
+    else
+    {
+      p.y = points_[0].y;
+    }
     points_.insert(points_.begin(), p);
   }
 }
@@ -179,4 +191,23 @@ void RoadLine::reset()
   coeff_.push_back(0.2);
   coeff_.push_back(0);
   coeff_.push_back(0);
+}
+
+void RoadLine::reduceTopPoints(float ratio)
+{
+  if (points_.empty())
+    return;
+
+  int begin = points_.size() * (1 - ratio);
+  points_.erase(points_.begin() + begin, points_.end());
+}
+
+cv::Point2f RoadLine::getPointNextToBottom(float min_dist_to_bottom)
+{
+  for(int i = 1; i < pointsSize(); ++i)
+  {
+    if (points_[i].x - points_[0].x > min_dist_to_bottom)
+      return points_[i];
+  }
+  return points_[pointsSize() - 1];
 }
