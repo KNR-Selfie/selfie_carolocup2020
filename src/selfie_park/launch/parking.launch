@@ -1,0 +1,20 @@
+<launch>
+  <arg name="yaml_parameters" default="$(find selfie_launch)/config/parameters.yaml"/>
+  <include file="$(find selfie_launch)/launch/subsystems/transforms.launch"/>
+  <include file="$(find selfie_launch)/launch/subsystems/basler.launch"/>
+  <arg name="homography_file" default="/home/$(env USER)/.ros/homography_export.yaml" />
+  <arg name="hom_cut_file" default="/home/$(env USER)/.ros/hom_cut.yaml" />
+  <node name="stm32_bridge" type="selfie_stm32_bridge" pkg="selfie_stm32_bridge" respawn="true" output="screen">
+    <remap from="/speed" to="/stm32/speed" />
+  </node>
+  <node pkg="urg_node" type="urg_node" name="lidar" respawn="true" output="screen"/>
+  <node name="detect_markings" type="detect_markings" pkg="selfie_perception" respawn="true" output="screen">
+    <param name="config_file" value="$(arg homography_file)" />
+    <param name="hom_cut_file" value="$(arg hom_cut_file)" />
+  </node>
+  <node pkg="selfie_perception" type="detect_obstacles" name="detect_obstacles" respawn="true" output="screen">
+  </node>
+  <node name="park_server" type="park_server" pkg="selfie_park" respawn="true" output="screen">
+  </node>
+  <node name="detect_parking_spot" type="detect_parking_spot" pkg="selfie_park" respawn="true" output="screen"/>
+</launch>
