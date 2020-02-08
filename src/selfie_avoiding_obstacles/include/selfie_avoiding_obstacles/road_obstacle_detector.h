@@ -106,6 +106,8 @@ private:
 
   int proof_slowdown_;
   int num_proof_to_slowdown_;
+  int proof_return_;
+  int num_proof_to_return_;
   int num_corners_to_detect_;
 
   std::list<Box> filtered_boxes_; // boxes are sorted by x valule
