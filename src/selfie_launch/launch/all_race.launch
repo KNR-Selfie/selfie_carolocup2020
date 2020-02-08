@@ -28,6 +28,8 @@
     <param name="debug_mode" value="$(arg debug_mode)"/>
   </node>
 
+  <node name="diagnose" pkg="selfie_diagnostic_node" type="diagnose.py" output="screen"/>
+
   <node name="extract_road_features" type="extract_road_features" pkg="selfie_path_planner" respawn="true" output="screen" />
 
   <node pkg="selfie_perception" type="detect_obstacles" name="detect_obstacles" respawn="true" output="screen">
@@ -52,6 +54,7 @@
     <arg name="i_visualization_of_intersection" value="$(arg visualization_of_intersection)" />
     <arg name="i_parking_msgs_output" value="$(arg parking_msgs_output)" />
   </include>
+
 
 
 </launch>

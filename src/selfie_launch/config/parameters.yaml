@@ -147,3 +147,26 @@ stm32_bridge:
     parallel_offset_back_left: 0.2,
     front_axis_offset: 0.15
   }
+diagnose: 
+  {
+    0_sensor_datatype: "LaserScan",
+    0_sensor_directory: "/dev/sensors/hokuyo_H1312790",
+    0_sensor_hz: 100,
+    0_sensor_name: "Lidar",
+    0_sensor_topic: "/scan",
+    1_sensor_datatype: "Imu",
+    1_sensor_hz: 250,
+    1_sensor_name: "Imu",
+    1_sensor_topic: "/imu",
+    2_sensor_datatype: "Image",
+    2_sensor_hz: 102,
+    2_sensor_name: "Camera",
+    2_sensor_topic: "/image_rect",
+    3_sensor_datatype: "Float32",
+    3_sensor_hz: 250,
+    3_sensor_name: "STM",
+    3_sensor_topic: "/stm32/speed",
+    frequency: 2,
+    debug: false,
+    delay: 10
+  }
