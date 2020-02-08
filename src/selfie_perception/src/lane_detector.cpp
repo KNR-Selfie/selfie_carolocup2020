@@ -827,9 +827,9 @@ void LaneDetector::ROILaneRight(cv::Mat &input_frame, cv::Mat &output_frame)
   else if (!intersection_)
   {
     if (!right_line_.isExist() || right_line_.isShort())
-      offset_right = 0.11;
+      offset_right = 0.08;
     if (!center_line_.isExist() || center_line_.isShort())
-      offset_center = -0.13;
+      offset_center = -0.1;
   }
 
   std::vector<cv::Point2f> center_line_offset = createOffsetLine(center_line_.getCoeff(), center_line_.getDegree(), offset_center);
@@ -2009,25 +2009,36 @@ void LaneDetector::detectStartAndIntersectionLine()
     }
     
   }
-  else if (right_distance > 0)
+  else
   {
     if (proof_start_line_ > 0)
       --proof_start_line_;
-    if (proof_intersection_ == 3)
+    if (right_distance > 0)
     {
-      intersection_line_dist_ = right_distance;
+      if (proof_intersection_ == 3)
+      {
+        intersection_line_dist_ = right_distance;
+        if(waiting_for_stabilize_ || intersection_)
+        {
+          std_msgs::Float32 msg;
+          msg.data = intersection_line_dist_;
+          intersection_pub_.publish(msg);
+        }
+      }
+      else
+      {
+        intersection_line_dist_ = -1;
+        ++proof_intersection_;
+      }
     }
     else
     {
-      intersection_line_dist_ = -1;
-      ++proof_intersection_;
+      if (proof_intersection_ > 0)
+      {
+        --proof_intersection_;
+        intersection_line_dist_ = -1;
+      }
     }
-    
-  }
-  else
-  {
-    if (proof_intersection_ > 0)
-      --proof_intersection_;
   }
 }
 
@@ -2188,6 +2199,7 @@ bool LaneDetector::isIntersection()
     //center_line_.setDegree(2);
     //right_line_.setDegree(2);
     //left_line_.setDegree(2);
+    return false;
   }
 
   bool left_intersection = false;
@@ -2326,12 +2338,6 @@ bool LaneDetector::isIntersection()
     intersection_ = true;
     waiting_for_stabilize_ = false;
     ROS_INFO_THROTTLE(2, "INTERSECTION");
-    if (intersection_line_dist_ != -1)
-    {
-      std_msgs::Float32 msg;
-      msg.data = intersection_line_dist_;
-      intersection_pub_.publish(msg);
-    }
 
     center_line_.setDegree(1);
     right_line_.setDegree(1);
