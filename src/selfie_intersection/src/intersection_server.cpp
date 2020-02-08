@@ -10,10 +10,12 @@ IntersectionServer::IntersectionServer(const ros::NodeHandle &nh, const ros::Nod
     , pnh_(pnh)
     , intersectionServer_(nh_, "intersection", false)
     , point_max_x_(0.95) // Width of road
+    , dr_server_CB_(boost::bind(&IntersectionServer::reconfigureCB, this, _1, _2))
 {
   intersectionServer_.registerGoalCallback(boost::bind(&IntersectionServer::init, this));
   intersectionServer_.registerPreemptCallback(boost::bind(&IntersectionServer::preemptCb, this));
   intersectionServer_.start();
+  dr_server_.setCallback(dr_server_CB_);
   pnh_.param<float>("distance_to_intersection", max_distance_to_intersection_, 0.7);
   pnh_.param<float>("road_width", road_width_, 0.95);
   pnh_.param<float>("point_min_y", point_min_y_, -2);
@@ -175,4 +177,39 @@ void IntersectionServer::preemptCb()
   obstacles_sub_.shutdown();
   intersection_subscriber_.shutdown();
   intersectionServer_.setAborted();
+}
+
+
+void IntersectionServer::reconfigureCB(selfie_intersection::IntersectionServerConfig& config, uint32_t level)
+{
+  if(max_distance_to_intersection_ != (float)config.distance_to_intersection)
+  {
+    max_distance_to_intersection_ = (float)config.distance_to_intersection;
+    ROS_INFO("New max_distance_to_intersection_ value %f",max_distance_to_intersection_);
+  }
+  if(num_corners_to_detect_ != config.num_corners_to_detect)
+  { 
+    num_corners_to_detect_ = config.num_corners_to_detect;
+    ROS_INFO("New num_corners_to_detect_ value %d",num_corners_to_detect_);
+  }
+  if(point_max_y_ != (float)config.point_max_y)
+  {
+    point_max_y_ = (float)config.point_max_y;
+    ROS_INFO("New point_max_y_ value %f",point_max_y_);
+  }
+  if(point_min_y_ != (float)config.point_min_y)
+  { 
+    point_min_y_ = (float)config.point_min_y;
+    ROS_INFO("New point_min_y value %f",point_min_y_);
+  }
+  if(speed_default_ != (float)config.speed_default)
+  {
+    speed_default_ = (float)config.speed_default;
+    ROS_INFO("New speed_default value %f",speed_default_);
+  }
+  if(stop_time_ != (float)config.stop_time)
+  {
+    stop_time_ = (float)config.stop_time;
+    ROS_INFO("New stop_time value %f",stop_time_);
+  }
 }
