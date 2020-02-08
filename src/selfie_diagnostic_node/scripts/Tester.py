@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 import rospy
 import os
-from sensor_msgs.msg import LaserScan #/scan
-from sensor_msgs.msg import Image #/image_rect
+from sensor_msgs.msg import LaserScan, Image, Imu
 from std_msgs.msg import Bool, String, Float32 #/left_turn_indicator, /right_turn_indicator
 from State import State
 
@@ -11,6 +10,9 @@ class Tester:
   def __init__(self, name, topic, directory, msg_type, desired_frequency):
     self.name = name
     self.directory_ = directory
+    self.msg_type_ = msg_type
+    if self.msg_type_ == Imu:
+      self.is_data_valid = None
     self.sub_ = rospy.Subscriber(topic, msg_type, self.callback)
     self.pub_ = rospy.Publisher("~" + self.name, String, queue_size=10)
     self.desired_frequency_ = desired_frequency
@@ -32,7 +34,12 @@ class Tester:
         now = rospy.get_rostime()
         self.frequency_ = 1/(now.to_sec() - self.last_stamp_.to_sec()) # Hz
         self.last_stamp_ = now
-    pass
+    if self.msg_type_ == Imu:
+      if data.orientation.x != 0.0 and data.orientation.y != 0.0 and data.orientation.z != 0.0:
+        self.is_data_valid = True
+      else:
+        self.is_data_valid = False
+
 
   def checkDeviceAvailability(self):
     if self.directory_ == None:
@@ -53,6 +60,13 @@ class Tester:
           self.state_ = State.FATAL
           rospy.logerr(msg)
           return
+      #check if Imu data exists
+      if self.msg_type_ == Imu:
+        if self.is_data_valid != True:
+          msg += '[Diagnostic Node] ' +  self.name + " invalid data! "
+          self.state = State.ERROR
+          rospy.logerr(msg)
+          return
       # TODO uncomment on car
       # node stopped publishing
       if self.last_stamp_ != None :
@@ -65,9 +79,6 @@ class Tester:
         self.state_ = State.FATAL
       elif self.frequency_ == 0.0:
         msg += '[Diagnostic Node] ' +  self.name + " stopped publishing "
-        self.state_ = State.ERROR
-      elif self.frequency_ < 1.0 or self.frequency_ > 3 * self.desired_frequency_:
-        msg += '[Diagnostic Node] ' +  self.name + " frequency is 0 or too high "
         self.state_ = State.ERROR
       elif self.frequency_ < self.desired_frequency_ - 0.5 or self.frequency_ > self.desired_frequency_ + 0.5:
         msg = '[Diagnostic Node] ' +  self.name + " rate: " + str(self.frequency_) + " " + msg
