@@ -211,3 +211,13 @@ cv::Point2f RoadLine::getPointNextToBottom(float min_dist_to_bottom)
   }
   return points_[pointsSize() - 1];
 }
+
+void RoadLine::reducePointsToStraight()
+{
+  for(int i = 1; i < pointsSize(); ++i)
+  {
+    if (points_[i].x - points_[0].x > min_dist_to_bottom)
+      return points_[i];
+  }
+  return points_[pointsSize() - 1];
+}
