@@ -204,6 +204,9 @@ void Road_obstacle_detector::filter_boxes(const selfie_msgs::PolygonArray &msg)
 
 bool Road_obstacle_detector::is_obstacle_next_to_car(const selfie_msgs::PolygonArray &msg)
 {
+  if (visualization_)
+    right_obst_area_box_.visualize(visualizer_, "area_of_right_boxes", 1, 0.9, 0.7);
+
   if (!msg.polygons.empty())
   {
     geometry_msgs::Polygon polygon;
@@ -226,7 +229,6 @@ bool Road_obstacle_detector::is_obstacle_next_to_car(const selfie_msgs::PolygonA
         if (visualization_)
         {
           temp_box.visualize(visualizer_, "box_on_right", 0.9, 0.2, 0.3);
-          right_obst_area_box_.visualize(visualizer_, "area_of_right_boxes", 1, 0.9, 0.7);
         }
         return true;
       }
@@ -423,7 +425,6 @@ void Road_obstacle_detector::passive_timer_cb(const ros::TimerEvent &time)
   setpoint_pub_.publish(setpoint_value_);
 }
 
-
 bool Road_obstacle_detector::switchToActive(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response)
 {
   if (status_ != PASSIVE)
@@ -495,14 +496,14 @@ void Road_obstacle_detector::blinkRight(bool on)
   return;
 }
 
-void Road_obstacle_detector::pidDynamicReconfigureCb(const PidConfig &config) 
+void Road_obstacle_detector::pidDynamicReconfigureCb(const PidConfig &config)
 {
-  pnh_.setParam("/pid_controller/Kd",(float)config.Kd);
-  pnh_.setParam("/pid_controller/Kp",(float)config.Kp);
-  pnh_.setParam("/pid_controller/Ki",(float)config.Ki);
-  pnh_.setParam("/pid_controller/Kd_scale",(float)config.Kd_scale);
-  pnh_.setParam("/pid_controller/Kp_scale",(float)config.Kp_scale);
-  pnh_.setParam("/pid_controller/Ki_scale",(float)config.Ki_scale);
+  pnh_.setParam("/pid_controller/Kd", (float)config.Kd);
+  pnh_.setParam("/pid_controller/Kp", (float)config.Kp);
+  pnh_.setParam("/pid_controller/Ki", (float)config.Ki);
+  pnh_.setParam("/pid_controller/Kd_scale", (float)config.Kd_scale);
+  pnh_.setParam("/pid_controller/Kp_scale", (float)config.Kp_scale);
+  pnh_.setParam("/pid_controller/Ki_scale", (float)config.Ki_scale);
 }
 
 void Road_obstacle_detector::reconfigureCB(selfie_avoiding_obstacles::LaneControllerConfig &config, uint32_t level)
