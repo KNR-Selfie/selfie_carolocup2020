@@ -142,7 +142,8 @@ void IntersectionServer::distance_callback(const std_msgs::Float32 &msg)
   {
     if (msg.data > distance_when_started_ + distance_to_intersection_when_started_)
     {
-      preemptCb();
+      ROS_INFO("Timeout for intersection (distance exceeded)");
+      send_goal();
     }
   }
 }
