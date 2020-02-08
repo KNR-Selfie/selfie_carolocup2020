@@ -139,7 +139,7 @@ void ParkService::initParkingSpot(const geometry_msgs::Polygon &msg)
         mid_on_lane += coef * powered_x;
         powered_x *= park_spot_middle_;
     }
-    park_spot_dist_ini_ = mid_on_lane - PARK_SPOT_WIDTH/2.;
+    park_spot_dist_ini_ = std::abs(mid_on_lane - PARK_SPOT_WIDTH/2.);
     std::cout<<"PARK SPOT DIST: "<<park_spot_dist_ini_<<std::endl;
 
     park_spot_dist_ = park_spot_dist_ini_;
