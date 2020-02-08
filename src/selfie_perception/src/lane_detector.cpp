@@ -212,6 +212,7 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
          || center_line_.isExist() && center_line_.getPoints()[0].x < half_of_image && center_line_.getPoints()[center_line_.pointsSize()].x > half_of_image)
         {
             waiting_for_stabilize_ = false;
+            ROS_INFO("waiting_for_stabilize is false");
             center_line_.setDegree(2);
             right_line_.setDegree(2);
             left_line_.setDegree(2);
@@ -855,7 +856,7 @@ void LaneDetector::ROILaneRight(cv::Mat &input_frame, cv::Mat &output_frame)
   right_lane_frame_ = input_frame.clone();
   cv::bitwise_and(input_frame, right_lane_ROI_, right_lane_frame_);
 
-  cv::Mat top_roi = right_lane_ROI_(cv::Rect(0, 0, TOPVIEW_COLS, TOPVIEW_ROWS / 4));
+  cv::Mat top_roi = right_lane_ROI_(cv::Rect(0, 0, TOPVIEW_COLS, TOPVIEW_ROWS / 5));
   top_roi.setTo(cv::Scalar(0, 0, 0));
 
   cv::bitwise_not(right_lane_ROI_, right_lane_ROI_);
@@ -905,7 +906,7 @@ void LaneDetector::ROILaneLeft(cv::Mat &input_frame, cv::Mat &output_frame)
   left_lane_frame_ = input_frame.clone();
   cv::bitwise_and(input_frame, left_lane_ROI_, left_lane_frame_);
 
-  cv::Mat top_roi = left_lane_ROI_(cv::Rect(0, 0, TOPVIEW_COLS, TOPVIEW_ROWS / 4));
+  cv::Mat top_roi = left_lane_ROI_(cv::Rect(0, 0, TOPVIEW_COLS, TOPVIEW_ROWS / 5));
   top_roi.setTo(cv::Scalar(0, 0, 0));
 
   cv::bitwise_not(left_lane_ROI_, left_lane_ROI_);
@@ -2196,6 +2197,7 @@ bool LaneDetector::isIntersection()
     if (intersection_)
       waiting_for_stabilize_ = true;
     intersection_ = false;
+    ROS_INFO("waiting_for_stabilize is true");
     //center_line_.setDegree(2);
     //right_line_.setDegree(2);
     //left_line_.setDegree(2);
@@ -2381,6 +2383,7 @@ bool LaneDetector::isIntersection()
     if (intersection_)
       waiting_for_stabilize_ = true;
     intersection_ = false;
+    ROS_INFO("waiting_for_stabilize is true");
     //center_line_.setDegree(2);
     //right_line_.setDegree(2);
     //left_line_.setDegree(2);
