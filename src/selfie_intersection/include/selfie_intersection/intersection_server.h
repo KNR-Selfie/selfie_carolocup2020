@@ -7,8 +7,10 @@
 #include <selfie_msgs/intersectionAction.h>
 #include <std_msgs/Float32.h>
 
+#include <dynamic_reconfigure/server.h>
 #include <selfie_park/shapes.h>
 #include <selfie_scheduler/scheduler_enums.h>
+#include <selfie_intersection/IntersectionServerConfig.h>
 
 class IntersectionServer
 {
@@ -47,6 +49,10 @@ private:
   std_msgs::Float64 speed_;
 
   actionlib::SimpleActionServer<selfie_msgs::intersectionAction> intersectionServer_;
+
+  dynamic_reconfigure::Server<selfie_intersection::IntersectionServerConfig> dr_server_;
+  dynamic_reconfigure::Server<selfie_intersection::IntersectionServerConfig>::CallbackType dr_server_CB_;
+
   void init();
   void preemptCb();
   void manager(const selfie_msgs::PolygonArray &);
@@ -54,5 +60,7 @@ private:
   void filter_boxes(const selfie_msgs::PolygonArray &);
   void publishFeedback(program_state newStatus);
   void send_goal();
+  void reconfigureCB(selfie_intersection::IntersectionServerConfig &config, uint32_t level);
+
   void visualizeBoxes(std::list<Box> boxes, float r, float g, float b);
 };
