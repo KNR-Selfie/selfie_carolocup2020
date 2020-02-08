@@ -110,6 +110,7 @@ private:
   float points_density_   {15};
 
   float getDistance(cv::Point2f p1, cv::Point2f p2);
+  float getA(cv::Point2f p1, cv::Point2f p2);
 };
 
 #endif  //  SELFIE_PERCEPTION_ROAD_LINE_H
