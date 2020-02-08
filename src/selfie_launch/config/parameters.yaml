@@ -144,8 +144,19 @@ stm32_bridge:
   }
 pid_tuner:
   {
-    kp_base: 1.5,
-    speed_base: 1.0,
-    coeff: -0.5,
-    deadzone: 0.1
+    L_Kp: 1.0, 
+    L_Ki: 0.0,
+    L_Kd: 0.0,
+
+    M_Kp: 1.0,
+    M_Ki: 0.0,
+    M_Kd: 0.0,
+
+    H_Kp: 1.0, 
+    H_Ki: 0.0,
+    H_Kd: 0.0,
+
+    H_speed_threshold: 5.0,
+    L_speed_threshold: 3.0, 
+    M_speed_threshold: 1.0
   }
