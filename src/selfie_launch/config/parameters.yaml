@@ -166,7 +166,7 @@ diagnose:
     3_sensor_hz: 250,
     3_sensor_name: "STM",
     3_sensor_topic: "/stm32/speed",
-    frequency: 1,
-    debug: false,
-    delay: 15
+    frequency: 2,
+    debug: true,
+    delay: 5
   }

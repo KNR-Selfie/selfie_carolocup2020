@@ -1,0 +1,7 @@
+<launch>
+    <arg name="yaml_parameters" default="$(find selfie_launch)/config/parameters.yaml"/>
+    <rosparam command="load" file="$(arg yaml_parameters)"/>
+    
+    <node name="diagnose" pkg="selfie_diagnostic_node" type="diagnose.py" output="screen">
+    </node>
+</launch>

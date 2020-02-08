@@ -70,7 +70,6 @@ class Tester:
         msg += '[Diagnostic Node] ' +  self.name + " frequency is 0 or too high "
         self.state_ = State.ERROR
       elif self.frequency_ < self.desired_frequency_ - 0.5 or self.frequency_ > self.desired_frequency_ + 0.5:
-        msg += self.name + " publishes with wrong frequency "
         msg = '[Diagnostic Node] ' +  self.name + " rate: " + str(self.frequency_) + " " + msg
         self.state_ = State.WARNING
       else:
