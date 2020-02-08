@@ -70,8 +70,8 @@ typedef struct __attribute__((__packed__))
     uint8_t start_code;
     uint8_t length;
     uint32_t timecode;
-    int16_t steering_fi_back;
     int16_t steering_fi_front;
+    int16_t steering_fi_back;
     int16_t speed;
     int16_t acceleration;
     int16_t jerk;
