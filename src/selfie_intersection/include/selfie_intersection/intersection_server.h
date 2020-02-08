@@ -8,9 +8,9 @@
 #include <std_msgs/Float32.h>
 
 #include <dynamic_reconfigure/server.h>
+#include <selfie_intersection/IntersectionServerConfig.h>
 #include <selfie_park/shapes.h>
 #include <selfie_scheduler/scheduler_enums.h>
-#include <selfie_intersection/IntersectionServerConfig.h>
 
 class IntersectionServer
 {
