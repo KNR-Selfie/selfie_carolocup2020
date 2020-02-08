@@ -221,6 +221,7 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
             left_line_.pfReset();
         }
       }
+      ROS_INFO("waiting_for_stabilize is %d", waiting_for_stabilize_);
       right_line_.addBottomPoint(waiting_for_stabilize_);
       center_line_.addBottomPoint(waiting_for_stabilize_);
       left_line_.addBottomPoint(waiting_for_stabilize_);
@@ -1687,6 +1688,8 @@ void LaneDetector::adjust(RoadLine &good_road_line,
 void LaneDetector::calcRoadWidth()
 {
   debug_points_.clear();
+  if (center_line_.getCoeff()[center_line_.getCoeff().size() - 1] == 0)
+    return;
   cv::Point2f p;
   cv::Point2f p_ahead;
   p_ahead.x = 0.7;
@@ -2195,9 +2198,12 @@ bool LaneDetector::isIntersection()
   if (lines_out_h_world_.empty())
   {
     if (intersection_)
+    {
       waiting_for_stabilize_ = true;
+      ROS_INFO("waiting_for_stabilize is true");
+    }
+      
     intersection_ = false;
-    ROS_INFO("waiting_for_stabilize is true");
     //center_line_.setDegree(2);
     //right_line_.setDegree(2);
     //left_line_.setDegree(2);
@@ -2344,6 +2350,7 @@ bool LaneDetector::isIntersection()
     center_line_.setDegree(1);
     right_line_.setDegree(1);
     left_line_.setDegree(1);
+    center_line_.reducePointsToStraight();
     center_line_.aprox();
     if (right_line_.isExist())
     {
@@ -2381,9 +2388,11 @@ bool LaneDetector::isIntersection()
   else
   {
     if (intersection_)
+    {
       waiting_for_stabilize_ = true;
+      ROS_INFO("waiting_for_stabilize is true");
+    }
     intersection_ = false;
-    ROS_INFO("waiting_for_stabilize is true");
     //center_line_.setDegree(2);
     //right_line_.setDegree(2);
     //left_line_.setDegree(2);
