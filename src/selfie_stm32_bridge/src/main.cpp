@@ -70,6 +70,7 @@ int main(int argc, char **argv)
 
     Usb.init();
     Time time;
+    ros::Rate sleep_rate(200);
 
     while (ros::ok())
     {
@@ -92,6 +93,7 @@ int main(int argc, char **argv)
             button2_publisher.publish(empty_msg);
 
         ros::spinOnce();
+        sleep_rate.sleep();
     }
 }
 
