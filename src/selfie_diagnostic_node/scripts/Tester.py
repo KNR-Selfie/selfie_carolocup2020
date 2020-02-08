@@ -48,29 +48,33 @@ class Tester:
       # is plugged == None -> we dont want to check if device is plugged 
       if self.is_plugged_ != None:
         if self.is_plugged_ == False:
-          msg += self.name + " is not plugged! "
+          msg += '[Diagnostic Node] ' +  self.name + " is not plugged! "
           self.pub_.publish(msg)
           self.state_ = State.FATAL
+          rospy.logerr(msg)
           return
       # TODO uncomment on car
-      # if self.last_stamp_ != None :
-      #     if rospy.get_time() - self.last_stamp_.to_sec() > 3 :
-      #         self.frequency_ = 0.0
-      #         self.state = State.ERROR
-      #         print(self.name + " stopped publishing ")
-              # msg += "Lidar stopped publishing! "
+      # node stopped publishing
+      if self.last_stamp_ != None :
+        if rospy.get_time() - self.last_stamp_.to_sec() > 3 :
+          self.frequency_ = 0.0
+          self.state = State.ERROR
       # checking msg rates
       if self.frequency_ == None:
-        msg += self.name + " hasn't published messages yet! "
+        msg += '[Diagnostic Node] ' +  self.name + " hasn't published messages yet! "
         self.state_ = State.FATAL
       elif self.frequency_ == 0.0:
-        msg += self.name + " stopped publishing "
+        msg += '[Diagnostic Node] ' +  self.name + " stopped publishing "
+        self.state_ = State.ERROR
+      elif self.frequency_ < 1.0 or self.frequency_ > 3 * self.desired_frequency_:
+        msg += '[Diagnostic Node] ' +  self.name + " frequency is 0 or too high "
         self.state_ = State.ERROR
       elif self.frequency_ < self.desired_frequency_ - 0.5 or self.frequency_ > self.desired_frequency_ + 0.5:
         msg += self.name + " publishes with wrong frequency "
-        msg = self.name + " rate: " + str(self.frequency_) + " " + msg
+        msg = '[Diagnostic Node] ' +  self.name + " rate: " + str(self.frequency_) + " " + msg
         self.state_ = State.WARNING
       else:
-        msg = self.name + " rate: " + str(self.frequency_) + " " + msg
+        msg = '[Diagnostic Node] ' +  self.name + " rate: " + str(self.frequency_) + " " + msg
+      rospy.loginfo(msg)
       self.pub_.publish(msg)
     

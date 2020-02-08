@@ -1,10 +1,11 @@
 <launch>
     <node name="diagnose" pkg="selfie_diagnostic_node" type="diagnose.py" output="screen">
-        <param name="delay" value="5" />
-        <param name="debug" value="true" />
+        <param name="delay" value="10" />
+        <param name="debug" value="false" />
+        <param name="frequency" value="1" />
 
         <param name="0_sensor_name" value="Lidar" />
-        <param name="0_sensor_directory" value="/dev/sensors/hokuyo_H1312790" />
+        <!-- <param name="0_sensor_directory" value="/dev/sensors/hokuyo_H1312790" /> -->
         <param name="0_sensor_topic" value="/scan" />
         <param name="0_sensor_datatype" value="LaserScan" />
         <param name="0_sensor_hz" value="10" />

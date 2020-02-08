@@ -10,6 +10,8 @@
   <arg name="detect_obstacles_visualization" default="false" />
   <arg name="lane_controller_visualization" default="false" />
   <arg name="debug_mode" value="false"/>
+  <arg name="diagnostic_delay" default="10" />
+  <arg name="diagnostic_debug" default="false" />
 
   <!-- PLATFORM DEPENDENT PARAMS -->
   <arg name="homography_file" default="/home/$(env USER)/.ros/homography_export.yaml" />
@@ -26,6 +28,11 @@
     <param name="config_file" value="$(arg homography_file)" />
     <param name="hom_cut_file" value="$(arg hom_cut_file)" />
     <param name="debug_mode" value="$(arg debug_mode)"/>
+  </node>
+
+  <node name="diagnose" pkg="selfie_diagnostic_node" type="diagnose.py" output="screen">
+    <param name="delay" value="$(arg diagnostic_delay)" />
+    <param name="debug" value="$(arg diagnostic_debug)" />
   </node>
 
   <node name="extract_road_features" type="extract_road_features" pkg="selfie_path_planner" respawn="true" output="screen" />
@@ -52,6 +59,7 @@
     <arg name="i_visualization_of_intersection" value="$(arg visualization_of_intersection)" />
     <arg name="i_parking_msgs_output" value="$(arg parking_msgs_output)" />
   </include>
+
 
 
 </launch>

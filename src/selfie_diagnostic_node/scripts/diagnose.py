@@ -35,7 +35,7 @@ class Diagnose:
         status = State.WARNING
     return status
 
-  # performing check on all device
+  # performing check on all devices
   def checkDevices(self):
     msg = ""
     for device in self.devices_:
@@ -94,10 +94,7 @@ class Diagnose:
       rospy.loginfo("[Diagnostic Node] SUMMARY: %d devices detected",len(parameters))
     return parameters
 
-  def diagnose(self):
-    # showing that diagnostics time is up
-    self.blinkLights(1.0)
-    rospy.sleep(0.5)
+  def diagnose(self, debug):
     # checking overall status
     devices_status = self.checkDevicesStates()
     # defining diagnose
@@ -105,17 +102,24 @@ class Diagnose:
       rospy.logfatal("[Diagnostic Node] FATAL ERROR")
     elif devices_status == State.WARNING:
       rospy.loginfo("[Diagnostic Node] WARNING")
-      diagnoser.blinkLights(6.0)
+      if not debug:
+        diagnoser.blinkLights(6.0)
+        # unregistering subscribers
+        for device in self.devices_:
+          device.sub_.unregister()
+          rospy.signal_shutdown("[Diagnostic Node] Done")
+          sys.exit(0)  
     elif devices_status == State.OK:
       rospy.loginfo("[Diagnostic Node] OK")
-      diagnoser.blinkLights(2.0)
+      if not debug:
+        diagnoser.blinkLights(2.0)
+        # unregistering subscribers
+        for device in self.devices_:
+          device.sub_.unregister()
+          rospy.signal_shutdown("[Diagnostic Node] Done")
+          sys.exit(0) 
     else:
       rospy.loginfo("[Diagnostic Node] WTF")
-    # unregistering subscribers
-    for device in self.devices_:
-      device.sub_.unregister()
-    rospy.signal_shutdown("[Diagnostic Node] Done")
-    sys.exit(0)  
 
 
 if __name__ =="__main__":
@@ -124,18 +128,19 @@ if __name__ =="__main__":
   diagnoser = Diagnose()
   diagnoser.setupDevices()
   # defining rate of performing diagnostics
-  rate = rospy.Rate(1)
+  frequency = rospy.get_param("~frequency",1)
+  rate = rospy.Rate(frequency)
   # getting delay when to stop programme
   delay = rospy.get_param("~delay",10)
   # debug value true -> programme spins to infinity
   # debug value false -> delay is taken into consideration during computation
   debug = rospy.get_param("~debug",True)
   # reading start time of node, needed for
-  start_time = rospy.get_time() 
+  start_time = rospy.get_time()
   while not rospy.is_shutdown():
     # updating devices internal states
     diagnoser.checkDevices()
     # checking if diagnostics ended
-    if rospy.get_time() - start_time > delay and not debug:
-      diagnoser.diagnose()          
+    if rospy.get_time() - start_time > delay:
+      diagnoser.diagnose(debug)          
     rate.sleep()
