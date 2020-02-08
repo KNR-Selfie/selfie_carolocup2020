@@ -17,8 +17,7 @@ while getopts ":d" opt; do
       ;;
   esac
 done
-echo "start"
+echo "deleting workspace"
 sshpass -p "$password" ssh "${selfie_name}@${selfie_ip}" rm -r $deleted && echo "deleted remote workspace"
 sshpass -p "$password" scp -p -r src "${selfie_name}@${selfie_ip}":/home/selfie/selfie_carolocup2020/src && echo "workspace copied"
 
-echo "copied"
