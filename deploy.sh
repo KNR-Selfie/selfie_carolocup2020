@@ -11,7 +11,6 @@ while getopts ":d" opt; do
   case ${opt} in
     d )
       deleted="${deleted} /home/selfie/selfie_carolocup2020/build /home/selfie/selfie_carolocup2020/devel"
-      echo $deleted
       ;;
     \? ) echo "Usage: ./deploy.sh [-d]"
       ;;
@@ -19,5 +18,6 @@ while getopts ":d" opt; do
 done
 echo "deleting workspace"
 sshpass -p "$password" ssh "${selfie_name}@${selfie_ip}" rm -r $deleted && echo "deleted remote workspace"
+echo "copying workspace"
 sshpass -p "$password" scp -p -r src "${selfie_name}@${selfie_ip}":/home/selfie/selfie_carolocup2020/src && echo "workspace copied"
 
