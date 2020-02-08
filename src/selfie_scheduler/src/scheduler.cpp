@@ -39,7 +39,7 @@ Scheduler::~Scheduler()
 }
 void Scheduler::waitForStart()
 {
-    while(ros::ok)
+    while(ros::ok())
     {
         if(checkIfActionFinished() == SUCCESS)
         {
