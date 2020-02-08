@@ -136,3 +136,13 @@ qr_decoder:
     min_detect_rate: 0.3,
     interations_to_vaild: 2
   }
+stm32_bridge:
+  {
+    ackermann_offset_front: 0.15,
+    ackermann_offset_back: 0.0,
+    parallel_offset_front_right: 0.3,
+    parallel_offset_back_right: -0.36,
+    parallel_offset_front_left: -0.27,
+    parallel_offset_back_left: 0.2,
+    front_axis_offset: 0.15
+  }

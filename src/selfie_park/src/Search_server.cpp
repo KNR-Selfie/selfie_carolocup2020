@@ -44,6 +44,7 @@ bool Search_server::init()
   obstacles_sub = nh_.subscribe("/obstacles", 1, &Search_server::manager, this);
   distance_sub_ = nh_.subscribe("/distance", 1, &Search_server::distanceCb, this);
 
+  speed_current.data = default_speed_in_parking_zone;
   speed_publisher.publish(speed_current);
   min_spot_lenght = search_server_.acceptNewGoal()->min_spot_lenght;
   publishFeedback(START_SEARCHING_PLACE);
@@ -86,7 +87,7 @@ void Search_server::manager(const selfie_msgs::PolygonArray &msg)
       if (first_free_place.bottom_left.x <= max_distance_to_free_place_)
       {
         publishFeedback(FIND_PROPER_PLACE);
-        speed_current.data = 0; // when we found proper place we should stop
+        speed_current.data = default_speed_in_parking_zone;
       }
       speed_publisher.publish(speed_current);
     } else
@@ -341,7 +342,6 @@ void Search_server::endAction() // shutting donw unnecesary subscribers and publ
 {
   obstacles_sub.shutdown();
   distance_sub_.shutdown();
-  speed_publisher.shutdown();
   max_distance_calculated_ = false;
 }
 void Search_server::reconfigureCB(selfie_park::DetectParkingSpotConfig& config, uint32_t level){
