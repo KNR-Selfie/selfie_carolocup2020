@@ -30,7 +30,6 @@ dr_server_CB_(boost::bind(&ParkService::reconfigureCB, this, _1, _2))
   dr_server_.setCallback(dr_server_CB_);
   move_state_ = first_phase;
   parking_state_ = not_parking;
-  action_status_ = READY_TO_DRIVE;
   as_.registerGoalCallback(boost::bind(&ParkService::goalCB, this));
   as_.registerPreemptCallback(boost::bind(&ParkService::preemptCB, this));
   steering_mode_set_parallel_ = nh_.serviceClient<std_srvs::Empty>("steering_parallel");
@@ -46,11 +45,10 @@ void ParkService::distanceCallback(const std_msgs::Float32 &msg)
 {
 
     actual_dist_ = msg.data;
-
+    selfie_msgs::parkFeedback feedback;
     switch (parking_state_)
     {
       case go_to_parking_spot:
-        action_status_ = START_PARK;
         if (toParkingSpot())
         {
             prev_dist_ = actual_dist_;
@@ -73,11 +71,12 @@ void ParkService::distanceCallback(const std_msgs::Float32 &msg)
         break;
 
       case parked:
-        action_status_ = IN_PLACE;
         if (state_msgs_) ROS_INFO_THROTTLE(5, "parked");
         drive(0., 0.);
         blinkLeft(true);
         blinkRight(true);
+        feedback.action_status = IN_PLACE;
+        as_.publishFeedback(feedback);
         ros::Duration(idle_time_).sleep();
         parking_state_ = going_out;
         break;
@@ -90,12 +89,12 @@ void ParkService::distanceCallback(const std_msgs::Float32 &msg)
         break;
 
       case out:
-        action_status_ = READY_TO_DRIVE;
+        feedback.action_status = OUT_PLACE;
+        as_.publishFeedback(feedback);
         blinkLeft(false);
         blinkRight(false);
         if (state_msgs_) ROS_INFO_THROTTLE(5, "out");
         drive(parking_speed_, 0);
-        selfie_msgs::parkFeedback feedback;
         feedback.action_status = READY_TO_DRIVE;
         as_.publishFeedback(feedback);
         selfie_msgs::parkResult result;
