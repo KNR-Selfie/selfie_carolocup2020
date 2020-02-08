@@ -72,9 +72,9 @@ bool LaneDetector::init()
   center_line_.setPointsDensity(points_density_);
   right_line_.setPointsDensity(points_density_);
 
-  left_line_.pfSetup(pf_num_samples_, pf_num_points_, pf_std_);
-  center_line_.pfSetup(pf_num_samples_, pf_num_points_, pf_std_);
-  right_line_.pfSetup(pf_num_samples_, pf_num_points_, pf_std_);
+  left_line_.pfSetup(pf_num_samples_, pf_num_points_, pf_std_min_, pf_std_max_);
+  center_line_.pfSetup(pf_num_samples_, pf_num_points_, pf_std_min_, pf_std_max_);
+  right_line_.pfSetup(pf_num_samples_, pf_num_points_, pf_std_min_, pf_std_max_);
 
   computeTopView();
   printInfoParams();
@@ -204,9 +204,25 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
 
     if(!isIntersection())
     {
-      right_line_.addBottomPoint();
-      center_line_.addBottomPoint();
-      left_line_.addBottomPoint();
+      if (waiting_for_stabilize_)
+      {
+        float half_of_image = (TOPVIEW_MIN_X + TOPVIEW_MAX_X) / 2.0;
+        if (right_line_.isExist() && right_line_.getPoints()[0].x < half_of_image && right_line_.getPoints()[right_line_.pointsSize()].x > half_of_image
+         || left_line_.isExist() && left_line_.getPoints()[0].x < half_of_image && left_line_.getPoints()[left_line_.pointsSize()].x > half_of_image
+         || center_line_.isExist() && center_line_.getPoints()[0].x < half_of_image && center_line_.getPoints()[center_line_.pointsSize()].x > half_of_image)
+        {
+            waiting_for_stabilize_ = false;
+            center_line_.setDegree(2);
+            right_line_.setDegree(2);
+            left_line_.setDegree(2);
+            center_line_.pfReset();
+            right_line_.pfReset();
+            left_line_.pfReset();
+        }
+      }
+      right_line_.addBottomPoint(waiting_for_stabilize_);
+      center_line_.addBottomPoint(waiting_for_stabilize_);
+      left_line_.addBottomPoint(waiting_for_stabilize_);
 
       right_line_.calcParams();
       center_line_.calcParams();
@@ -249,6 +265,7 @@ bool LaneDetector::resetVisionCallback(std_srvs::Empty::Request &request, std_sr
   proof_intersection_ = 0;
   proof_start_line_ = 0;
   intersection_ = false;
+  waiting_for_stabilize_ = false;
   ROS_INFO("RESET VISION");
   return true;
 }
@@ -368,7 +385,8 @@ void LaneDetector::getParams()
 
   pnh_.getParam("pf_num_samples", pf_num_samples_);
   pnh_.getParam("pf_num_points_", pf_num_points_);
-  pnh_.getParam("pf_std", pf_std_);
+  pnh_.getParam("pf_std_min", pf_std_min_);
+  pnh_.getParam("pf_std_max", pf_std_max_);
   pnh_.getParam("pf_num_samples_vis", pf_num_samples_vis_);
 
   pnh_.getParam("obstacle_window_size", obstacle_window_size_);
@@ -524,7 +542,7 @@ void LaneDetector::recognizeLinesNew()
 {
   float checking_length = 0.4;
   float max_cost = 0.05;
-  if (intersection_)
+  if (intersection_ || waiting_for_stabilize_)
     max_cost = 0.1;
   float ratio = 0.4;
   center_line_.clearPoints();
@@ -753,7 +771,8 @@ void LaneDetector::printInfoParams()
 
   ROS_INFO("pf_num_samples: %d", pf_num_samples_);
   ROS_INFO("pf_num_points: %d\n", pf_num_points_);
-  ROS_INFO("pf_std: %.3f", pf_std_);
+  ROS_INFO("pf_std_min: %.3f", pf_std_min_);
+  ROS_INFO("pf_std_max: %.3f", pf_std_max_);
 }
 
 void LaneDetector::dynamicMask(cv::Mat &input_frame, cv::Mat &output_frame)
@@ -808,9 +827,9 @@ void LaneDetector::ROILaneRight(cv::Mat &input_frame, cv::Mat &output_frame)
   else if (!intersection_)
   {
     if (!right_line_.isExist() || right_line_.isShort())
-      offset_right = 0.11;
+      offset_right = 0.08;
     if (!center_line_.isExist() || center_line_.isShort())
-      offset_center = -0.13;
+      offset_center = -0.1;
   }
 
   std::vector<cv::Point2f> center_line_offset = createOffsetLine(center_line_.getCoeff(), center_line_.getDegree(), offset_center);
@@ -897,7 +916,8 @@ void LaneDetector::filterSmallLines()
 {
   for (int i = 0; i < lines_vector_converted_.size(); ++i)
   {
-    float sum = arcLength(lines_vector_converted_[i], false);
+    //float sum = arcLength(lines_vector_converted_[i], false);
+    float sum = lines_vector_converted_[i][lines_vector_converted_[i].size() - 1].x - lines_vector_converted_[i][0].x;
     if (sum < min_length_search_line_)
     {
       lines_vector_converted_.erase(lines_vector_converted_.begin() + i);
@@ -1670,19 +1690,19 @@ void LaneDetector::calcRoadWidth()
   cv::Point2f p_ahead;
   p_ahead.x = 0.7;
   p_ahead.y = getPolyY(center_line_.getCoeff(), p_ahead.x);
-  double deriative;
-  if (center_line_.getDegree() == 3)
+  float deriative;
+  if (center_line_.getCoeff().size() - 1 == 3)
     deriative = 3 * center_line_.getCoeff()[3] * pow(p_ahead.x, 2)
               + 2 * center_line_.getCoeff()[2] * p_ahead.x
               + center_line_.getCoeff()[1];
-  else if(center_line_.getDegree() == 2)
+  else if(center_line_.getCoeff().size() - 1 == 2)
     deriative = 2 * center_line_.getCoeff()[2] * p_ahead.x
               + center_line_.getCoeff()[1];
   else
     deriative = center_line_.getCoeff()[1];
 
-  double a_param_orthg = -1 / deriative;
-  double b_param_orthg = p_ahead.y - a_param_orthg * p_ahead.x;
+  float a_param_orthg = -1 / deriative;
+  float b_param_orthg = p_ahead.y - a_param_orthg * p_ahead.x;
 
   // right lane
   float r_lane_width = 0;
@@ -1989,25 +2009,36 @@ void LaneDetector::detectStartAndIntersectionLine()
     }
     
   }
-  else if (right_distance > 0)
+  else
   {
     if (proof_start_line_ > 0)
       --proof_start_line_;
-    if (proof_intersection_ == 3)
+    if (right_distance > 0)
     {
-      intersection_line_dist_ = right_distance;
+      if (proof_intersection_ == 3)
+      {
+        intersection_line_dist_ = right_distance;
+        if(waiting_for_stabilize_ || intersection_)
+        {
+          std_msgs::Float32 msg;
+          msg.data = intersection_line_dist_;
+          intersection_pub_.publish(msg);
+        }
+      }
+      else
+      {
+        intersection_line_dist_ = -1;
+        ++proof_intersection_;
+      }
     }
     else
     {
-      intersection_line_dist_ = -1;
-      ++proof_intersection_;
+      if (proof_intersection_ > 0)
+      {
+        --proof_intersection_;
+        intersection_line_dist_ = -1;
+      }
     }
-    
-  }
-  else
-  {
-    if (proof_intersection_ > 0)
-      --proof_intersection_;
   }
 }
 
@@ -2160,9 +2191,16 @@ void LaneDetector::tuneParams(const ros::TimerEvent &time)
 
 bool LaneDetector::isIntersection()
 {
-  intersection_ = false;
   if (lines_out_h_world_.empty())
+  {
+    if (intersection_)
+      waiting_for_stabilize_ = true;
+    intersection_ = false;
+    //center_line_.setDegree(2);
+    //right_line_.setDegree(2);
+    //left_line_.setDegree(2);
     return false;
+  }
 
   bool left_intersection = false;
   bool right_intersection = false;
@@ -2289,19 +2327,17 @@ bool LaneDetector::isIntersection()
   {
     if (center_line_.getPoints()[0].x > ((TOPVIEW_MIN_X + TOPVIEW_MAX_X) / 2))
     {
-      center_line_.setDegree(2);
-      right_line_.setDegree(2);
-      left_line_.setDegree(2);
+      if (intersection_)
+        waiting_for_stabilize_ = true;
+      intersection_ = false;
+      //center_line_.setDegree(2);
+      //right_line_.setDegree(2);
+      //left_line_.setDegree(2);
       return false;
     }
     intersection_ = true;
+    waiting_for_stabilize_ = false;
     ROS_INFO_THROTTLE(2, "INTERSECTION");
-    if (intersection_line_dist_ != -1)
-    {
-      std_msgs::Float32 msg;
-      msg.data = intersection_line_dist_;
-      intersection_pub_.publish(msg);
-    }
 
     center_line_.setDegree(1);
     right_line_.setDegree(1);
@@ -2342,9 +2378,12 @@ bool LaneDetector::isIntersection()
   }
   else
   {
-    center_line_.setDegree(2);
-    right_line_.setDegree(2);
-    left_line_.setDegree(2);
+    if (intersection_)
+      waiting_for_stabilize_ = true;
+    intersection_ = false;
+    //center_line_.setDegree(2);
+    //right_line_.setDegree(2);
+    //left_line_.setDegree(2);
     return false;
   }
 }
