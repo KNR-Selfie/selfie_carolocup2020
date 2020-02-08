@@ -67,7 +67,6 @@ class Tester:
           self.state = State.ERROR
           rospy.logerr(msg)
           return
-      # TODO uncomment on car
       # node stopped publishing
       if self.last_stamp_ != None :
         if rospy.get_time() - self.last_stamp_.to_sec() > 3 :
