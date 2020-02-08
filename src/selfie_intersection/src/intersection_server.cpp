@@ -11,6 +11,7 @@ IntersectionServer::IntersectionServer(const ros::NodeHandle &nh, const ros::Nod
     , intersectionServer_(nh_, "intersection", false)
     , point_max_x_(0.95) // Width of road
     , dr_server_CB_(boost::bind(&IntersectionServer::reconfigureCB, this, _1, _2))
+    , is_distance_to_intersection_saved_(false)
 {
   intersectionServer_.registerGoalCallback(boost::bind(&IntersectionServer::init, this));
   intersectionServer_.registerPreemptCallback(boost::bind(&IntersectionServer::preemptCb, this));
@@ -112,6 +113,11 @@ void IntersectionServer::manager(const selfie_msgs::PolygonArray &boxes)
 void IntersectionServer::intersection_callback(const std_msgs::Float32 &msg)
 {
   point_min_x_ = msg.data;
+  if (!is_distance_to_intersection_saved_)
+  {
+    distance_to_intersection_when_started_ = msg.data;
+    is_distance_to_intersection_saved_ = true;
+  }
   point_max_x_ = point_min_x_ + road_width_;
   if (intersectionServer_.isActive())
     ROS_INFO_THROTTLE(1, "Distance to intersection: %lf", point_min_x_);
@@ -127,6 +133,7 @@ void IntersectionServer::send_goal()
 {
   selfie_msgs::intersectionResult result;
   result.done = true;
+  is_distance_to_intersection_saved_ = false;
   point_min_x_ = max_distance_to_intersection_;
   point_max_x_ = point_min_x_ + road_width_;
 

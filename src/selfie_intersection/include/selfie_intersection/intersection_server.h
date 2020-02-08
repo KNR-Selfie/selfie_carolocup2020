@@ -40,6 +40,9 @@ private:
   float road_width_;
   float max_distance_to_intersection_; // Describrs how far before intersection
                                        // car should stop
+  float distance_to_intersection_when_started_;
+  bool is_distance_to_intersection_saved_;
+
   int num_corners_to_detect_;
   bool visualization_;
 
