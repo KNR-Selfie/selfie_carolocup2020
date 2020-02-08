@@ -46,57 +46,26 @@ rosrun selfie_park park_server
 ```
 ## Topics
 ### Subscribed
-- /odom (nav_msgs/OdometryStamped)
+- /distance (std_msgs/Float32)
 ### Published
 - /drive (ackermann_msgs/AckermannDriveStamped)
 - /right_turn_indicator (std_msgs/Bool)
 - /left_turn_indicator (std_msgs/Bool)
 
 ## Parameters
-- minimal_start_parking_x (float)
-distance, at which the car will start parking, in reference to the beginning of the parking spot
 - state_msgs (bool)
 printing messages indicating the current state of the parking manouvre
-- max_rot (float)
-maximal rotation of the vehicle when parking
 - parking_speed (float)
-- odom_to_laser (float)
 distance between imu and the laser sensor of the vehicle
-- odom_to_front (float)
-distance between imu and the front of the vehicle
-- odom_to_back (float)
-distance between imu and the back of the vehicle
+- back_to_mid (float)
+distance between the back and the base_link of the vehicle
 - idle_time (float)
 time spent idle in the parking spot
-
-# Park Action
-## Usage
-```
-. devel/setup.bash
-rosrun selfie_park park_server
-```
-## Topics
-### Subscribed
-- /odom (nav_msgs/OdometryStamped)
-### Published
-- /drive (ackermann_msgs/AckermannDriveStamped)
-- /right_turn_indicator (std_msgs/Bool)
-- /left_turn_indicator (std_msgs/Bool)
-
-## Parameters
-- minimal_start_parking_x (float)
-distance, at which the car will start parking, in reference to the beginning of the parking spot
-- state_msgs (bool)
-printing messages indicating the current state of the parking manouvre
-- max_rot (float)
-maximal rotation of the vehicle when parking
-- parking_speed (float)
-- odom_to_laser (float)
-distance between imu and the laser sensor of the vehicle
-- odom_to_front (float)
-distance between imu and the front of the vehicle
-- odom_to_back (float)
-distance between imu and the back of the vehicle
-- idle_time (float)
-time spent idle in the parking spot
-
+- iter_distance (float)
+one move distance
+- angle_coeff (float)
+angle coefficient for calculations
+- max_turn (float)
+maximal wheel turn angle
+- turn_delay (float)
+time to wait for turn direction change
