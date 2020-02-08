@@ -44,6 +44,7 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
   pnh_.param<float>("lane_change_distance", lane_change_distance_, 0.9);
   pnh_.param<double>("lane_change_kp", lane_change_kp_, 0.05);
 
+  num_proof_to_return_ = num_proof_to_slowdown_; // Maybe change to param later
   dr_server_.setCallback(dr_server_CB_);
   passive_mode_service_ = nh_.advertiseService("/avoiding_obst_set_passive", &Road_obstacle_detector::switchToPassive, this);
   active_mode_service_ = nh_.advertiseService("/avoiding_obst_set_active", &Road_obstacle_detector::switchToActive, this);
@@ -115,20 +116,31 @@ void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &
         --proof_slowdown_;
       }
     }
-  } else if (status_ == ON_LEFT && !is_obstacle_next_to_car(msg))
+  } else if (status_ == ON_LEFT)
   {
-    if (ackermann_mode_)
+    if (!is_obstacle_next_to_car(msg))
     {
-      std_srvs::Empty e;
-      ackerman_steering_service_.call(e);
+      proof_return_++;
+    } else if (proof_return_ > 0)
+    {
+      proof_return_--;
     }
-    status_ = RETURN;
-    changePidSettings(lane_change_kp_);
-    ROS_INFO("LC: RETURN");
-    return_distance_calculated_ = false;
-    distance_when_started_changing_lane_ = current_distance_;
-    selfie_msgs::PolygonArray temp;
-    obstacle_callback(temp);
+
+    if (proof_return_ > num_proof_to_return_)
+    {
+      if (ackermann_mode_)
+      {
+        std_srvs::Empty e;
+        ackerman_steering_service_.call(e);
+      }
+      status_ = RETURN;
+      changePidSettings(lane_change_kp_);
+      ROS_INFO("LC: RETURN");
+      return_distance_calculated_ = false;
+      distance_when_started_changing_lane_ = current_distance_;
+      selfie_msgs::PolygonArray temp;
+      obstacle_callback(temp);
+    }
   }
   switch (status_)
   {
@@ -204,6 +216,9 @@ void Road_obstacle_detector::filter_boxes(const selfie_msgs::PolygonArray &msg)
 
 bool Road_obstacle_detector::is_obstacle_next_to_car(const selfie_msgs::PolygonArray &msg)
 {
+  if (visualization_)
+    right_obst_area_box_.visualize(visualizer_, "area_of_right_boxes", 1, 0.9, 0.7);
+
   if (!msg.polygons.empty())
   {
     geometry_msgs::Polygon polygon;
@@ -226,7 +241,6 @@ bool Road_obstacle_detector::is_obstacle_next_to_car(const selfie_msgs::PolygonA
         if (visualization_)
         {
           temp_box.visualize(visualizer_, "box_on_right", 0.9, 0.2, 0.3);
-          right_obst_area_box_.visualize(visualizer_, "area_of_right_boxes", 1, 0.9, 0.7);
         }
         return true;
       }
@@ -315,6 +329,7 @@ void Road_obstacle_detector::distanceCallback(const std_msgs::Float32 &msg)
       front_axis_steering_service_.call(e);
     }
     status_ = ON_LEFT;
+    proof_return_ = 0;
     restorePidSettings();
     ROS_INFO("LC: ON_LEFT");
     blinkLeft(false);
@@ -423,7 +438,6 @@ void Road_obstacle_detector::passive_timer_cb(const ros::TimerEvent &time)
   setpoint_pub_.publish(setpoint_value_);
 }
 
-
 bool Road_obstacle_detector::switchToActive(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response)
 {
   if (status_ != PASSIVE)
@@ -495,14 +509,14 @@ void Road_obstacle_detector::blinkRight(bool on)
   return;
 }
 
-void Road_obstacle_detector::pidDynamicReconfigureCb(const PidConfig &config) 
+void Road_obstacle_detector::pidDynamicReconfigureCb(const PidConfig &config)
 {
-  pnh_.setParam("/pid_controller/Kd",(float)config.Kd);
-  pnh_.setParam("/pid_controller/Kp",(float)config.Kp);
-  pnh_.setParam("/pid_controller/Ki",(float)config.Ki);
-  pnh_.setParam("/pid_controller/Kd_scale",(float)config.Kd_scale);
-  pnh_.setParam("/pid_controller/Kp_scale",(float)config.Kp_scale);
-  pnh_.setParam("/pid_controller/Ki_scale",(float)config.Ki_scale);
+  pnh_.setParam("/pid_controller/Kd", (float)config.Kd);
+  pnh_.setParam("/pid_controller/Kp", (float)config.Kp);
+  pnh_.setParam("/pid_controller/Ki", (float)config.Ki);
+  pnh_.setParam("/pid_controller/Kd_scale", (float)config.Kd_scale);
+  pnh_.setParam("/pid_controller/Kp_scale", (float)config.Kp_scale);
+  pnh_.setParam("/pid_controller/Ki_scale", (float)config.Ki_scale);
 }
 
 void Road_obstacle_detector::reconfigureCB(selfie_avoiding_obstacles::LaneControllerConfig &config, uint32_t level)
@@ -560,6 +574,7 @@ void Road_obstacle_detector::reconfigureCB(selfie_avoiding_obstacles::LaneContro
   if (num_proof_to_slowdown_ != (int)config.num_proof_to_slowdown)
   {
     num_proof_to_slowdown_ = config.num_proof_to_slowdown;
+    num_proof_to_return_ = num_proof_to_slowdown_;
     ROS_INFO("num_proof_to_slowdown new value: %d", num_proof_to_slowdown_);
   }
   if (lane_change_kp_ != (int)config.lane_change_kp)
