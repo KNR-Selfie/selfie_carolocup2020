@@ -212,10 +212,12 @@ cv::Point2f RoadLine::getPointNextToBottom(float min_dist_to_bottom)
   return points_[pointsSize() - 1];
 }
 
-void RoadLine::reducePointsToStraight()
+void RoadLine::reducePointsToStraight(int check_to_index)
 {
   if(pointsSize() == 0)
     return;
+
+  points_.erase(points_.begin() + check_to_index, points_.end());
 
   // generate for density
   for (int i = 0; i < pointsSize(); ++i)
@@ -257,7 +259,7 @@ void RoadLine::reducePointsToStraight()
   }
   std::cout << "max_dist: " << max << std::endl;
 
-  if (max > 0.015 && index_max > -1)
+  if (max > 0.05 && index_max > 4)
   {
     std::cout << "index_max: " << index_max << std::endl;
     points_.erase(points_.begin() + index_max, points_.end());
@@ -267,4 +269,35 @@ void RoadLine::reducePointsToStraight()
 float RoadLine::getA(cv::Point2f p1, cv::Point2f p2)
 {
   return (p2.y - p1.y) / (p2.x - p1.x);
+}
+
+float RoadLine::getMaxDiffonX()
+{
+  if(pointsSize() == 0)
+    return 0;
+
+  float dist = 0;
+  for(int i = 1; i < pointsSize(); ++i)
+  {
+    float dist_now = points_[i].x - points_[i - 1].x;
+    if (dist_now > dist)
+    {
+      dist = dist_now;
+    }
+  }
+  std::cout << "getMaxDiffonX: " << dist << std::endl;
+  return dist;
+}
+
+int RoadLine::getIndexOnMerge()
+{
+  for(int i = 1; i < pointsSize(); ++i)
+  {
+    float dist_now = points_[i].x - points_[i - 1].x;
+    if (dist_now > 0.3)
+    {
+      return i - 1;
+    }
+  }
+  return pointsSize();
 }

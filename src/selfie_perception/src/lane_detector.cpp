@@ -211,6 +211,8 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
          || left_line_.isExist() && left_line_.getPoints()[0].x < half_of_image && left_line_.getPoints()[left_line_.pointsSize()].x > half_of_image
          || center_line_.isExist() && center_line_.getPoints()[0].x < half_of_image && center_line_.getPoints()[center_line_.pointsSize()].x > half_of_image)
         {
+          if (right_line_.getMaxDiffonX() < 0.3 && left_line_.getMaxDiffonX() < 0.3 && center_line_.getMaxDiffonX() < 0.3)
+          {
             waiting_for_stabilize_ = false;
             ROS_INFO("waiting_for_stabilize is false");
             center_line_.setDegree(2);
@@ -219,6 +221,7 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
             center_line_.pfReset();
             right_line_.pfReset();
             left_line_.pfReset();
+          }
         }
       }
       ROS_INFO("waiting_for_stabilize is %d", waiting_for_stabilize_);
@@ -2212,6 +2215,7 @@ bool LaneDetector::isIntersection()
 
   bool left_intersection = false;
   bool right_intersection = false;
+  float right_lenght = 0;
   int min_right_index = -1;
   int min_left_index = -1;
 
@@ -2267,6 +2271,9 @@ bool LaneDetector::isIntersection()
           isec_debug_points_.push_back(lines_out_h_world_[i]);
           isec_debug_points_.push_back(lines_out_h_world_[i + 1]);
         }
+        float d = getDistance(lines_out_h_world_[i], lines_out_h_world_[i + 1]);
+        if(d > right_lenght)
+          right_lenght = d;
         right_intersection = true;
         break;
       }
@@ -2330,8 +2337,19 @@ bool LaneDetector::isIntersection()
       }
     }
   }
+  ROS_INFO("right_lenght: %.3f", right_lenght);
+  if(right_lenght > 0.5)
+    left_intersection = true; 
+  
+  int index_on_merge = 0;
+  if (center_line_.isExist())
+  {
+    index_on_merge = center_line_.getIndexOnMerge();
+  }
+  ROS_INFO("center_size: %.3f", center_line_.getPoints()[index_on_merge].x - center_line_.getPoints()[0].x);
 
-  if(left_intersection && right_intersection && center_line_.isExist())
+  if(left_intersection && right_intersection && center_line_.isExist() && 
+     (center_line_.getPoints()[index_on_merge].x - center_line_.getPoints()[0].x > 0.2))
   {
     if (center_line_.getPoints()[0].x > ((TOPVIEW_MIN_X + TOPVIEW_MAX_X) / 2))
     {
@@ -2350,7 +2368,7 @@ bool LaneDetector::isIntersection()
     center_line_.setDegree(1);
     right_line_.setDegree(1);
     left_line_.setDegree(1);
-    center_line_.reducePointsToStraight();
+    center_line_.reducePointsToStraight(index_on_merge);
     center_line_.aprox();
     if (right_line_.isExist())
     {

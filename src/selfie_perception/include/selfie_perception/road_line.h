@@ -19,7 +19,9 @@ public:
   void generateForDensity();
   void reduceTopPoints(float ratio);
   cv::Point2f getPointNextToBottom(float min_dist_to_bottom);
-  void reducePointsToStraight();
+  void reducePointsToStraight(int check_to_index);
+  float getMaxDiffonX();
+  int getIndexOnMerge();
   void reset();
 
   void pfSetup(int num_particles, int num_control_points, float std_min, float std_max);
