@@ -23,6 +23,7 @@ private:
   ros::NodeHandle pnh_;
   ros::Subscriber obstacles_sub_;
   ros::Subscriber intersection_subscriber_;
+  ros::Subscriber distance_subscriber_;
   ros::Publisher speed_publisher_;
   ros::Publisher visualize_intersection_;
 
@@ -42,6 +43,8 @@ private:
                                        // car should stop
   float distance_to_intersection_when_started_;
   bool is_distance_to_intersection_saved_;
+  float distance_when_started_;
+  bool is_distance_saved_;
 
   int num_corners_to_detect_;
   bool visualization_;
@@ -60,6 +63,7 @@ private:
   void preemptCb();
   void manager(const selfie_msgs::PolygonArray &);
   void intersection_callback(const std_msgs::Float32 &);
+  void distance_callback(const std_msgs::Float32 &);
   void filter_boxes(const selfie_msgs::PolygonArray &);
   void publishFeedback(program_state newStatus);
   void send_goal();
