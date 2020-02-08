@@ -8,9 +8,9 @@
 #include <std_msgs/Float32.h>
 
 #include <dynamic_reconfigure/server.h>
+#include <selfie_intersection/IntersectionServerConfig.h>
 #include <selfie_park/shapes.h>
 #include <selfie_scheduler/scheduler_enums.h>
-#include <selfie_intersection/IntersectionServerConfig.h>
 
 class IntersectionServer
 {
@@ -23,6 +23,7 @@ private:
   ros::NodeHandle pnh_;
   ros::Subscriber obstacles_sub_;
   ros::Subscriber intersection_subscriber_;
+  ros::Subscriber distance_subscriber_;
   ros::Publisher speed_publisher_;
   ros::Publisher visualize_intersection_;
 
@@ -40,6 +41,11 @@ private:
   float road_width_;
   float max_distance_to_intersection_; // Describrs how far before intersection
                                        // car should stop
+  float distance_to_intersection_when_started_;
+  bool is_distance_to_intersection_saved_;
+  float distance_when_started_;
+  bool is_distance_saved_;
+
   int num_corners_to_detect_;
   bool visualization_;
 
@@ -57,6 +63,7 @@ private:
   void preemptCb();
   void manager(const selfie_msgs::PolygonArray &);
   void intersection_callback(const std_msgs::Float32 &);
+  void distance_callback(const std_msgs::Float32 &);
   void filter_boxes(const selfie_msgs::PolygonArray &);
   void publishFeedback(program_state newStatus);
   void send_goal();

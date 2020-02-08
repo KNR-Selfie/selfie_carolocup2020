@@ -11,6 +11,8 @@ IntersectionServer::IntersectionServer(const ros::NodeHandle &nh, const ros::Nod
     , intersectionServer_(nh_, "intersection", false)
     , point_max_x_(0.95) // Width of road
     , dr_server_CB_(boost::bind(&IntersectionServer::reconfigureCB, this, _1, _2))
+    , is_distance_to_intersection_saved_(false)
+    , is_distance_saved_(false)
 {
   intersectionServer_.registerGoalCallback(boost::bind(&IntersectionServer::init, this));
   intersectionServer_.registerPreemptCallback(boost::bind(&IntersectionServer::preemptCb, this));
@@ -41,6 +43,7 @@ void IntersectionServer::init()
   obstacles_sub_ = nh_.subscribe("/obstacles", 1, &IntersectionServer::manager, this);
   speed_publisher_ = nh_.advertise<std_msgs::Float64>("/max_speed", 2);
   intersection_subscriber_ = nh_.subscribe("/intersection_distance", 1, &IntersectionServer::intersection_callback, this);
+  distance_subscriber_ = nh_.subscribe("/distance", 1, &IntersectionServer::distance_callback, this);
   speed_publisher_.publish(speed_);
   publishFeedback(APPROACHING_TO_INTERSECTION);
   time_started_ = false;
@@ -112,6 +115,11 @@ void IntersectionServer::manager(const selfie_msgs::PolygonArray &boxes)
 void IntersectionServer::intersection_callback(const std_msgs::Float32 &msg)
 {
   point_min_x_ = msg.data;
+  if (!is_distance_to_intersection_saved_)
+  {
+    distance_to_intersection_when_started_ = msg.data;
+    is_distance_to_intersection_saved_ = true;
+  }
   point_max_x_ = point_min_x_ + road_width_;
   if (intersectionServer_.isActive())
     ROS_INFO_THROTTLE(1, "Distance to intersection: %lf", point_min_x_);
@@ -123,14 +131,34 @@ void IntersectionServer::intersection_callback(const std_msgs::Float32 &msg)
   }
 }
 
+void IntersectionServer::distance_callback(const std_msgs::Float32 &msg)
+{
+  if (!is_distance_saved_)
+  {
+    is_distance_saved_ = true;
+    distance_when_started_ = msg.data;
+  }
+  if (is_distance_to_intersection_saved_)
+  {
+    if (msg.data > distance_when_started_ + distance_to_intersection_when_started_)
+    {
+      ROS_INFO("Timeout for intersection (distance exceeded)");
+      send_goal();
+    }
+  }
+}
+
 void IntersectionServer::send_goal()
 {
   selfie_msgs::intersectionResult result;
   result.done = true;
+  is_distance_to_intersection_saved_ = false;
+  is_distance_saved_ = false;
   point_min_x_ = max_distance_to_intersection_;
   point_max_x_ = point_min_x_ + road_width_;
 
   intersection_subscriber_.shutdown();
+  distance_subscriber_.shutdown();
   obstacles_sub_.shutdown();
   intersectionServer_.setSucceeded();
 }
@@ -173,43 +201,45 @@ void IntersectionServer::publishFeedback(program_state newStatus)
 
 void IntersectionServer::preemptCb()
 {
+  is_distance_saved_ = false;
+  is_distance_to_intersection_saved_ = false;
   ROS_INFO("Intersection action preempted");
+  distance_subscriber_.shutdown();
   obstacles_sub_.shutdown();
   intersection_subscriber_.shutdown();
   intersectionServer_.setAborted();
 }
 
-
 void IntersectionServer::reconfigureCB(selfie_intersection::IntersectionServerConfig& config, uint32_t level)
 {
-  if(max_distance_to_intersection_ != (float)config.distance_to_intersection)
+  if (max_distance_to_intersection_ != (float)config.distance_to_intersection)
   {
     max_distance_to_intersection_ = (float)config.distance_to_intersection;
-    ROS_INFO("New max_distance_to_intersection_ value %f",max_distance_to_intersection_);
+    ROS_INFO("New max_distance_to_intersection_ value %f", max_distance_to_intersection_);
   }
-  if(num_corners_to_detect_ != config.num_corners_to_detect)
-  { 
+  if (num_corners_to_detect_ != config.num_corners_to_detect)
+  {
     num_corners_to_detect_ = config.num_corners_to_detect;
-    ROS_INFO("New num_corners_to_detect_ value %d",num_corners_to_detect_);
+    ROS_INFO("New num_corners_to_detect_ value %d", num_corners_to_detect_);
   }
-  if(point_max_y_ != (float)config.point_max_y)
+  if (point_max_y_ != (float)config.point_max_y)
   {
     point_max_y_ = (float)config.point_max_y;
-    ROS_INFO("New point_max_y_ value %f",point_max_y_);
+    ROS_INFO("New point_max_y_ value %f", point_max_y_);
   }
-  if(point_min_y_ != (float)config.point_min_y)
-  { 
+  if (point_min_y_ != (float)config.point_min_y)
+  {
     point_min_y_ = (float)config.point_min_y;
-    ROS_INFO("New point_min_y value %f",point_min_y_);
+    ROS_INFO("New point_min_y value %f", point_min_y_);
   }
-  if(speed_default_ != (float)config.speed_default)
+  if (speed_default_ != (float)config.speed_default)
   {
     speed_default_ = (float)config.speed_default;
-    ROS_INFO("New speed_default value %f",speed_default_);
+    ROS_INFO("New speed_default value %f", speed_default_);
   }
-  if(stop_time_ != (float)config.stop_time)
+  if (stop_time_ != (float)config.stop_time)
   {
     stop_time_ = (float)config.stop_time;
-    ROS_INFO("New stop_time value %f",stop_time_);
+    ROS_INFO("New stop_time value %f", stop_time_);
   }
 }
