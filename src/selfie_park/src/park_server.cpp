@@ -22,15 +22,16 @@ dr_server_CB_(boost::bind(&ParkService::reconfigureCB, this, _1, _2))
   pnh_.param<float>("angle_coeff", angle_coeff_, 1./2.);
   pnh_.param<float>("back_to_mid", back_to_mid_, 0.18);
   pnh_.param<float>("turn_delay",turn_delay_, 0.1);
+  pnh_.param<float>("line_dist_end", line_dist_end_, 0.15);
 
   park_spot_middle_ = 0.;
   front_target_ = 0.;
   back_target_ = 0.;
+  out_target_ = 0.;
   delay_end_ = ros::Time::now();
   dr_server_.setCallback(dr_server_CB_);
   move_state_ = first_phase;
   parking_state_ = not_parking;
-  action_status_ = READY_TO_DRIVE;
   as_.registerGoalCallback(boost::bind(&ParkService::goalCB, this));
   as_.registerPreemptCallback(boost::bind(&ParkService::preemptCB, this));
   steering_mode_set_parallel_ = nh_.serviceClient<std_srvs::Empty>("steering_parallel");
@@ -40,17 +41,17 @@ dr_server_CB_(boost::bind(&ParkService::reconfigureCB, this, _1, _2))
   ackermann_pub_ = nh_.advertise<ackermann_msgs::AckermannDriveStamped>(ackermann_topic_, 10);
   right_indicator_pub_ = nh_.advertise<std_msgs::Bool>("right_turn_indicator", 20);
   left_indicator_pub_ = nh_.advertise<std_msgs::Bool>("left_turn_indicator", 20);
+  markings_sub_ = nh_.subscribe("/road_markings", 10, &ParkService::markingsCallback,this);
 }
 
 void ParkService::distanceCallback(const std_msgs::Float32 &msg)
 {
 
     actual_dist_ = msg.data;
-
+    selfie_msgs::parkFeedback feedback;
     switch (parking_state_)
     {
       case go_to_parking_spot:
-        action_status_ = START_PARK;
         if (toParkingSpot())
         {
             prev_dist_ = actual_dist_;
@@ -73,11 +74,12 @@ void ParkService::distanceCallback(const std_msgs::Float32 &msg)
         break;
 
       case parked:
-        action_status_ = IN_PLACE;
         if (state_msgs_) ROS_INFO_THROTTLE(5, "parked");
         drive(0., 0.);
         blinkLeft(true);
         blinkRight(true);
+        feedback.action_status = IN_PLACE;
+        as_.publishFeedback(feedback);
         ros::Duration(idle_time_).sleep();
         parking_state_ = going_out;
         break;
@@ -90,12 +92,12 @@ void ParkService::distanceCallback(const std_msgs::Float32 &msg)
         break;
 
       case out:
-        action_status_ = READY_TO_DRIVE;
+        feedback.action_status = OUT_PLACE;
+        as_.publishFeedback(feedback);
         blinkLeft(false);
         blinkRight(false);
         if (state_msgs_) ROS_INFO_THROTTLE(5, "out");
         drive(parking_speed_, 0);
-        selfie_msgs::parkFeedback feedback;
         feedback.action_status = READY_TO_DRIVE;
         as_.publishFeedback(feedback);
         selfie_msgs::parkResult result;
@@ -132,10 +134,17 @@ void ParkService::preemptCB()
 void ParkService::initParkingSpot(const geometry_msgs::Polygon &msg)
 {
     park_spot_middle_ = (msg.points[0].x + msg.points[3].x)/2.;
-    park_spot_dist_ini_ = std::abs(msg.points[2].y + msg.points[3].y)/2.;
+    float mid_on_line(0.);
+    float powered_x = 1.;
+    for(float &coef:right_line_)
+    {
+        mid_on_line += coef * powered_x;
+        powered_x *= park_spot_middle_;
+    }
+    park_spot_dist_ = std::abs(mid_on_line) - PARK_SPOT_WIDTH/2.;
+    std::cout<<"PARK SPOT DIST: "<<park_spot_dist_ini_<<std::endl;
 
-    park_spot_dist_ = park_spot_dist_ini_;
-
+    out_target_ = std::abs(mid_on_line) + line_dist_end_;
     back_target_ = actual_dist_ + park_spot_middle_ - iter_distance_/2. - back_to_mid_;
     front_target_ = back_target_ + iter_distance_;
 }
@@ -154,11 +163,9 @@ void ParkService::drive(float speed, float steering_angle)
 bool ParkService::toParkingSpot()
 {
     if(actual_dist_ > back_target_)
-    {
-        drive(0., -max_turn_);
-        return true;
-    }
-    drive(parking_speed_, 0.);
+    { drive(0., -max_turn_);
+               return true;
+    } drive(parking_speed_, 0.);
     return false;
 }
 
@@ -223,7 +230,7 @@ bool ParkService::leave()
     static ros::Time delay_end;
 
     park_spot_dist_ += angle_coeff_*std::sin(max_turn_)*std::abs(actual_dist_ - prev_dist_);
-    bool in_pos = park_spot_dist_ < park_spot_dist_ini_;
+    bool in_pos = park_spot_dist_ < out_target_;
     if(move_state_ == first_phase)
     {
         if(in_pos)
@@ -273,7 +280,15 @@ bool ParkService::leave()
     }
     prev_dist_ = actual_dist_;
     return false;
+}
 
+void ParkService::markingsCallback(const selfie_msgs::RoadMarkings &msg)
+{
+    if(parking_state_ == not_parking)
+    {
+    
+        right_line_ = msg.right_line;
+    }
 }
 
 
@@ -330,6 +345,11 @@ void ParkService::reconfigureCB(selfie_park::ParkServerConfig& config, uint32_t 
     {
         back_to_mid_= config.back_to_mid;
         ROS_INFO("back_to_mid_ new value: %f", back_to_mid_);
+    }
+    if(line_dist_end_!= (float)config.line_dist_end)
+    {
+        line_dist_end_ = config.line_dist_end;
+        ROS_INFO("line_dist_end_ new value: %f", line_dist_end_);
     }
 
 }

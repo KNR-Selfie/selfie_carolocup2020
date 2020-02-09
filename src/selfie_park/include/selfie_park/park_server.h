@@ -21,6 +21,7 @@
 #include <std_msgs/Float32.h>
 #include <algorithm>
 #include <std_srvs/Empty.h>
+#include <selfie_msgs/RoadMarkings.h>
 
 
 class ParkService
@@ -29,6 +30,7 @@ public:
   ParkService(const ros::NodeHandle &nh, const ros::NodeHandle &pnh);
 
 private:
+  const float PARK_SPOT_WIDTH = 0.3;
 
   ros::Subscriber dist_sub_;
   ros::NodeHandle nh_, pnh_;
@@ -36,6 +38,7 @@ private:
   ros::Publisher ackermann_pub_;
   ros::Publisher right_indicator_pub_;
   ros::Publisher left_indicator_pub_;
+  ros::Subscriber markings_sub_;
   ros::ServiceClient steering_mode_set_parallel_;
   ros::ServiceClient steering_mode_set_front_axis_;
 
@@ -44,6 +47,7 @@ private:
   void reconfigureCB(selfie_park::ParkServerConfig& config, uint32_t level);
 
   void distanceCallback(const std_msgs::Float32 &msg);
+  void markingsCallback(const selfie_msgs::RoadMarkings &msg);
   void goalCB();
   void preemptCB();
 
@@ -82,7 +86,9 @@ private:
   float front_target_;
   float back_target_;
   float park_spot_middle_;
+  std::vector<float> right_line_;
   ros::Time delay_end_;
+  float out_target_;
 
 
 
@@ -106,4 +112,5 @@ private:
   std::string odom_topic_;
   float angle_coeff_;
   float turn_delay_;
+  float line_dist_end_;
 };
