@@ -7,6 +7,10 @@
 #include <ros/ros.h>
 #include <vector>
 
+#include <dynamic_reconfigure/Config.h>
+#include <dynamic_reconfigure/Reconfigure.h>
+#include <dynamic_reconfigure/client.h>
+#include <dynamic_reconfigure/server.h>
 #include <geometry_msgs/Polygon.h>
 #include <geometry_msgs/PolygonStamped.h>
 #include <nav_msgs/Odometry.h>
@@ -15,12 +19,11 @@
 #include <std_msgs/Float64.h>
 #include <std_msgs/Int16.h>
 #include <visualization_msgs/Marker.h>
-#include <dynamic_reconfigure/server.h>
 
 #include <actionlib/server/simple_action_server.h>
 #include <selfie_msgs/searchAction.h>
-#include <selfie_scheduler/scheduler_enums.h>
 #include <selfie_park/DetectParkingSpotConfig.h>
+#include <selfie_scheduler/scheduler_enums.h>
 
 #include <ros/console.h>
 
@@ -70,7 +73,14 @@ private:
 
   dynamic_reconfigure::Server<selfie_park::DetectParkingSpotConfig> dr_server_;
   dynamic_reconfigure::Server<selfie_park::DetectParkingSpotConfig>::CallbackType dr_server_CB_;
-  void reconfigureCB(selfie_park::DetectParkingSpotConfig& config, uint32_t level);
+  void reconfigureCB(selfie_park::DetectParkingSpotConfig &config, uint32_t level);
+
+  // variables used for changing settings of lane_controller
+  dynamic_reconfigure::ReconfigureRequest srv_req_;
+  dynamic_reconfigure::ReconfigureResponse srv_resp_;
+  dynamic_reconfigure::DoubleParameter double_param_;
+  dynamic_reconfigure::Config conf_;
+  void changeSetpoint(float);
 
   // area of interest (used unit- meter)
   float point_min_x;
@@ -78,6 +88,9 @@ private:
 
   float point_min_y;
   float point_max_y;
+
+  float old_setpoint_;
+  float new_setpoint_;
 
   bool init();
   void preemptCB();

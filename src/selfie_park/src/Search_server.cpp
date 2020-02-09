@@ -10,6 +10,7 @@ Search_server::Search_server(const ros::NodeHandle &nh, const ros::NodeHandle &p
     , pnh_(pnh)
     , search_server_(nh_, "search", false)
     , dr_server_CB_(boost::bind(&Search_server::reconfigureCB, this, _1, _2))
+    , old_setpoint_(-0.2)
 {
   search_server_.registerGoalCallback(boost::bind(&Search_server::init, this));
   search_server_.registerPreemptCallback(boost::bind(&Search_server::preemptCB, this));
@@ -26,6 +27,7 @@ Search_server::Search_server(const ros::NodeHandle &nh, const ros::NodeHandle &p
   pnh_.param<float>("max_distance_to_free_place", max_distance_to_free_place_, 0.8);
   pnh_.param<float>("box_angle_deg", tangens_of_box_angle_, 55); // maximum angle between car and found place
   pnh_.param<float>("length_of_parking_area", length_of_parking_area_, 2.5);
+  pnh_.param<float>("new_setpoint", new_setpoint_, -0.3);
   tangens_of_box_angle_ = tan(tangens_of_box_angle_ * M_PI / 180);
 
   speed_publisher = nh_.advertise<std_msgs::Float64>("/max_speed", 5);
@@ -46,6 +48,7 @@ bool Search_server::init()
 
   speed_current.data = default_speed_in_parking_zone;
   speed_publisher.publish(speed_current);
+  changeSetpoint(new_setpoint_);
   min_spot_lenght = search_server_.acceptNewGoal()->min_spot_lenght;
   publishFeedback(START_SEARCHING_PLACE);
   ROS_INFO("Initialized");
@@ -342,22 +345,44 @@ void Search_server::endAction() // shutting donw unnecesary subscribers and publ
 {
   obstacles_sub.shutdown();
   distance_sub_.shutdown();
+  changeSetpoint(old_setpoint_);
   max_distance_calculated_ = false;
 }
-void Search_server::reconfigureCB(selfie_park::DetectParkingSpotConfig& config, uint32_t level){
-    if(default_speed_in_parking_zone != (float)config.default_speed_in_parking_zone)
-    {
-        default_speed_in_parking_zone = config.default_speed_in_parking_zone;
-        ROS_INFO("default_speed in parking_zone new value: %f",default_speed_in_parking_zone);
-    }
-    if(max_distance_to_free_place_ != (float)config.max_distance_to_free_place)
-    {
-        max_distance_to_free_place_ = config.max_distance_to_free_place;
-        ROS_INFO("max_distance_to_free_place_ new value: %f", max_distance_to_free_place_);
-    }
-    if(speed_when_found_place != (float)config.speed_when_found_place)
-    {
-        speed_when_found_place = config.speed_when_found_place;
-        ROS_INFO("speed_when_found_place new value: %f", speed_when_found_place);
-    }
+
+void Search_server::changeSetpoint(float setpoint)
+{
+  conf_.doubles.clear();
+  double_param_.name = "right_lane_setpoint";
+  double_param_.value = setpoint;
+  conf_.doubles.push_back(double_param_);
+
+  srv_req_.config = conf_;
+
+  ros::service::call("/lane_controller/set_parameters", srv_req_, srv_resp_);
+
+  pnh_.setParam("/lane_controller/right_lane_setpoint", setpoint);
+}
+
+void Search_server::reconfigureCB(selfie_park::DetectParkingSpotConfig &config, uint32_t level)
+{
+  if (default_speed_in_parking_zone != (float)config.default_speed_in_parking_zone)
+  {
+    default_speed_in_parking_zone = config.default_speed_in_parking_zone;
+    ROS_INFO("default_speed in parking_zone new value: %f", default_speed_in_parking_zone);
+  }
+  if (max_distance_to_free_place_ != (float)config.max_distance_to_free_place)
+  {
+    max_distance_to_free_place_ = config.max_distance_to_free_place;
+    ROS_INFO("max_distance_to_free_place_ new value: %f", max_distance_to_free_place_);
+  }
+  if (speed_when_found_place != (float)config.speed_when_found_place)
+  {
+    speed_when_found_place = config.speed_when_found_place;
+    ROS_INFO("speed_when_found_place new value: %f", speed_when_found_place);
+  }
+  if (new_setpoint_ != (float)config.new_setpoint)
+  {
+    new_setpoint_ = config.new_setpoint;
+    ROS_INFO("new_setpoint new value: %f", new_setpoint_);
+  }
 }
