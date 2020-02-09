@@ -44,9 +44,11 @@ void IntersectionServer::init()
   speed_publisher_ = nh_.advertise<std_msgs::Float64>("/max_speed", 2);
   intersection_subscriber_ = nh_.subscribe("/intersection_distance", 1, &IntersectionServer::intersection_callback, this);
   distance_subscriber_ = nh_.subscribe("/distance", 1, &IntersectionServer::distance_callback, this);
+  speed_.data = speed_default_;
   speed_publisher_.publish(speed_);
   publishFeedback(APPROACHING_TO_INTERSECTION);
   time_started_ = false;
+  approached_blindly_ = false;
   ROS_INFO("Goal received - node activated");
 
   if (visualization_)
@@ -103,10 +105,23 @@ void IntersectionServer::manager(const selfie_msgs::PolygonArray &boxes)
         send_goal();
       } else
       {
-        speed_.data = 0;
-        speed_publisher_.publish(speed_);
-        publishFeedback(WAITING_ON_INTERSECTION);
-        ROS_INFO_THROTTLE(0.3, "Waiting (%lf s left) on intersection", stop_time_ - difftime_);
+        if (approached_blindly_)
+        {
+          speed_.data = 0;
+          speed_publisher_.publish(speed_);
+          publishFeedback(WAITING_ON_INTERSECTION);
+          ROS_INFO_THROTTLE(0.3, "Waiting (%lf s left) on intersection", stop_time_ - difftime_);
+        } else
+        {
+          if (action_status_.action_status != APPROACHING_TO_INTERSECTION2)
+          {
+            distance_to_stop_blind_approaching_ = current_distance_ + distance_of_blind_approaching_;
+          }
+
+          speed_.data = speed_default_;
+          speed_publisher_.publish(speed_);
+          publishFeedback(APPROACHING_TO_INTERSECTION2);
+        }
       }
     }
   }
@@ -133,6 +148,7 @@ void IntersectionServer::intersection_callback(const std_msgs::Float32 &msg)
 
 void IntersectionServer::distance_callback(const std_msgs::Float32 &msg)
 {
+  current_distance_ = msg.data;
   if (!is_distance_saved_)
   {
     is_distance_saved_ = true;
@@ -144,6 +160,13 @@ void IntersectionServer::distance_callback(const std_msgs::Float32 &msg)
     {
       ROS_INFO("Timeout for intersection (distance exceeded)");
       send_goal();
+    }
+  }
+  if (!approached_blindly_ && action_status_.action_status == APPROACHING_TO_INTERSECTION2)
+  {
+    if (current_distance_ >= distance_to_stop_blind_approaching_)
+    {
+      approached_blindly_ = true;
     }
   }
 }
@@ -210,7 +233,7 @@ void IntersectionServer::preemptCb()
   intersectionServer_.setAborted();
 }
 
-void IntersectionServer::reconfigureCB(selfie_intersection::IntersectionServerConfig& config, uint32_t level)
+void IntersectionServer::reconfigureCB(selfie_intersection::IntersectionServerConfig &config, uint32_t level)
 {
   if (max_distance_to_intersection_ != (float)config.distance_to_intersection)
   {

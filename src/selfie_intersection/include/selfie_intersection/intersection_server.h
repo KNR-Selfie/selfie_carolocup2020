@@ -41,6 +41,10 @@ private:
   float road_width_;
   float max_distance_to_intersection_; // Describrs how far before intersection
                                        // car should stop
+  float distance_of_blind_approaching_;
+  float distance_to_stop_blind_approaching_;
+  float current_distance_;
+  bool approached_blindly_;
   float distance_to_intersection_when_started_;
   bool is_distance_to_intersection_saved_;
   float distance_when_started_;
