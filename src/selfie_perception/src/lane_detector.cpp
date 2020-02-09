@@ -224,7 +224,6 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
           }
         }
       }
-      ROS_INFO("waiting_for_stabilize is %d", waiting_for_stabilize_);
       right_line_.addBottomPoint(waiting_for_stabilize_);
       center_line_.addBottomPoint(waiting_for_stabilize_);
       left_line_.addBottomPoint(waiting_for_stabilize_);
@@ -2337,7 +2336,6 @@ bool LaneDetector::isIntersection()
       }
     }
   }
-  ROS_INFO("right_lenght: %.3f", right_lenght);
   if(right_lenght > 0.5)
     left_intersection = true; 
   
@@ -2346,7 +2344,6 @@ bool LaneDetector::isIntersection()
   {
     index_on_merge = center_line_.getIndexOnMerge();
   }
-  ROS_INFO("center_size: %.3f", center_line_.getPoints()[index_on_merge].x - center_line_.getPoints()[0].x);
 
   if(left_intersection && right_intersection && center_line_.isExist() && 
      (center_line_.getPoints()[index_on_merge].x - center_line_.getPoints()[0].x > 0.2))

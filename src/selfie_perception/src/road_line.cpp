@@ -257,11 +257,8 @@ void RoadLine::reducePointsToStraight(int check_to_index)
       index_max = i;
     }
   }
-  std::cout << "max_dist: " << max << std::endl;
-
-  if (max > 0.05 && index_max > 4)
+  if (max > 0.01 && index_max > 4)
   {
-    std::cout << "index_max: " << index_max << std::endl;
     points_.erase(points_.begin() + index_max, points_.end());
   }
 }
@@ -285,7 +282,6 @@ float RoadLine::getMaxDiffonX()
       dist = dist_now;
     }
   }
-  std::cout << "getMaxDiffonX: " << dist << std::endl;
   return dist;
 }
 
