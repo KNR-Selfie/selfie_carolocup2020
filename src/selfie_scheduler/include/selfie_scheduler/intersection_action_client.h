@@ -10,6 +10,7 @@ protected:
     actionlib::SimpleActionClient<selfie_msgs::intersectionAction> ac_;
     selfie_msgs::intersectionGoal goal_;
     ros::ServiceClient avoidingObstSetPassive_;
+    ros::ServiceClient resetLaneController_;
     bool result_;
 public:
     IntersectionClient(std::string name);
