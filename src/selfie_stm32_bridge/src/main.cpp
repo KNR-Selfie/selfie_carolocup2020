@@ -115,17 +115,17 @@ void ackermanCallback(const ackermann_msgs::AckermannDriveStamped::ConstPtr& msg
             tmp_paralell_offset_back = parallel_offset_back_right;
             tmp_parallel_offset_front = parallel_offset_front_right;
         }
-        sub_messages.ackerman.steering_angle_front = msg->drive.steering_angle + tmp_parallel_offset_front;
-        sub_messages.ackerman.steering_angle_back = msg->drive.steering_angle + tmp_paralell_offset_back;
+        sub_messages.ackerman.steering_angle_front = -msg->drive.steering_angle + tmp_parallel_offset_front;
+        sub_messages.ackerman.steering_angle_back = -msg->drive.steering_angle + tmp_paralell_offset_back;
     }
     else if(steering_mode == ACKERMANN)
     {   
-        sub_messages.ackerman.steering_angle_front = msg->drive.steering_angle + ackermann_offset_front;
-        sub_messages.ackerman.steering_angle_back = -(msg->drive.steering_angle + ackermann_offset_back);
+        sub_messages.ackerman.steering_angle_front = -msg->drive.steering_angle + ackermann_offset_front;
+        sub_messages.ackerman.steering_angle_back = msg->drive.steering_angle + ackermann_offset_back;
     }
     else if(steering_mode == FRONT_AXIS)
     {
-        sub_messages.ackerman.steering_angle_front = msg->drive.steering_angle + front_axis_offset;
+        sub_messages.ackerman.steering_angle_front = -msg->drive.steering_angle + front_axis_offset;
         sub_messages.ackerman.steering_angle_back = back_axis_offset;
     }
         
@@ -208,7 +208,7 @@ void reconfigureCB(selfie_stm32_bridge::StmBridgeConfig& config, uint32_t level)
     }
     if(back_axis_offset != (float)config.back_axis_offset)
     {
-        back_axis_offset = (float)config.front_axis_offset;
+        back_axis_offset = (float)config.back_axis_offset;
         ROS_INFO("back_axis_offset end new value %f", back_axis_offset);
     }
     
