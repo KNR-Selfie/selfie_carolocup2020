@@ -31,7 +31,6 @@ Search_server::Search_server(const ros::NodeHandle &nh, const ros::NodeHandle &p
   tangens_of_box_angle_ = tan(tangens_of_box_angle_ * M_PI / 180);
 
   speed_publisher = nh_.advertise<std_msgs::Float64>("/max_speed", 5);
-  setpoint_publisher_ = nh_.advertise<std_msgs::Float64>("/setpoint", 1);
 
   speed_current.data = default_speed_in_parking_zone;
   if (visualization)
@@ -48,9 +47,8 @@ bool Search_server::init()
   distance_sub_ = nh_.subscribe("/distance", 1, &Search_server::distanceCb, this);
 
   speed_current.data = default_speed_in_parking_zone;
-  setpoint_value_.data = new_setpoint_;
   speed_publisher.publish(speed_current);
-  setpoint_publisher_.publish(setpoint_value_);
+  changeSetpoint(new_setpoint_);
   min_spot_lenght = search_server_.acceptNewGoal()->min_spot_lenght;
   publishFeedback(START_SEARCHING_PLACE);
   ROS_INFO("Initialized");
@@ -121,7 +119,6 @@ void Search_server::manager(const selfie_msgs::PolygonArray &msg)
     ROS_INFO("Err, wrong action_status");
     break;
   }
-  setpoint_publisher_.publish(setpoint_value_);
 }
 
 void Search_server::filter_boxes(const selfie_msgs::PolygonArray &msg)
@@ -348,8 +345,7 @@ void Search_server::endAction() // shutting donw unnecesary subscribers and publ
 {
   obstacles_sub.shutdown();
   distance_sub_.shutdown();
-  setpoint_value_.data = old_setpoint_;
-  setpoint_publisher_.publish(setpoint_value_);
+  changeSetpoint(old_setpoint_);
   max_distance_calculated_ = false;
 }
 

@@ -44,7 +44,6 @@ private:
   ros::Subscriber distance_sub_;
   ros::Publisher visualize_free_place;
   ros::Publisher speed_publisher;
-  ros::Publisher setpoint_publisher_;
 
   actionlib::SimpleActionServer<selfie_msgs::searchAction> search_server_;
 
@@ -92,7 +91,6 @@ private:
 
   float old_setpoint_;
   float new_setpoint_;
-  std_msgs::Float64 setpoint_value_;
 
   bool init();
   void preemptCB();
