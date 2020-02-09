@@ -7,7 +7,8 @@
 StartingProcedureAction::StartingProcedureAction(const ros::NodeHandle &nh, const ros::NodeHandle &pnh) :
   nh_(nh), pnh_(pnh), as_(nh_, "starting_procedure",  false),
   min_second_press_time_(ros::Time(0)), debounce_duration_(ros::Duration(2)),
-  distance_goal_(0.f), distance_read_(0.f)
+  distance_goal_(0.f), distance_read_(0.f), gate_open_qr_(false),
+  gate_open_scan_(false)
 {
   as_.registerPreemptCallback(boost::bind(&StartingProcedureAction::preemptCB, this));
   as_.registerGoalCallback(boost::bind(&StartingProcedureAction::executeCB, this));
@@ -34,11 +35,11 @@ void StartingProcedureAction::executeCB()
   ROS_INFO("received goal %f", goal.distance);
   if (use_qr_)
   {
-    qr_sub_ = nh_.subscribe("qr_gate_open", 1, &StartingProcedureAction::gateOpenCB, this);
+    qr_sub_ = nh_.subscribe("qr_gate_open", 1, &StartingProcedureAction::qrGateOpenCB, this);
   }
   if (use_scan_)
   {
-    gate_scan_sub_ = nh_.subscribe("scan_gate_open", 1, &StartingProcedureAction::gateOpenCB, this);
+    gate_scan_sub_ = nh_.subscribe("scan_gate_open", 1, &StartingProcedureAction::scanGateOpenCB, this);
   }
   distance_sub_ = nh_.subscribe("distance", 10, &StartingProcedureAction::distanceCB, this);
   parking_button_sub_ = nh_.subscribe("start_button1", 10, &StartingProcedureAction::parkingButtonCB, this);
@@ -78,6 +79,7 @@ void StartingProcedureAction::parkingButtonCB(const std_msgs::Empty &msg)
         std_srvs::Empty call = std_srvs::Empty();
         qr_stop_search_.call(call);
       }
+      // TODO scan stop search
       publishFeedback(BUTTON_PARKING_DRIVE_PRESSED);
       distance_goal_ = distance_read_ + distance_goal_;
       starting_distance_ = distance_read_;
@@ -129,9 +131,44 @@ void StartingProcedureAction::obstacleButtonCB(const std_msgs::Empty &msg)
   }
 }
 
-void StartingProcedureAction::gateOpenCB(const std_msgs::Empty &msg)
+void StartingProcedureAction::qrGateOpenCB(const std_msgs::Empty &msg)
 {
   if (state_ == State::WAIT_START)
+  {
+    // nie uzywamy skanu
+    if(!use_scan_)
+    {
+      state_ = State::START_MOVE;
+      publishFeedback(button_status_);
+      distance_goal_ = distance_read_ + distance_goal_;
+      ROS_INFO("gate was opened");
+      starting_distance_ = distance_read_;
+      publishFeedback(START_DRIVE);
+    }
+    else // uzywamy skanu
+    {
+      // jezeli skan jeszcze nie dal znaku ze dziala
+      // to oznaczamy ze qr pokazal ze jest git
+      if (!gate_open_scan_) {
+        gate_open_qr_ = true;
+      }
+      else // qr tez pokazal ze gate otwarty
+      {
+      state_ = State::START_MOVE;
+      publishFeedback(button_status_);
+      distance_goal_ = distance_read_ + distance_goal_;
+      ROS_INFO("gate was opened");
+      starting_distance_ = distance_read_;
+      publishFeedback(START_DRIVE);
+      }
+    }
+  }
+}
+
+void StartingProcedureAction::scanGateOpenCB(const std_msgs::Empty &msg)
+{
+  // nie uzywamy qr
+  if(!use_qr_)
   {
     state_ = State::START_MOVE;
     publishFeedback(button_status_);
@@ -139,6 +176,23 @@ void StartingProcedureAction::gateOpenCB(const std_msgs::Empty &msg)
     ROS_INFO("gate was opened");
     starting_distance_ = distance_read_;
     publishFeedback(START_DRIVE);
+  }
+  else // uzywamy qr
+  {
+    // jezeli skan jeszcze nie dal znaku ze dziala
+    // to oznaczamy ze qr pokazal ze jest gitówka
+    if (!gate_open_qr_) {
+      gate_open_scan_ = true;
+    }
+    else // skan tez pokazal ze gate otwarty
+    {
+    state_ = State::START_MOVE;
+    publishFeedback(button_status_);
+    distance_goal_ = distance_read_ + distance_goal_;
+    ROS_INFO("gate was opened");
+    starting_distance_ = distance_read_;
+    publishFeedback(START_DRIVE);
+    }
   }
 }
 

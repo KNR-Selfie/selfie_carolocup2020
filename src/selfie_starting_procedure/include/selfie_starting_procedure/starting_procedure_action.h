@@ -25,6 +25,8 @@ protected:
   float starting_speed_;
   bool use_scan_;
   bool use_qr_;
+  bool gate_open_qr_;
+  bool gate_open_scan_;
 
   //create messages that are used to published feedback/result
   selfie_msgs::startingGoal goal_;
@@ -69,8 +71,8 @@ private:
   void parkingButtonCB(const std_msgs::Empty &msg);
   void obstacleButtonCB(const std_msgs::Empty &msg);
   void distanceCB(const std_msgs::Float32ConstPtr &msg);
-  void gateOpenCB(const std_msgs::Empty &msg);
-
+  void qrGateOpenCB(const std_msgs::Empty &msg);
+  void scanGateOpenCB(const std_msgs::Empty &msg);
 
 public:
 
