@@ -117,6 +117,7 @@ void IntersectionServer::manager(const selfie_msgs::PolygonArray &boxes)
           if (action_status_.action_status != APPROACHING_TO_INTERSECTION2)
           {
             distance_to_stop_blind_approaching_ = current_distance_ + distance_of_blind_approaching_;
+            ROS_INFO("Approaching blindly");
           }
 
           speed_.data = speed_default_;
