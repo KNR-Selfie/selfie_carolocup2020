@@ -19,6 +19,9 @@ public:
   void generateForDensity();
   void reduceTopPoints(float ratio);
   cv::Point2f getPointNextToBottom(float min_dist_to_bottom);
+  void reducePointsToStraight(int check_to_index);
+  float getMaxDiffonX();
+  int getIndexOnMerge();
   void reset();
 
   void pfSetup(int num_particles, int num_control_points, float std_min, float std_max);
@@ -109,6 +112,7 @@ private:
   float points_density_   {15};
 
   float getDistance(cv::Point2f p1, cv::Point2f p2);
+  float getA(cv::Point2f p1, cv::Point2f p2);
 };
 
 #endif  //  SELFIE_PERCEPTION_ROAD_LINE_H

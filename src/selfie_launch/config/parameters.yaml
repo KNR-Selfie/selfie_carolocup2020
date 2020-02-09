@@ -1,15 +1,15 @@
 detect_markings: 
   {
-    threshold_c: -45,
+    threshold_c: -35,
     real_window_size: 0.1,
 
     pf_num_points: 3,
     pf_num_samples: 40,
     pf_num_samples_vis: 4,
     pf_std_min: 0.01,
-    pf_std_max: 0.02,
+    pf_std_max: 0.03,
     obstacle_window_size: 0.09,
-    obstacles_threshold: 205,
+    obstacles_threshold: 255,
 
     max_mid_line_distance: 0.15,
     max_mid_line_gap: 0.38
@@ -27,23 +27,23 @@ detect_parking_spot:
   }
 extract_road_features: 
   {
-    lookahead: 0.5,
+    lookahead: 0.6,
     min_speed: 2.0,
-    max_acceleration: 1.0,
-    max_deceleration: 1.5,
+    max_acceleration: 100.0,
+    max_deceleration: 100.0,
     max_curvature: 1.8,
-    average_window_size: 10
+    average_window_size: 200
   }
 free_drive: 
   {
-    max_speed: 3.0,
+    max_speed: 1.5,
     starting_line_distance_to_end: 0.6,
     intersection_distance_to_end: 1.2,
-    distance_to_verify_event_: 2.0
+    distance_to_verify_event_: 1.0
   }
 lane_controller:
   {
-    right_lane_setpoint: -0.22,
+    right_lane_setpoint: -0.20,
     left_lane_setpoint: 0.18,
 
     ackermann_mode: false,
@@ -90,19 +90,19 @@ park_server:
   }
 intersection_server: 
   {
-    distance_to_intersection: 0.7,
+    distance_to_intersection: 0.6,
     road_width: 0.95,
-    point_min_y: -1.5,
-    point_max_y: 1.5,
+    point_min_y: -1.0,
+    point_max_y: 1.0,
     stop_time: 3,
-    speed_default: 0.3,
+    speed_default: 1.0,
     num_corners_to_detect: 3,
   }
 pid_controller: 
   {
     Kd: 0.01,
     Ki: 0.0,
-    Kp: 0.9,
+    Kp: 1.5,
     lower_limit: -0.785,
     upper_limit: 0.785,
     windup_limit: 10
@@ -113,7 +113,7 @@ scheduler:
     parking_spot: 0.6,
     parking_steering_mode: 1, # 0 - ackermann 1 - paralell
     drive_steering_mode: 2, # 0 - ackermann  1 - paralell 2 - front axis only 
-    starting_distance: 1.0
+    starting_distance: 0.1
   }
 detect_obstacles: 
   {
@@ -128,7 +128,7 @@ detect_obstacles:
   }
 starting_procedure: 
   {
-    starting_speed: 2.0,
+    starting_speed: 1.0,
     use_scan: false,
     use_qr: true
   }

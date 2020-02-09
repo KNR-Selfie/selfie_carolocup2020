@@ -211,3 +211,89 @@ cv::Point2f RoadLine::getPointNextToBottom(float min_dist_to_bottom)
   }
   return points_[pointsSize() - 1];
 }
+
+void RoadLine::reducePointsToStraight(int check_to_index)
+{
+  if(pointsSize() == 0)
+    return;
+
+  points_.erase(points_.begin() + check_to_index, points_.end());
+
+  // generate for density
+  for (int i = 0; i < pointsSize(); ++i)
+  {
+    float distance = getDistance(points_[i], points_[i + 1]);
+    if (distance > 1 / 20)
+    {
+      int add = distance * 20;
+      cv::Point2f p;
+      float x1 = points_[i].x;
+      float y1 = points_[i].y;
+      float x_dif = (points_[i + 1].x - points_[i].x) / (add + 1);
+      float y_dif = (points_[i + 1].y - points_[i].y) / (add + 1);
+      for (int j = 0; j < add; ++j)
+      {
+        p.x = x1 + x_dif * (j + 1);
+        p.y = y1 + y_dif * (j + 1);
+        points_.insert(points_.begin() + i + 1, p);
+        ++i;
+      }
+    }
+  }
+
+  float max = 0;
+  int index_max = -1;
+
+  float A = getA(points_[0], points_[pointsSize() - 1]);
+  float C = points_[0].y - (A * points_[0].x);
+  float sqrtf_m = sqrtf(A * A + 1);
+
+  for(int i = 2; i < pointsSize(); ++i)
+  {
+    float distance = std::abs(A * points_[i].x - points_[i].y + C) / sqrtf_m;
+    if(distance > max)
+    {
+      max = distance;
+      index_max = i;
+    }
+  }
+  if (max > 0.01 && index_max > 4)
+  {
+    points_.erase(points_.begin() + index_max, points_.end());
+  }
+}
+
+float RoadLine::getA(cv::Point2f p1, cv::Point2f p2)
+{
+  return (p2.y - p1.y) / (p2.x - p1.x);
+}
+
+float RoadLine::getMaxDiffonX()
+{
+  if(pointsSize() == 0)
+    return 0;
+
+  float dist = 0;
+  for(int i = 1; i < pointsSize(); ++i)
+  {
+    float dist_now = points_[i].x - points_[i - 1].x;
+    if (dist_now > dist)
+    {
+      dist = dist_now;
+    }
+  }
+  return dist;
+}
+
+int RoadLine::getIndexOnMerge()
+{
+  for(int i = 1; i < pointsSize(); ++i)
+  {
+    float dist_now = points_[i].x - points_[i - 1].x;
+    if (dist_now > 0.3)
+    {
+      return i - 1;
+    }
+  }
+  return pointsSize();
+}

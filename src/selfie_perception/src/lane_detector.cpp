@@ -211,13 +211,17 @@ void LaneDetector::imageCallback(const sensor_msgs::ImageConstPtr &msg)
          || left_line_.isExist() && left_line_.getPoints()[0].x < half_of_image && left_line_.getPoints()[left_line_.pointsSize()].x > half_of_image
          || center_line_.isExist() && center_line_.getPoints()[0].x < half_of_image && center_line_.getPoints()[center_line_.pointsSize()].x > half_of_image)
         {
+          if (right_line_.getMaxDiffonX() < 0.3 && left_line_.getMaxDiffonX() < 0.3 && center_line_.getMaxDiffonX() < 0.3)
+          {
             waiting_for_stabilize_ = false;
+            ROS_INFO("waiting_for_stabilize is false");
             center_line_.setDegree(2);
             right_line_.setDegree(2);
             left_line_.setDegree(2);
             center_line_.pfReset();
             right_line_.pfReset();
             left_line_.pfReset();
+          }
         }
       }
       right_line_.addBottomPoint(waiting_for_stabilize_);
@@ -855,7 +859,7 @@ void LaneDetector::ROILaneRight(cv::Mat &input_frame, cv::Mat &output_frame)
   right_lane_frame_ = input_frame.clone();
   cv::bitwise_and(input_frame, right_lane_ROI_, right_lane_frame_);
 
-  cv::Mat top_roi = right_lane_ROI_(cv::Rect(0, 0, TOPVIEW_COLS, TOPVIEW_ROWS / 4));
+  cv::Mat top_roi = right_lane_ROI_(cv::Rect(0, 0, TOPVIEW_COLS, TOPVIEW_ROWS / 5));
   top_roi.setTo(cv::Scalar(0, 0, 0));
 
   cv::bitwise_not(right_lane_ROI_, right_lane_ROI_);
@@ -905,7 +909,7 @@ void LaneDetector::ROILaneLeft(cv::Mat &input_frame, cv::Mat &output_frame)
   left_lane_frame_ = input_frame.clone();
   cv::bitwise_and(input_frame, left_lane_ROI_, left_lane_frame_);
 
-  cv::Mat top_roi = left_lane_ROI_(cv::Rect(0, 0, TOPVIEW_COLS, TOPVIEW_ROWS / 4));
+  cv::Mat top_roi = left_lane_ROI_(cv::Rect(0, 0, TOPVIEW_COLS, TOPVIEW_ROWS / 5));
   top_roi.setTo(cv::Scalar(0, 0, 0));
 
   cv::bitwise_not(left_lane_ROI_, left_lane_ROI_);
@@ -1686,6 +1690,8 @@ void LaneDetector::adjust(RoadLine &good_road_line,
 void LaneDetector::calcRoadWidth()
 {
   debug_points_.clear();
+  if (center_line_.getCoeff()[center_line_.getCoeff().size() - 1] == 0)
+    return;
   cv::Point2f p;
   cv::Point2f p_ahead;
   p_ahead.x = 0.7;
@@ -2194,7 +2200,11 @@ bool LaneDetector::isIntersection()
   if (lines_out_h_world_.empty())
   {
     if (intersection_)
+    {
       waiting_for_stabilize_ = true;
+      ROS_INFO("waiting_for_stabilize is true");
+    }
+      
     intersection_ = false;
     //center_line_.setDegree(2);
     //right_line_.setDegree(2);
@@ -2204,6 +2214,7 @@ bool LaneDetector::isIntersection()
 
   bool left_intersection = false;
   bool right_intersection = false;
+  float right_lenght = 0;
   int min_right_index = -1;
   int min_left_index = -1;
 
@@ -2259,6 +2270,9 @@ bool LaneDetector::isIntersection()
           isec_debug_points_.push_back(lines_out_h_world_[i]);
           isec_debug_points_.push_back(lines_out_h_world_[i + 1]);
         }
+        float d = getDistance(lines_out_h_world_[i], lines_out_h_world_[i + 1]);
+        if(d > right_lenght)
+          right_lenght = d;
         right_intersection = true;
         break;
       }
@@ -2322,8 +2336,17 @@ bool LaneDetector::isIntersection()
       }
     }
   }
+  if(right_lenght > 0.5)
+    left_intersection = true; 
+  
+  int index_on_merge = 0;
+  if (center_line_.isExist())
+  {
+    index_on_merge = center_line_.getIndexOnMerge();
+  }
 
-  if(left_intersection && right_intersection && center_line_.isExist())
+  if(left_intersection && right_intersection && center_line_.isExist() && 
+     (center_line_.getPoints()[index_on_merge].x - center_line_.getPoints()[0].x > 0.2))
   {
     if (center_line_.getPoints()[0].x > ((TOPVIEW_MIN_X + TOPVIEW_MAX_X) / 2))
     {
@@ -2342,6 +2365,7 @@ bool LaneDetector::isIntersection()
     center_line_.setDegree(1);
     right_line_.setDegree(1);
     left_line_.setDegree(1);
+    center_line_.reducePointsToStraight(index_on_merge);
     center_line_.aprox();
     if (right_line_.isExist())
     {
@@ -2379,7 +2403,10 @@ bool LaneDetector::isIntersection()
   else
   {
     if (intersection_)
+    {
       waiting_for_stabilize_ = true;
+      ROS_INFO("waiting_for_stabilize is true");
+    }
     intersection_ = false;
     //center_line_.setDegree(2);
     //right_line_.setDegree(2);
