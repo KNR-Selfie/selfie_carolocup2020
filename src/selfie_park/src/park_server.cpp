@@ -118,6 +118,7 @@ void ParkService::goalCB()
   parking_state_ = go_to_parking_spot;
   std_srvs::Empty empty = std_srvs::Empty();
   steering_mode_set_front_axis_.call(empty);
+  boxes_sub_ = nh_.subscribe("/obstacles",1, &ParkService::boxesCallback, this);
 }
 
 void ParkService::preemptCB()
@@ -127,6 +128,7 @@ void ParkService::preemptCB()
   blinkRight(false);
   parking_state_ = not_parking;
   move_state_ = first_phase;
+  boxes_sub_.shutdown();
   as_.setAborted();
 }
 
@@ -274,6 +276,7 @@ bool ParkService::leave()
         else
         {
             move_state_ = first_phase;
+            boxes_sub_.shutdown();
             return true;
         }
         
@@ -306,6 +309,12 @@ void ParkService::blinkRight(bool on)
   msg.data = on;
   right_indicator_pub_.publish(msg);
   return;
+}
+
+
+void ParkService::boxesCallback(const selfie_msgs::PolygonArray &msg)
+{
+
 }
 
 void ParkService::reconfigureCB(selfie_park::ParkServerConfig& config, uint32_t level)

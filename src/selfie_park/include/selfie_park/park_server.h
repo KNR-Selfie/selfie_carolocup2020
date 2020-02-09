@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <std_srvs/Empty.h>
 #include <selfie_msgs/RoadMarkings.h>
+#include <selfie_msgs/PolygonArray.h>
 
 
 class ParkService
@@ -39,6 +40,7 @@ private:
   ros::Publisher right_indicator_pub_;
   ros::Publisher left_indicator_pub_;
   ros::Subscriber markings_sub_;
+  ros::Subscriber boxes_sub_;
   ros::ServiceClient steering_mode_set_parallel_;
   ros::ServiceClient steering_mode_set_front_axis_;
 
@@ -48,6 +50,7 @@ private:
 
   void distanceCallback(const std_msgs::Float32 &msg);
   void markingsCallback(const selfie_msgs::RoadMarkings &msg);
+  void boxesCallback(const selfie_msgs::PolygonArray &msg);
   void goalCB();
   void preemptCB();
 
