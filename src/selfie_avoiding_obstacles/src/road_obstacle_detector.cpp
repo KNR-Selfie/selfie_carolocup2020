@@ -477,6 +477,7 @@ bool Road_obstacle_detector::switchToPassive(std_srvs::Empty::Request &request, 
   speed_pub_.publish(speed_message_);
   status_ = PASSIVE;
   timer_.start();
+  restorePidSettings();
   ROS_INFO("Lane control passive mode");
   return true;
 }
