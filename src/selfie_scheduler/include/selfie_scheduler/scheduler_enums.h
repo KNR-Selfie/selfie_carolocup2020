@@ -36,6 +36,7 @@ typedef enum program_state
 
     //intersection
     APPROACHING_TO_INTERSECTION, //Approaching to intersection
+    APPROACHING_TO_INTERSECTION2, //Approaching to intersection when we can't see line //TODO change it later
     STOPPED_ON_INTERSECTION,  //car stopped before intersection, because there is another car on priority road
     WAITING_ON_INTERSECTION, //car stops on intersection even if there aren't any obstacles and waits certain amount of time
     ROAD_CLEAR  //none obstacles on priority road, action ends now
