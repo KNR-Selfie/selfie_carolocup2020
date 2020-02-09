@@ -369,4 +369,9 @@ void Search_server::reconfigureCB(selfie_park::DetectParkingSpotConfig &config, 
     speed_when_found_place = config.speed_when_found_place;
     ROS_INFO("speed_when_found_place new value: %f", speed_when_found_place);
   }
+  if (new_setpoint_ != (float)config.new_setpoint)
+  {
+    new_setpoint_ = config.new_setpoint;
+    ROS_INFO("new_setpoint new value: %f", new_setpoint_);
+  }
 }
