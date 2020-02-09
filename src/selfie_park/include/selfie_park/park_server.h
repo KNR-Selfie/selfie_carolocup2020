@@ -88,6 +88,7 @@ private:
   float park_spot_middle_;
   std::vector<float> right_line_;
   ros::Time delay_end_;
+  float out_target_;
 
 
 
@@ -111,4 +112,5 @@ private:
   std::string odom_topic_;
   float angle_coeff_;
   float turn_delay_;
+  float line_dist_end_;
 };

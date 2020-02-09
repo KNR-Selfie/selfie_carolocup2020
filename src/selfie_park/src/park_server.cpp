@@ -22,10 +22,12 @@ dr_server_CB_(boost::bind(&ParkService::reconfigureCB, this, _1, _2))
   pnh_.param<float>("angle_coeff", angle_coeff_, 1./2.);
   pnh_.param<float>("back_to_mid", back_to_mid_, 0.18);
   pnh_.param<float>("turn_delay",turn_delay_, 0.1);
+  pnh_.param<float>("line_dist_end", line_dist_end_, 0.15);
 
   park_spot_middle_ = 0.;
   front_target_ = 0.;
   back_target_ = 0.;
+  out_target_ = 0.;
   delay_end_ = ros::Time::now();
   dr_server_.setCallback(dr_server_CB_);
   move_state_ = first_phase;
@@ -132,18 +134,17 @@ void ParkService::preemptCB()
 void ParkService::initParkingSpot(const geometry_msgs::Polygon &msg)
 {
     park_spot_middle_ = (msg.points[0].x + msg.points[3].x)/2.;
-    float mid_on_lane(0.);
+    float mid_on_line(0.);
     float powered_x = 1.;
     for(float &coef:right_line_)
     {
-        mid_on_lane += coef * powered_x;
+        mid_on_line += coef * powered_x;
         powered_x *= park_spot_middle_;
     }
-    park_spot_dist_ini_ = std::abs(mid_on_lane - PARK_SPOT_WIDTH/2.);
+    park_spot_dist_ = std::abs(mid_on_line) - PARK_SPOT_WIDTH/2.;
     std::cout<<"PARK SPOT DIST: "<<park_spot_dist_ini_<<std::endl;
 
-    park_spot_dist_ = park_spot_dist_ini_;
-
+    out_target_ = std::abs(mid_on_line) + line_dist_end_;
     back_target_ = actual_dist_ + park_spot_middle_ - iter_distance_/2. - back_to_mid_;
     front_target_ = back_target_ + iter_distance_;
 }
@@ -229,7 +230,7 @@ bool ParkService::leave()
     static ros::Time delay_end;
 
     park_spot_dist_ += angle_coeff_*std::sin(max_turn_)*std::abs(actual_dist_ - prev_dist_);
-    bool in_pos = park_spot_dist_ < park_spot_dist_ini_;
+    bool in_pos = park_spot_dist_ < out_target_;
     if(move_state_ == first_phase)
     {
         if(in_pos)
@@ -279,7 +280,6 @@ bool ParkService::leave()
     }
     prev_dist_ = actual_dist_;
     return false;
-
 }
 
 void ParkService::markingsCallback(const selfie_msgs::RoadMarkings &msg)
@@ -288,7 +288,6 @@ void ParkService::markingsCallback(const selfie_msgs::RoadMarkings &msg)
     {
     
         right_line_ = msg.right_line;
-        std::cout<<right_line_[0]<<std::endl;
     }
 }
 
@@ -346,6 +345,11 @@ void ParkService::reconfigureCB(selfie_park::ParkServerConfig& config, uint32_t 
     {
         back_to_mid_= config.back_to_mid;
         ROS_INFO("back_to_mid_ new value: %f", back_to_mid_);
+    }
+    if(line_dist_end_!= (float)config.line_dist_end)
+    {
+        line_dist_end_ = config.line_dist_end;
+        ROS_INFO("line_dist_end_ new value: %f", line_dist_end_);
     }
 
 }

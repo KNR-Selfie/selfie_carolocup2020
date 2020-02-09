@@ -86,7 +86,8 @@ park_server:
     parking_speed: 0.4,
     iter_distance: 0.2,
     angle_coeff: 0.5,
-    turn_delay: 0.1
+    turn_delay: 0.1,
+    line_dist_end: 0.13
   }
 intersection_server: 
   {
