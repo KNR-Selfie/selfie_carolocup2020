@@ -97,7 +97,6 @@ private:
   float safety_margin_; // safety margin considering inaccurations in measuring distance etc..
   float current_distance_;
   float current_offset_;
-  float pos_tolerance_;
   float return_distance_; // after passing this distance car returns on right lane
 
   float lane_change_distance_;                // returning from left lane should be gradual, and it should take about

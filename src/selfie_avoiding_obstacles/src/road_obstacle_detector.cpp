@@ -15,7 +15,6 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
     , current_distance_(0)
     , current_offset_(0)
     , return_distance_calculated_(false)
-    , pos_tolerance_(0.01)
     , dr_server_CB_(boost::bind(&Road_obstacle_detector::reconfigureCB, this, _1, _2))
     , old_pid_saved_(false)
     , df_pid_client_("cont", boost::bind(&Road_obstacle_detector::pidDynamicReconfigureCb, this, _1))
@@ -38,7 +37,6 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
   pnh_.param<float>("slowdown_speed", slowdown_speed_, 0.1);
   pnh_.param<float>("lane_change_speed", lane_change_speed_, 0.1);
   pnh_.param<float>("safety_margin", safety_margin_, 1.15);
-  pnh_.param<float>("pos_tolerance", pos_tolerance_, 0.01);
   pnh_.param<int>("num_proof_to_slowdown", num_proof_to_slowdown_, 2);
   pnh_.param<int>("num_corners_to_detect", num_corners_to_detect_, 3);
   pnh_.param<float>("lane_change_distance", lane_change_distance_, 0.9);
@@ -546,11 +544,6 @@ void Road_obstacle_detector::reconfigureCB(selfie_avoiding_obstacles::LaneContro
   {
     num_corners_to_detect_ = config.num_corners_to_detect;
     ROS_INFO("num_corners_to_detect new value: %d", num_corners_to_detect_);
-  }
-  if (pos_tolerance_ != (float)config.pos_tolerance)
-  {
-    pos_tolerance_ = config.pos_tolerance;
-    ROS_INFO("pos_tolerance new value: %f", pos_tolerance_);
   }
   if (right_lane_ != (float)config.right_lane_setpoint)
   {
