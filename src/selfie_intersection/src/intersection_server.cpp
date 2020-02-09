@@ -24,6 +24,7 @@ IntersectionServer::IntersectionServer(const ros::NodeHandle &nh, const ros::Nod
   pnh_.param<float>("point_max_y", point_max_y_, 2);
   pnh_.param<float>("stop_time", stop_time_, 3);
   pnh_.param<float>("speed_default", speed_default_, 0.3);
+  pnh_.param<float>("distance_of_blind_approaching", distance_of_blind_approaching_, 0.3);
   pnh_.param<int>("num_corners_to_detect", num_corners_to_detect_, 3);
   pnh_.param<bool>("visualization", visualization_, true);
   point_min_x_ = max_distance_to_intersection_;
@@ -264,5 +265,10 @@ void IntersectionServer::reconfigureCB(selfie_intersection::IntersectionServerCo
   {
     stop_time_ = (float)config.stop_time;
     ROS_INFO("New stop_time value %f", stop_time_);
+  }
+  if (distance_of_blind_approaching_ != (float)config.distance_of_blind_approaching)
+  {
+    distance_of_blind_approaching_ = (float)config.distance_of_blind_approaching;
+    ROS_INFO("New distance_of_blind_approaching value %f", distance_of_blind_approaching_);
   }
 }
