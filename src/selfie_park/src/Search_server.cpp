@@ -352,6 +352,21 @@ void Search_server::endAction() // shutting donw unnecesary subscribers and publ
   setpoint_publisher_.publish(setpoint_value_);
   max_distance_calculated_ = false;
 }
+
+void Search_server::changeSetpoint(float setpoint)
+{
+  conf_.doubles.clear();
+  double_param_.name = "right_lane_setpoint";
+  double_param_.value = setpoint;
+  conf_.doubles.push_back(double_param_);
+
+  srv_req_.config = conf_;
+
+  ros::service::call("/lane_controller/set_parameters", srv_req_, srv_resp_);
+
+  pnh_.setParam("/lane_controller/right_lane_setpoint", setpoint);
+}
+
 void Search_server::reconfigureCB(selfie_park::DetectParkingSpotConfig &config, uint32_t level)
 {
   if (default_speed_in_parking_zone != (float)config.default_speed_in_parking_zone)
