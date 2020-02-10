@@ -7,7 +7,7 @@
 StartingProcedureAction::StartingProcedureAction(const ros::NodeHandle &nh, const ros::NodeHandle &pnh) :
   nh_(nh), pnh_(pnh), as_(nh_, "starting_procedure",  false),
   min_second_press_time_(ros::Time(0)), debounce_duration_(ros::Duration(2)),
-  distance_goal_(0.f), distance_read_(0.f), initial_yaw_(0.f),
+  distance_goal_(0.f), distance_read_(0.f), initial_yaw_(0.f),current_yaw(0.f),
   dr_server_CB_(boost::bind(&StartingProcedureAction::reconfigureCB, this, _1, _2))
 {
   as_.registerPreemptCallback(boost::bind(&StartingProcedureAction::preemptCB, this));
