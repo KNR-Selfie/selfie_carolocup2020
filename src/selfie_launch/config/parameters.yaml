@@ -19,7 +19,7 @@ detect_parking_spot:
     default_speed_in_parking_zone: 1.5,
     max_distance_to_free_place: 0.4,
     speed_when_found_place: 0.8,
-    new_setpoint: -0.32,
+    new_setpoint: -0.3,
 
     point_max_x: 2,
     point_max_y: 0.2,
@@ -44,7 +44,7 @@ free_drive:
   }
 lane_controller:
   {
-    right_lane_setpoint: -0.28,
+    right_lane_setpoint: -0.26,
     left_lane_setpoint: 0.18,
 
     ackermann_mode: true,
@@ -117,7 +117,7 @@ scheduler:
     parking_spot: 0.63,
     parking_steering_mode: 1, # 0 - ackermann 1 - paralell
     drive_steering_mode: 2, # 0 - ackermann  1 - paralell 2 - front axis only 
-    starting_distance: 2.0
+    starting_distance: 1.0
   }
 detect_obstacles: 
   {
