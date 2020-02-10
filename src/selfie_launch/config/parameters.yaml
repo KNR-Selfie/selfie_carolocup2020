@@ -135,7 +135,7 @@ starting_procedure:
     starting_speed: 2.0,
     use_scan: false,
     use_qr: true,
-    Kp: 0.20
+    Kp: 1.00
   }
 qr_decoder: 
   {
