@@ -17,6 +17,10 @@ find_package(catkin REQUIRED COMPONENTS
   cv_bridge
   std_srvs
   roslint
+  nav_msgs
+  tf
+  dynamic_reconfigure
+  rospy
 )
 
 ## System dependencies are found with CMake's conventions
@@ -94,10 +98,9 @@ find_package(OpenCV 3.3.1 REQUIRED)
 ##     and list every .cfg file to be processed
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
-# generate_dynamic_reconfigure_options(
-#   cfg/DynReconf1.cfg
-#   cfg/DynReconf2.cfg
-# )
+ generate_dynamic_reconfigure_options(
+    cfg/starting_procedure.cfg
+ )
 
 ###################################
 ## catkin specific configuration ##
@@ -208,7 +211,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 
 add_executable(starting_procedure src/starting_procedure_action.cpp src/starting_procedure.cpp)
 target_link_libraries(starting_procedure ${catkin_LIBRARIES})
-add_dependencies(starting_procedure ${catkin_EXPORTED_TARGETS})
+add_dependencies(starting_procedure ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencfg)
 
 add_executable(qr_decoder  src/qr_decoder.cpp src/decoder.cpp)
 target_link_libraries(qr_decoder ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${ZBAR_LIBRARIES}zbar)

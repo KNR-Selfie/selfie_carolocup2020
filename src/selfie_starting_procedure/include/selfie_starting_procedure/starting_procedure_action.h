@@ -9,9 +9,12 @@
 #include <std_msgs/Float32.h>
 #include <std_msgs/Empty.h>
 #include <std_srvs/Empty.h>
-
+#include <nav_msgs/Odometry.h>
 #include <selfie_scheduler/scheduler_enums.h>
 #include <ackermann_msgs/AckermannDriveStamped.h>
+#include <tf/tf.h>
+#include <selfie_starting_procedure/StartingConfig.h>
+#include <dynamic_reconfigure/server.h>
 
 class StartingProcedureAction
 {
@@ -25,6 +28,7 @@ protected:
   float starting_speed_;
   bool use_scan_;
   bool use_qr_;
+  float Kp_;
 
   //create messages that are used to published feedback/result
   selfie_msgs::startingGoal goal_;
@@ -37,6 +41,7 @@ protected:
   ros::Subscriber distance_sub_;
   ros::Subscriber qr_sub_;
   ros::Subscriber gate_scan_sub_;
+  ros::Subscriber odom_sub_;
   ros::ServiceClient qr_start_search_;
   ros::ServiceClient qr_stop_search_;
   ros::ServiceClient scan_client_;
@@ -57,6 +62,8 @@ private:
   float distance_goal_;
   float starting_distance_;
   float distance_read_ {0.0};
+  float initial_yaw_;
+  float current_yaw_;
 
   ros::Time min_second_press_time_;
   ros::Duration debounce_duration_;
@@ -70,6 +77,11 @@ private:
   void obstacleButtonCB(const std_msgs::Empty &msg);
   void distanceCB(const std_msgs::Float32ConstPtr &msg);
   void gateOpenCB(const std_msgs::Empty &msg);
+  void odomCallback(const nav_msgs::Odometry &msg);
+  float angleDiff(float,float);
+  dynamic_reconfigure::Server<selfie_starting_procedure::StartingConfig> dr_server_;
+  dynamic_reconfigure::Server<selfie_starting_procedure::StartingConfig>::CallbackType dr_server_CB_;
+  void reconfigureCB(selfie_starting_procedure::StartingConfig & config, uint32_t level);
 
 
 public:
