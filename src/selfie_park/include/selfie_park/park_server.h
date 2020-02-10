@@ -113,4 +113,5 @@ private:
   float angle_coeff_;
   float turn_delay_;
   float line_dist_end_;
+  float start_parking_speed_;
 };

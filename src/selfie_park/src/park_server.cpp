@@ -15,14 +15,15 @@ dr_server_CB_(boost::bind(&ParkService::reconfigureCB, this, _1, _2))
   pnh_.param<std::string>("ackermann_topic", ackermann_topic_, "/drive");
   
   pnh_.param<bool>("state_msgs", state_msgs_, false);
-  pnh_.param<float>("parking_speed", parking_speed_, 0.4);
-  pnh_.param<float>("max_turn", max_turn_, 0.8);
+  pnh_.param<float>("parking_speed", parking_speed_, 0.8);
+  pnh_.param<float>("max_turn", max_turn_, 0.5);
   pnh_.param<float>("idle_time", idle_time_, 2.);
   pnh_.param<float>("iter_distance",iter_distance_,0.2);
   pnh_.param<float>("angle_coeff", angle_coeff_, 1./2.);
   pnh_.param<float>("back_to_mid", back_to_mid_, 0.18);
   pnh_.param<float>("turn_delay",turn_delay_, 0.1);
   pnh_.param<float>("line_dist_end", line_dist_end_, 0.15);
+  pnh_.param<float>("start_parking_speed", start_parking_speed_, 0.5);
 
   park_spot_middle_ = 0.;
   front_target_ = 0.;
@@ -76,6 +77,8 @@ void ParkService::distanceCallback(const std_msgs::Float32 &msg)
       case parked:
         if (state_msgs_) ROS_INFO_THROTTLE(5, "parked");
         drive(0., 0.);
+        blinkLeft(false);
+        blinkRight(false);
         blinkLeft(true);
         blinkRight(true);
         feedback.action_status = IN_PLACE;
@@ -141,8 +144,7 @@ void ParkService::initParkingSpot(const geometry_msgs::Polygon &msg)
         mid_on_line += coef * powered_x;
         powered_x *= park_spot_middle_;
     }
-    park_spot_dist_ = std::abs(mid_on_line) - PARK_SPOT_WIDTH/2.;
-    std::cout<<"PARK SPOT DIST: "<<park_spot_dist_ini_<<std::endl;
+    park_spot_dist_ = std::abs(mid_on_line - PARK_SPOT_WIDTH/2.);
 
     out_target_ = std::abs(mid_on_line) + line_dist_end_;
     back_target_ = actual_dist_ + park_spot_middle_ - iter_distance_/2. - back_to_mid_;
@@ -165,7 +167,7 @@ bool ParkService::toParkingSpot()
     if(actual_dist_ > back_target_)
     { drive(0., -max_turn_);
                return true;
-    } drive(parking_speed_, 0.);
+    } drive(start_parking_speed_, 0.);
     return false;
 }
 
@@ -325,6 +327,11 @@ void ParkService::reconfigureCB(selfie_park::ParkServerConfig& config, uint32_t 
     {
         parking_speed_ = config.parking_speed;
         ROS_INFO("parking_speed_ new value: %f",parking_speed_);
+    }
+    if(start_parking_speed_ != (float)config.start_parking_speed)
+    {
+        start_parking_speed_ = config.start_parking_speed;
+        ROS_INFO("start_parking_speed_ new value: %f",start_parking_speed_);
     }
     if(angle_coeff_ != (float)config.angle_coeff)
     {
