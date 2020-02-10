@@ -43,7 +43,7 @@ int main(int argc, char** argv)
   ros::ServiceServer pub_service = n.advertiseService("/cmd_start_pub", cmdPubCallback);
   ros::ServiceServer not_pub_service = n.advertiseService("/cmd_stop_pub", cmdNotPubCallback);
 
-  ros::Rate loop_rate(80);
+  ros::Rate loop_rate(120);
   ackermann_msgs::AckermannDriveStamped drive_msg;
 
   _speed.data = 0;

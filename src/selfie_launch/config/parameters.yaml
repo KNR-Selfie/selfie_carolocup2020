@@ -37,38 +37,38 @@ extract_road_features:
   }
 free_drive: 
   {
-    max_speed: 1.5,
+    max_speed: 2.0,
     starting_line_distance_to_end: 0.6,
     intersection_distance_to_end: 1.2,
     distance_to_verify_event_: 1.0
   }
 lane_controller:
   {
-    right_lane_setpoint: -0.20,
+    right_lane_setpoint: -0.22,
     left_lane_setpoint: 0.18,
 
-    ackermann_mode: false,
+    ackermann_mode: true,
 
     maximum_speed: 2.0,
-    slowdown_speed: 0.8,
-    lane_change_speed: 0.7,
-    lane_change_distance: 0.9,
+    slowdown_speed: 1.5,
+    lane_change_speed: 1.5,
+    lane_change_distance: 0.5,
     max_length_of_obstacle: 0.4,
-    max_distance_to_obstacle: 0.8,
+    max_distance_to_obstacle: 1.0,
     safety_margin: 1.0,
     pos_tolerance: 0.01,
     num_proof_to_slowdown: 2,
     num_corners_to_detect: 3,
-    lane_change_kp: 0.05,
+    lane_change_kp: 0.7,
 
-    ROI_min_x: 0.0,
-    ROI_max_x: 1.1,
+    ROI_min_x: 0.4,
+    ROI_max_x: 1.6,
     ROI_min_y: -1.0,
     ROI_max_y: 1.0,
 
-    right_obst_area_min_x: -0.65,
+    right_obst_area_min_x: 0.1,
     right_obst_area_max_x: 1.1,
-    right_obst_area_min_y: -1.2,
+    right_obst_area_min_y: -0.75,
     right_obst_area_max_y: 0.15,
   }
 lidar: 
@@ -100,7 +100,7 @@ intersection_server:
     stop_time: 3,
     speed_default: 1.0,
     num_corners_to_detect: 3,
-    distance_of_blind_approaching: 0.5,
+    distance_of_blind_approaching: 0.15,
   }
 pid_controller: 
   {
@@ -114,10 +114,10 @@ pid_controller:
 scheduler: 
   {
     begin_action: 1,
-    parking_spot: 0.6,
+    parking_spot: 0.62,
     parking_steering_mode: 1, # 0 - ackermann 1 - paralell
     drive_steering_mode: 2, # 0 - ackermann  1 - paralell 2 - front axis only 
-    starting_distance: 0.1
+    starting_distance: 2.0
   }
 detect_obstacles: 
   {
@@ -132,13 +132,13 @@ detect_obstacles:
   }
 starting_procedure: 
   {
-    starting_speed: 1.0,
+    starting_speed: 2.0,
     use_scan: false,
     use_qr: true
   }
 qr_decoder: 
   {
-    min_detect_rate: 0.3,
+    min_detect_rate: 0.4,
     interations_to_vaild: 2
   }
 stm32_bridge:

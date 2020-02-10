@@ -438,6 +438,7 @@ void Road_obstacle_detector::passive_timer_cb(const ros::TimerEvent &time)
 
 bool Road_obstacle_detector::switchToActive(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response)
 {
+  ROS_INFO("lane control set to active");
   if (status_ != PASSIVE)
   {
     ROS_WARN("Switched to active when node is active");
@@ -466,6 +467,7 @@ bool Road_obstacle_detector::switchToActive(std_srvs::Empty::Request &request, s
 
 bool Road_obstacle_detector::switchToPassive(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response)
 {
+  ROS_INFO("lane control set to passive");
   markings_sub_.shutdown();
   obstacles_sub_.shutdown();
   distance_sub_.shutdown();

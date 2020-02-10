@@ -62,6 +62,8 @@ void DriveClient::doneCb(const actionlib::SimpleClientGoalState& state,
     if(state == State::ABORTED)
     {
         result_flag_ = ABORTED;
+        std_srvs::Empty empty_msg;
+        avoidingObstSetPassive_.call(empty_msg);
     }
     else
     {
