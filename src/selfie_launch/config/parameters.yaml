@@ -19,12 +19,12 @@ detect_parking_spot:
     default_speed_in_parking_zone: 1.5,
     max_distance_to_free_place: 0.4,
     speed_when_found_place: 0.8,
-    new_setpoint: -0.3,
+    new_setpoint: -0.32,
 
     point_max_x: 2,
     point_max_y: 0.2,
     point_min_x: 0.01,
-    point_min_y: -0.6
+    point_min_y: -0.3
   }
 extract_road_features: 
   {
@@ -87,7 +87,7 @@ park_server:
     parking_speed: 0.8,
     start_parking_speed: 0.5,
     iter_distance: 0.09,
-    angle_coeff: 0.50,
+    angle_coeff: 0.54,
     turn_delay: 0.51,
     line_dist_end: 0.17
   }
@@ -114,7 +114,7 @@ pid_controller:
 scheduler: 
   {
     begin_action: 1,
-    parking_spot: 0.62,
+    parking_spot: 0.63,
     parking_steering_mode: 1, # 0 - ackermann 1 - paralell
     drive_steering_mode: 2, # 0 - ackermann  1 - paralell 2 - front axis only 
     starting_distance: 2.0
