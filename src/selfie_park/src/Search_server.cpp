@@ -28,6 +28,7 @@ Search_server::Search_server(const ros::NodeHandle &nh, const ros::NodeHandle &p
   pnh_.param<float>("box_angle_deg", tangens_of_box_angle_, 55); // maximum angle between car and found place
   pnh_.param<float>("length_of_parking_area", length_of_parking_area_, 5.5);
   pnh_.param<float>("new_setpoint", new_setpoint_, -0.3);
+  pnh_.param<float>("old_setpoint", old_setpoint_, -0.2);
   tangens_of_box_angle_ = tan(tangens_of_box_angle_ * M_PI / 180);
 
   speed_publisher = nh_.advertise<std_msgs::Float64>("/max_speed", 5);
