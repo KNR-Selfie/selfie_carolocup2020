@@ -15,7 +15,6 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
     , current_distance_(0)
     , current_offset_(0)
     , return_distance_calculated_(false)
-    , pos_tolerance_(0.01)
     , dr_server_CB_(boost::bind(&Road_obstacle_detector::reconfigureCB, this, _1, _2))
     , old_pid_saved_(false)
     , df_pid_client_("cont", boost::bind(&Road_obstacle_detector::pidDynamicReconfigureCb, this, _1))
@@ -38,7 +37,6 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
   pnh_.param<float>("slowdown_speed", slowdown_speed_, 0.1);
   pnh_.param<float>("lane_change_speed", lane_change_speed_, 0.1);
   pnh_.param<float>("safety_margin", safety_margin_, 1.15);
-  pnh_.param<float>("pos_tolerance", pos_tolerance_, 0.01);
   pnh_.param<int>("num_proof_to_slowdown", num_proof_to_slowdown_, 2);
   pnh_.param<int>("num_corners_to_detect", num_corners_to_detect_, 3);
   pnh_.param<float>("lane_change_distance", lane_change_distance_, 0.9);
@@ -547,11 +545,6 @@ void Road_obstacle_detector::reconfigureCB(selfie_avoiding_obstacles::LaneContro
     num_corners_to_detect_ = config.num_corners_to_detect;
     ROS_INFO("num_corners_to_detect new value: %d", num_corners_to_detect_);
   }
-  if (pos_tolerance_ != (float)config.pos_tolerance)
-  {
-    pos_tolerance_ = config.pos_tolerance;
-    ROS_INFO("pos_tolerance new value: %f", pos_tolerance_);
-  }
   if (right_lane_ != (float)config.right_lane_setpoint)
   {
     right_lane_ = config.right_lane_setpoint;
@@ -578,31 +571,31 @@ void Road_obstacle_detector::reconfigureCB(selfie_avoiding_obstacles::LaneContro
     num_proof_to_return_ = num_proof_to_slowdown_;
     ROS_INFO("num_proof_to_slowdown new value: %d", num_proof_to_slowdown_);
   }
-  if (lane_change_kp_ != (int)config.lane_change_kp)
+  if (lane_change_kp_ != (float)config.lane_change_kp)
   {
     lane_change_kp_ = config.lane_change_kp;
     ROS_INFO("lane_change_kp new value: %lf", lane_change_kp_);
   }
   bool ROI_changed = false;
-  if (ROI_min_x_ != (int)config.ROI_min_x)
+  if (ROI_min_x_ != (float)config.ROI_min_x)
   {
     ROI_changed = true;
     ROI_min_x_ = config.ROI_min_x;
     ROS_INFO("ROI_min_x new value: %lf", ROI_min_x_);
   }
-  if (ROI_max_x_ != (int)config.ROI_max_x)
+  if (ROI_max_x_ != (float)config.ROI_max_x)
   {
     ROI_changed = true;
     ROI_max_x_ = config.ROI_max_x;
     ROS_INFO("ROI_max_x new value: %lf", ROI_max_x_);
   }
-  if (ROI_min_y_ != (int)config.ROI_min_y)
+  if (ROI_min_y_ != (float)config.ROI_min_y)
   {
     ROI_changed = true;
     ROI_min_y_ = config.ROI_min_y;
     ROS_INFO("ROI_min_y new value: %lf", ROI_min_y_);
   }
-  if (ROI_max_y_ != (int)config.ROI_max_y)
+  if (ROI_max_y_ != (float)config.ROI_max_y)
   {
     ROI_changed = true;
     ROI_max_y_ = config.ROI_max_y;
@@ -616,25 +609,25 @@ void Road_obstacle_detector::reconfigureCB(selfie_avoiding_obstacles::LaneContro
   }
 
   bool right_obst_area_changed = false;
-  if (right_obst_area_min_x_ != (int)config.right_obst_area_min_x)
+  if (right_obst_area_min_x_ != (float)config.right_obst_area_min_x)
   {
     right_obst_area_changed = true;
     right_obst_area_min_x_ = config.right_obst_area_min_x;
     ROS_INFO("right_obst_area_min_x new value: %lf", right_obst_area_min_x_);
   }
-  if (right_obst_area_max_x_ != (int)config.right_obst_area_max_x)
+  if (right_obst_area_max_x_ != (float)config.right_obst_area_max_x)
   {
     right_obst_area_changed = true;
     right_obst_area_max_x_ = config.right_obst_area_max_x;
     ROS_INFO("right_obst_area_max_x new value: %lf", right_obst_area_max_x_);
   }
-  if (right_obst_area_min_y_ != (int)config.right_obst_area_min_y)
+  if (right_obst_area_min_y_ != (float)config.right_obst_area_min_y)
   {
     right_obst_area_changed = true;
     right_obst_area_min_y_ = config.right_obst_area_min_y;
     ROS_INFO("right_obst_area_min_y new value: %lf", right_obst_area_min_y_);
   }
-  if (right_obst_area_max_y_ != (int)config.right_obst_area_max_y)
+  if (right_obst_area_max_y_ != (float)config.right_obst_area_max_y)
   {
     right_obst_area_changed = true;
     right_obst_area_max_y_ = config.right_obst_area_max_y;
@@ -648,7 +641,7 @@ void Road_obstacle_detector::reconfigureCB(selfie_avoiding_obstacles::LaneContro
             Point(right_obst_area_max_x_, right_obst_area_max_y_), Point(right_obst_area_max_x_, right_obst_area_min_y_));
   }
 
-  if (lane_change_speed_ != (int)config.lane_change_speed)
+  if (lane_change_speed_ != (float)config.lane_change_speed)
   {
     lane_change_speed_ = config.lane_change_speed;
     ROS_INFO("lane_change_kp new value: %lf", lane_change_speed_);

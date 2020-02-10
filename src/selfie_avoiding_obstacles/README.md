@@ -49,8 +49,6 @@ rosrun selfie_avoiding_obstacles lane_controller
    - Whether or not visualization topics are active
  - `ackermann_mode` (*bool*, default: false)
    - set if ackermann mode is active (if not then front_axis_steering_mode is used)
- - `pos_tolerance` (*float*)
-   - tolerance for received offset
  - `num_proof_to_overtake` (*int*)
    - how many times in a row car should discover obstacle to start intersecting (it is used to avoid overtaking caused by static)
  - `num_corners_to_detect` (*int*)

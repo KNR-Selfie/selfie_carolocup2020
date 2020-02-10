@@ -100,6 +100,7 @@ intersection_server:
     stop_time: 3,
     speed_default: 1.0,
     num_corners_to_detect: 3,
+    distance_of_blind_approaching: 0.5,
   }
 pid_controller: 
   {
