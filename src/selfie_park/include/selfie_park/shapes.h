@@ -106,67 +106,53 @@ public:
     bottom_horizontal_line.b = x_min;
   }
   // this constructor finds and assign correct points to corners of our box
-  Box(geometry_msgs::Polygon right_side_poly)
+  Box(geometry_msgs::Polygon poly)
   {
-    bool is_in_the_front = true;
-    float avg_x = (right_side_poly.points[0].x + right_side_poly.points[1].x + right_side_poly.points[2].x +
-                   right_side_poly.points[3].x) /
-                  4;
-    if (avg_x < 0)
-      is_in_the_front = false;
+    bottom_left = Point(poly.points[0].x, poly.points[0].y);
+    bottom_right = Point(poly.points[1].x, poly.points[1].y);
+    top_left = Point(poly.points[2].x, poly.points[2].y);
+    top_right = Point(poly.points[3].x, poly.points[3].y);
 
-    Point zero(0, 0);
-    vector<float> distances = {zero.get_distance(right_side_poly.points[0]), zero.get_distance(right_side_poly.points[1]),
-                               zero.get_distance(right_side_poly.points[2]), zero.get_distance(right_side_poly.points[3])};
+    Point temp;
 
-    vector<float>::iterator min;
-
-    min = min_element(distances.begin(), distances.end());
-    if (is_in_the_front)
-      bottom_left = right_side_poly.points[std::distance(distances.begin(), min)];
-    else
-      top_left = right_side_poly.points[std::distance(distances.begin(), min)];
-    *min = 1000;
-    //    cout <<"distance from the nearest point of the box: " <<
-    //    bottom_left.x << endl;
-
-    // pick two closest points
-    Point a, b;
-    min = min_element(distances.begin(), distances.end());
-    a = right_side_poly.points[std::distance(distances.begin(), min)];
-    *min = 1000;
-    min = min_element(distances.begin(), distances.end());
-    b = right_side_poly.points[std::distance(distances.begin(), min)];
-    *min = 1000;
-    // pick the one with smaller y coordinate -> it's the left one
-    if (a.x > b.x)
+    if (top_right.x < bottom_left.x)
     {
-      if (is_in_the_front)
-      {
-        top_left = a;
-        bottom_right = b;
-      } else
-      {
-        bottom_left = a;
-        top_right = b;
-      }
-    } else
-    {
-      if (is_in_the_front)
-      {
-        top_left = b;
-        bottom_right = a;
-      } else
-      {
-        bottom_left = b;
-        top_right = a;
-      }
+      temp = bottom_left;
+      bottom_left = top_right;
+      top_right = temp;
     }
-    min = min_element(distances.begin(), distances.end());
-    if (is_in_the_front)
-      top_right = right_side_poly.points[std::distance(distances.begin(), min)];
-    else
-      bottom_right = right_side_poly.points[std::distance(distances.begin(), min)];
+    if (top_right.x < bottom_right.x)
+    {
+      temp = bottom_right;
+      bottom_right = top_right;
+      top_right = temp;
+    }
+
+    if (top_left.x < bottom_left.x)
+    {
+      temp = bottom_left;
+      bottom_left = top_left;
+      top_left = temp;
+    }
+    if (top_left.x < bottom_right.x)
+    {
+      temp = bottom_right;
+      bottom_right = top_left;
+      top_left = temp;
+    }
+
+    if (top_right.y > top_left.y)
+    {
+      temp = top_right;
+      top_right = top_left;
+      top_left = temp;
+    }
+    if (bottom_right.y > bottom_left.y)
+    {
+      temp = bottom_right;
+      bottom_right = bottom_left;
+      bottom_left = temp;
+    }
   }
 
   Box(Point b_l, Point b_r, Point t_l, Point t_r)
