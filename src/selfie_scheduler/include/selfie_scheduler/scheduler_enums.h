@@ -85,4 +85,10 @@ typedef enum steering_mode
     PARALLEL,
     FRONT_AXIS
 }steering_mode_variable;
+
+typedef enum park_counter
+{
+    PARKING_COMPLETE = 5,
+
+}park_counter_variable;
 #endif // SCHEDULER_ENUMS_H

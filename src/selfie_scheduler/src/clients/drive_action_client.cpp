@@ -1,10 +1,12 @@
 #include <selfie_scheduler/drive_action_client.h>
 #include <std_srvs/Empty.h>
+#include <typeinfo>
 
 DriveClient::DriveClient(std::string name, const ros::NodeHandle &pnh):
     ac_(name, true),
     pnh_(pnh),
-    drive_steering_mode_(ACKERMANN)
+    drive_steering_mode_(ACKERMANN),
+    park_complete_(false)
 {
     next_action_ = DRIVING;
     action_state_ = SELFIE_IDLE;
@@ -34,9 +36,25 @@ void DriveClient::setDriveMode(bool drive_mode)
     else
         next_action_ = INTERSECTION;
 }
+void DriveClient::checkParkCounter(boost::any goal)
+{
+    const std::type_info &ti = goal.type();
+    if(ti.name()[0] == 'i' && park_complete_ == false)
+    {   
+        int i = boost::any_cast<int>(goal);
+        if(i == PARKING_COMPLETE)
+        {   
+            ROS_INFO("Park complete");
+            next_action_= DRIVING;
+            park_complete_ = true;
+        }
+    }
+}
 void DriveClient::setGoal(boost::any goal)
 {
-    // function goal does not change
+    // check parking counter only for parking task
+    if(drive_mode_ == false)
+        checkParkCounter(goal);
 
     goal_.mode = drive_mode_;
     ac_.sendGoal(goal_, boost::bind(&DriveClient::doneCb, this, _1, _2),
@@ -99,6 +117,7 @@ void DriveClient::setDriveSteeringMode()
     else if(drive_steering_mode_ == FRONT_AXIS)
         steeringModeSetFrontAxis_.call(empty_msg);
 }
+
 void DriveClient::prepareAction()
 {   
     std_srvs::Empty empty_msg;
