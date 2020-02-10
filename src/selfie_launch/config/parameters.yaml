@@ -39,7 +39,7 @@ extract_road_features:
   }
 free_drive: 
   {
-    max_speed: 2.0,
+    max_speed: 3.0,
     starting_line_distance_to_end: 0.6,
     intersection_distance_to_end: 1.2,
     distance_to_verify_event_: 1.0
@@ -51,7 +51,7 @@ lane_controller:
 
     ackermann_mode: true,
 
-    maximum_speed: 2.0,
+    maximum_speed: 3.0,
     slowdown_speed: 1.5,
     lane_change_speed: 1.2,
     lane_change_distance: 0.5,
@@ -106,9 +106,9 @@ intersection_server:
   }
 pid_controller: 
   {
-    Kd: 0.01,
-    Ki: 0.008,
-    Kp: 1.2,
+    Kd: 0.11,
+    Ki: 0.0,
+    Kp: 1.3,
     lower_limit: -0.785,
     upper_limit: 0.785,
     windup_limit: 10
