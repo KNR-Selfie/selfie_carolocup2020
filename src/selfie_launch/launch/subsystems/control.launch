@@ -1,10 +1,9 @@
 <launch>
   <node name="pid_controller" pkg="pid" type="controller" respawn="true" output="screen">
-    <remap from="state" to="combined_offset" />
+    <remap from="state" to="pid_input" />
     <remap from="control_effort" to="steering_angle" />
+    <remap from="setpoint" to="pid_setpoint" />
   </node>
-
-  <node name="offset_combiner" pkg="selfie_control" type="offset_combiner.py" respawn="true" output="screen" />
 
   <node name="cmd_creator" type="cmd_creator" pkg="selfie_control" respawn="true" output="screen" />
 </launch>
