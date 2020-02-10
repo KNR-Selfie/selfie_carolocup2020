@@ -7,6 +7,6 @@
     <param name="qr_invisible_time_thresh" type="double" value="2.0"/>
   </node-->
   <node pkg="selfie_starting_procedure" type="gate_scanner" name="gate_scanner" output="screen">
-    <param name="no_obstacle_time_thresh" type="double" value="2.0"/>
+    <param name="no_obstacles_limit" type="double" value="25.0"/>
   </node>
 </launch>
