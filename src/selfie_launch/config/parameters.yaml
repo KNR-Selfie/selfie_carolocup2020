@@ -28,7 +28,7 @@ detect_parking_spot:
   }
 extract_road_features: 
   {
-    lookahead: 0.6,
+    lookahead: 0.55,
     min_speed: 2.0,
     max_acceleration: 100.0,
     max_deceleration: 100.0,
@@ -44,7 +44,7 @@ free_drive:
   }
 lane_controller:
   {
-    right_lane_setpoint: -0.22,
+    right_lane_setpoint: -0.28,
     left_lane_setpoint: 0.18,
 
     ackermann_mode: true,
@@ -77,7 +77,7 @@ lidar:
   }
 offset_combiner: 
   {
-    L: 0.3
+    L: 0.25
   }
 park_server: 
   {
@@ -105,8 +105,8 @@ intersection_server:
 pid_controller: 
   {
     Kd: 0.01,
-    Ki: 0.0,
-    Kp: 1.5,
+    Ki: 0.008,
+    Kp: 1.2,
     lower_limit: -0.785,
     upper_limit: 0.785,
     windup_limit: 10
