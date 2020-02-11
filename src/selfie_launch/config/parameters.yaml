@@ -31,7 +31,7 @@ detect_parking_spot:
 extract_road_features: 
   {
     lookahead: 0.55,
-    min_speed: 2.0,
+    min_speed: 5.0,
     max_acceleration: 100.0,
     max_deceleration: 100.0,
     max_curvature: 1.8,
@@ -39,7 +39,7 @@ extract_road_features:
   }
 free_drive: 
   {
-    max_speed: 3.0,
+    max_speed: 2.5,
     starting_line_distance_to_end: 0.6,
     intersection_distance_to_end: 1.2,
     distance_to_verify_event_: 1.0
@@ -47,29 +47,29 @@ free_drive:
 lane_controller:
   {
     right_lane_setpoint: -0.26,
-    left_lane_setpoint: 0.18,
+    left_lane_setpoint: 0.22,
 
     ackermann_mode: true,
 
-    maximum_speed: 3.0,
+    maximum_speed: 2.5,
     slowdown_speed: 1.5,
     lane_change_speed: 1.2,
-    lane_change_distance: 0.5,
+    lane_change_distance: 0.65,
     max_length_of_obstacle: 0.4,
-    max_distance_to_obstacle: 1.0,
+    max_distance_to_obstacle: 1.1,
     safety_margin: 1.0,
     pos_tolerance: 0.01,
     num_proof_to_slowdown: 2,
     num_corners_to_detect: 3,
-    lane_change_kp: 0.5,
+    lane_change_kp: 0.65,
 
-    ROI_min_x: 0.4,
-    ROI_max_x: 1.6,
+    ROI_min_x: 0.5,
+    ROI_max_x: 1.7,
     ROI_min_y: -1.0,
     ROI_max_y: 1.0,
 
-    right_obst_area_min_x: 0.1,
-    right_obst_area_max_x: 1.1,
+    right_obst_area_min_x: 0.4,
+    right_obst_area_max_x: 1.6,
     right_obst_area_min_y: -0.75,
     right_obst_area_max_y: 0.15,
   }
@@ -97,8 +97,8 @@ intersection_server:
   {
     distance_to_intersection: 0.6,
     road_width: 0.95,
-    point_min_y: -1.0,
-    point_max_y: 1.0,
+    point_min_y: -0.5,
+    point_max_y: 0.7,
     stop_time: 3,
     speed_default: 1.0,
     num_corners_to_detect: 3,
@@ -106,9 +106,9 @@ intersection_server:
   }
 pid_controller: 
   {
-    Kd: 0.11,
+    Kd: 0.12,
     Ki: 0.0,
-    Kp: 1.3,
+    Kp: 1.0,
     lower_limit: -0.785,
     upper_limit: 0.785,
     windup_limit: 10
