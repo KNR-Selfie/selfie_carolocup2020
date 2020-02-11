@@ -35,8 +35,21 @@ extract_road_features:
     max_acceleration: 100.0,
     max_deceleration: 100.0,
     max_curvature: 1.8,
-    average_window_size: 200
-  }
+    average_window_size: 200,
+
+    car_point: 0.3,
+    first_point: 0.45,
+    second_point: 0.6,
+    third_point: 0.8,
+
+    car_weight: 0.5,
+    first_weight: 0.3,
+    second_weight: 0.3,
+    hird_weight: 0.2,
+
+    path_planner_visualization: False
+  
+    }
 free_drive: 
   {
     max_speed: 2.0,

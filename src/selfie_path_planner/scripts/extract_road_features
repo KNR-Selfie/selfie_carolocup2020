@@ -19,18 +19,24 @@ from std_msgs.msg import Float32
 from dynamic_reconfigure.server import Server
 from selfie_path_planner.cfg import ExtractRoadFeaturesConfig
 
+from visualization_msgs.msg import Marker
+from visualization_msgs.msg import MarkerArray
+from geometry_msgs.msg import Point
+from scipy.interpolate import interp1d
+
 max_speed = 3.0
 act_speed = 0.0
 position_offset = 0.0
 time_last_speed = time.time()
 
 class StreamingMovingAverage:
-    def __init__(self, window_size):
-        self.window_size = window_size
+    def __init__(self, window_size_param):
+        self.window_size = window_size_param
         self.values = []
         self.sum = 0
 
     def process(self, value):
+        self.window_size = average_window_size
         self.values.append(value)
         self.sum += value
         if len(self.values) > self.window_size:
@@ -47,11 +53,9 @@ def road_markings_callback(msg):
     global act_speed
     global weights
 
-
-
     c_poly = Polynomial(msg.center_line)
-    c_poly_points = np.array([[0.45,c_poly(0.45)],[0.65,c_poly(0.65)],[0.8, c_poly(0.8)]])
-    weights = np.array([0.6, 0.2, 0.1, 0.1])
+    c_poly_points = np.array([[first_point,c_poly(first_point)],[second_point,c_poly(second_point)],[third_point, c_poly(third_point)]])
+    weights = np.array([car_weight, first_weight, second_weight, third_weight])
 
     def convert_offset(c_poly,x,y):
         der = c_poly.deriv()(x)
@@ -63,28 +67,95 @@ def road_markings_callback(msg):
     path_points = np.empty([4, 2])
     
     #middle of the car
-    path_points[0] = [0.2,0.0]
+    path_points[0] = [car_point,0.0]
 
     for i in range(1, 4):
         path_points[i] = convert_offset(c_poly,c_poly_points[i-1,0],c_poly_points[i-1,1])
     
-    path_coeffs = np.polyfit(path_points[:,0], path_points[:,1], 2)
-    path = Polynomial(path_coeffs)
+    #print path_points
+    path = interp1d(path_points[:,0], path_points[:,1], kind='cubic')
+    #path_coeffs = np.polyfit(, 2)
+    #path = Polynomial(path_coeffs)
+    angle = 0
+    def derivative(f, x0, dx):
+        return (f(x0+2*dx) - f(x0)) / (2 * dx)
 
-    tangents = np.empty([4,1])
-    for i in range(0,4):
-        tangents[i] = path.deriv()(path_points[i,0])
+    tangents = np.empty([3,1])
+    for i in range(0,3):
+        tangents[i] = derivative(path,path_points[i,0],0.001)
     angle = 0
 
-    for i in range(0,4):
+    for i in range(0,3):
         angle+=weights[i]*atan(tangents[i])
+    angle = sma_angle.process(angle)
 
     zero_state_pub.publish(0.0)
-    steering_angle_pub.publish(angle)
+    pid_input_pub.publish(-angle)
 
+    #visualization
+    if(path_planner_visualization):
+        tangent_a = derivative(path,path_points[0,0],0.001)
+        tangent_b = path_points[0,1] - tangent_a*path_points[0,0]
+        marker = Marker()
+        marker.header.frame_id = "/road_markings"
+        marker.type = marker.POINTS
+        marker.action = marker.ADD
+        marker.scale.x = 0.05
+        marker.scale.y = 0.05
+        marker.color.a = 1.0
+        marker.color.r = 0.0
+        marker.color.g = 1.0
+        marker.color.b = 0.0
 
+        for i in range(0,4):
+            point = Point()
+            point.x = path_points[i,0]
+            point.y = path_points[i,1]
+            point.z = 0.0
+            marker.points.append(point)
 
+        rviz_point_pub.publish(marker)
 
+        spline_marker = Marker()
+        spline_marker.header.frame_id = "/road_markings"
+        spline_marker.type = marker.POINTS
+        spline_marker.action = marker.ADD
+        spline_marker.scale.x = 0.01
+        spline_marker.scale.y = 0.01
+        spline_marker.color.a = 1.0
+        spline_marker.color.r = 0.0
+        spline_marker.color.g = 1.0
+        spline_marker.color.b = 1.0
+
+        spline_values = np.arange(path_points[0,0],path_points[-1,0],0.01)
+        for i in spline_values:
+            point = Point()
+            point.x = i
+            point.y = path(i)
+            point.z = 0.0
+            spline_marker.points.append(point)
+
+        rviz_spline_pub.publish(spline_marker)
+
+        tangent_marker = Marker()
+        tangent_marker.header.frame_id = "/road_markings"
+        tangent_marker.type = marker.POINTS
+        tangent_marker.action = marker.ADD
+        tangent_marker.scale.x = 0.01
+        tangent_marker.scale.y = 0.01
+        tangent_marker.color.a = 1.0
+        tangent_marker.color.r = 0.0
+        tangent_marker.color.g = 0.5
+        tangent_marker.color.b = 0.5
+
+        tangent_values = np.arange(0,1,0.01)
+        for i in tangent_values:
+            point = Point()
+            point.x = i
+            point.y = tangent_a*i + tangent_b
+            point.z = 0.0
+            tangent_marker.points.append(point)
+        rviz_tangent_pub.publish(tangent_marker)
 
 
     # x - lookahead
@@ -123,8 +194,6 @@ def road_markings_callback(msg):
     if atan2(c_y, x_shifted(c_x)) - theta > 0:
         c_dist = -c_dist
 
-    #heading_offset_pub.publish(-theta)
-    #position_offset_pub.publish(c_dist)
     speed_pub.publish(pub_speed)
     
 
@@ -177,11 +246,32 @@ if __name__ == '__main__':
     min_speed = rospy.get_param('~min_speed', 0.5)
     global max_curvature
     max_curvature = rospy.get_param('~max_curvature', 1.8)
-    window_size = rospy.get_param('~average_window_size', 10)
+    global average_window_size
+    average_window_size = rospy.get_param('~average_window_size', 10)
     global max_acceleration
     max_acceleration = rospy.get_param('~max_acceleration', 1.0)
     global max_deceleration
     max_deceleration = rospy.get_param('~max_deceleration', 1.0)
+
+
+    global car_point
+    car_point = rospy.get_param('~car_point', 0.3)
+    global first_point
+    first_point = rospy.get_param('~first_point', 0.45)
+    global second_point
+    second_point = rospy.get_param('~second_point', 0.5)
+    global third_point
+    third_point = rospy.get_param('~third_point', 0.8)
+    global car_weight
+    car_weight = rospy.get_param('~car_weight', 0.5)
+    global first_weight
+    first_weight = rospy.get_param('~first_weight', 0.2)
+    global second_weight
+    second_weight = rospy.get_param('~second_weight', 0.1)
+    global third_weight
+    third_weight = rospy.get_param('~third_weight', 0.1)
+    global path_planner_visualization
+    path_planner_visualization = rospy.get_param('~path_planner_visualization', False)
 
     print("lookahead set to: " + str(lookahead))
     print("min_speed set to: " + str(min_speed))
@@ -189,23 +279,30 @@ if __name__ == '__main__':
     print("max_acceleration set to: " + str(max_acceleration))
     print("max_deceleration set to: " + str(max_deceleration))
     print("max_curvature set to: " + str(max_curvature))
-    print("average_window_size set to: " + str(window_size))
+    print("average_window_size set to: " + str(average_window_size))
+    print("first point set to: " + str(first_point))
+    print("second point set to: " + str(second_point))
 
     dr_srv = Server(ExtractRoadFeaturesConfig, reconfigureCB)
 
     global sma
-    sma = StreamingMovingAverage(window_size)
+    sma = StreamingMovingAverage(average_window_size)
+    global sma_angle
+    sma_angle = StreamingMovingAverage(average_window_size)
 
-    global heading_offset_pub, position_offset_pub, curvature_pub, steering_angle_pub
+    global heading_offset_pub, position_offset_pub, curvature_pub, pid_input_pub, rviz_point_pub, zero_state_pub, rviz_spline_pub, rviz_tangent_pub
     heading_offset_pub = rospy.Publisher(
         'heading_offset', Float64, queue_size=1)
     position_offset_pub = rospy.Publisher(
         'position_offset', Float64, queue_size=1)
     speed_pub = rospy.Publisher('speed', Float64, queue_size=1)
 
-    steering_angle_pub = rospy.Publisher(
+    pid_input_pub = rospy.Publisher(
         'pid_input', Float64, queue_size=1)
     zero_state_pub = rospy.Publisher(
-        'pid_setpoint', Float64, queue_size=1)    
+        'pid_setpoint', Float64, queue_size=1)
 
+    rviz_point_pub= rospy.Publisher("path_point", Marker, queue_size=1)    
+    rviz_spline_pub = rospy.Publisher("path_line", Marker, queue_size=1)
+    rviz_tangent_pub = rospy.Publisher("path_tangent", Marker,queue_size=1)
     rospy.spin()
