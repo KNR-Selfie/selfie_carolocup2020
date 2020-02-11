@@ -62,8 +62,8 @@ private:
   float distance_goal_;
   float starting_distance_;
   float distance_read_ {0.0};
-  float initial_yaw_;
-  float current_yaw_;
+  tf::Pose init_pose_;
+  tf::Pose current_pose_;
 
   ros::Time min_second_press_time_;
   ros::Duration debounce_duration_;

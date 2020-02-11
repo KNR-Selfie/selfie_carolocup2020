@@ -7,7 +7,7 @@
 StartingProcedureAction::StartingProcedureAction(const ros::NodeHandle &nh, const ros::NodeHandle &pnh) :
   nh_(nh), pnh_(pnh), as_(nh_, "starting_procedure",  false),
   min_second_press_time_(ros::Time(0)), debounce_duration_(ros::Duration(2)),
-  distance_goal_(0.f), distance_read_(0.f), initial_yaw_(0.f),current_yaw_(0.f),
+  distance_goal_(0.f), distance_read_(0.f), 
   dr_server_CB_(boost::bind(&StartingProcedureAction::reconfigureCB, this, _1, _2))
 {
   as_.registerPreemptCallback(boost::bind(&StartingProcedureAction::preemptCB, this));
@@ -87,7 +87,7 @@ void StartingProcedureAction::parkingButtonCB(const std_msgs::Empty &msg)
       distance_goal_ = distance_read_ + distance_goal_;
       starting_distance_ = distance_read_;
       ROS_INFO("start parking mode");
-      initial_yaw_ = current_yaw_;
+      init_pose_ = current_pose_;
       state_ = State::START_MOVE;
       publishFeedback(START_DRIVE);
     }
@@ -129,7 +129,7 @@ void StartingProcedureAction::obstacleButtonCB(const std_msgs::Empty &msg)
       distance_goal_ = distance_read_ + distance_goal_;
       starting_distance_ = distance_read_;
       ROS_INFO("start obstacle mode");
-      initial_yaw_ = current_yaw_;
+      init_pose_ = current_pose_;
       state_ = State::START_MOVE;
       publishFeedback(START_DRIVE);
     }
@@ -145,7 +145,7 @@ void StartingProcedureAction::gateOpenCB(const std_msgs::Empty &msg)
     distance_goal_ = distance_read_ + distance_goal_;
     ROS_INFO("gate was opened");
     starting_distance_ = distance_read_;
-    initial_yaw_ = current_yaw_;
+    init_pose_ = current_pose_;
     publishFeedback(START_DRIVE);
   }
 }
@@ -192,7 +192,8 @@ void StartingProcedureAction::distanceCB(const std_msgs::Float32ConstPtr &msg)
 
 void StartingProcedureAction::odomCallback(const nav_msgs::Odometry &msg)
 {
-  current_yaw_ = tf::getYaw(msg.pose.pose.orientation);
+
+  tf::poseMsgToTF(msg.pose.pose, current_pose_);
 }
 
 void StartingProcedureAction::publishFeedback(feedback_variable program_state)
@@ -221,7 +222,10 @@ void StartingProcedureAction::driveBoxOut(float speed)
 {
   ackermann_msgs::AckermannDriveStamped cmd;
   cmd.drive.speed = speed;
-  cmd.drive.steering_angle = Kp_ * angleDiff(initial_yaw_ , current_yaw_);
+  tf::Vector3 pos;
+  pos = (init_pose_.inverse() * current_pose_).getOrigin();
+  cmd.drive.steering_angle = -Kp_ * pos.y();
+  ROS_INFO("pos: %f", cmd.drive.steering_angle);
   drive_pub_.publish(cmd);
 }
 
