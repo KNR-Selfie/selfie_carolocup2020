@@ -2346,7 +2346,7 @@ bool LaneDetector::isIntersection()
   }
 
   if(left_intersection && right_intersection && center_line_.isExist() && 
-     (center_line_.getPoints()[index_on_merge].x - center_line_.getPoints()[0].x > 0.2))
+     (center_line_.getPoints()[index_on_merge].x - center_line_.getPoints()[0].x > 0.15))
   {
     if (center_line_.getPoints()[0].x > ((TOPVIEW_MIN_X + TOPVIEW_MAX_X) / 2))
     {
