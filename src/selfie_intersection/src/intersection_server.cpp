@@ -131,20 +131,23 @@ void IntersectionServer::manager(const selfie_msgs::PolygonArray &boxes)
 
 void IntersectionServer::intersection_callback(const std_msgs::Float32 &msg)
 {
-  point_min_x_ = msg.data;
-  if (!is_distance_to_intersection_saved_)
+  if (action_status_.action_status != APPROACHING_TO_INTERSECTION2)
   {
-    distance_to_intersection_when_started_ = msg.data;
-    is_distance_to_intersection_saved_ = true;
-  }
-  point_max_x_ = point_min_x_ + road_width_;
-  if (intersectionServer_.isActive())
-    ROS_INFO_THROTTLE(1, "Distance to intersection: %lf", point_min_x_);
-
-  if (max_distance_to_intersection_ >= point_min_x_)
-  {
-    selfie_msgs::PolygonArray emptyBoxes;
-    manager(emptyBoxes);
+    point_min_x_ = msg.data;
+    if (!is_distance_to_intersection_saved_)
+    {
+      distance_to_intersection_when_started_ = msg.data;
+      is_distance_to_intersection_saved_ = true;
+    }
+    point_max_x_ = point_min_x_ + road_width_;
+    if (intersectionServer_.isActive())
+      ROS_INFO_THROTTLE(1, "Distance to intersection: %lf", point_min_x_);
+  
+    if (max_distance_to_intersection_ >= point_min_x_)
+    {
+      selfie_msgs::PolygonArray emptyBoxes;
+      manager(emptyBoxes);
+    }
   }
 }
 

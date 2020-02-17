@@ -41,7 +41,7 @@ free_drive:
   {
     max_speed: 2.5,
     starting_line_distance_to_end: 0.65,
-    intersection_distance_to_end: 1.2,
+    intersection_distance_to_end: 1.3,
     distance_to_verify_event_: 1.0
   }
 lane_controller:
@@ -95,14 +95,14 @@ park_server:
   }
 intersection_server: 
   {
-    distance_to_intersection: 0.6,
+    distance_to_intersection: 0.75,
     road_width: 1.05,
     point_min_y: -0.5,
     point_max_y: 0.7,
     stop_time: 3,
     speed_default: 1.0,
     num_corners_to_detect: 1,
-    distance_of_blind_approaching: 0.15,
+    distance_of_blind_approaching: 0.2,
   }
 pid_controller: 
   {

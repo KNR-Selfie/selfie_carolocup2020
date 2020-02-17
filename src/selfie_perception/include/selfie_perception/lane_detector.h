@@ -185,7 +185,7 @@ class LaneDetector
   int isec_HL_max_gap_          {40};
 
   float isec_line_close_        {0.15};
-  float isec_angle_diff_        {10 / 57.2957795};
+  float isec_angle_diff_        {20 / 57.2957795};
 
   int color_set[20][3] =
   {
