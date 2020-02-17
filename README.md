@@ -1,4 +1,5 @@
 # Selfie-autonomous-car
+![chrupek](https://user-images.githubusercontent.com/28540485/74652634-bdccbb00-5186-11ea-8b1c-0661c07a055a.jpg)
 
 *Selfie* is the student project of autonomous cars. Vehicles based on 1:10 scale RC cars are customized to be able
 to operate autonomously in simulated road environments. They are equipped with camera, computer vision computing unit,
