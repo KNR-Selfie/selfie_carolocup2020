@@ -5,6 +5,7 @@
 
   <!-- LAUNCH DEPENDENT PARAMS -->
   <arg name="visualization_in_searching" default="true" />
+  <arg name="visualization_of_intersection" default="true" />
   <arg name="parking_msgs_output" default="true" />
   <arg name="detect_obstacles_visualization" default="true" />
   <arg name="lane_controller_visualization" default="true" />
@@ -37,6 +38,11 @@
     <param name="visualization" value="$(arg lane_controller_visualization)" />
   </node>
 
+  <node name="diagnose" pkg="selfie_diagnostic_node" type="diagnose.py" output="screen"/>
+
+
+  <node pkg="selfie_starting_procedure" type="qr_decoder" name="qr_decoder" output="screen"/>
+
   <node name="odometry" type="selfie_odometry" pkg="selfie_odometry" respawn="true" output="screen"/>
   <node name="scheduler" type="scheduler" pkg="selfie_scheduler" respawn="true" output="screen" />
 
@@ -46,6 +52,7 @@
   <include file="$(find selfie_launch)/launch/subsystems/control.launch"/>
   <include file="$(find selfie_launch)/launch/subsystems/action_servers.launch">
     <arg name="i_visualization_in_searching" value="$(arg visualization_in_searching)" />
+    <arg name="i_visualization_of_intersection" value="$(arg visualization_of_intersection)" />
     <arg name="i_parking_msgs_output" value="$(arg parking_msgs_output)" />
   </include>
 

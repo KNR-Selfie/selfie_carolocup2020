@@ -4,14 +4,14 @@
 **/ 
 
 #include <ros/ros.h>
-#include <selfie_free_drive/free_drive_action.h>
+#include <selfie_free_drive/free_drive_server.h>
 
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "free_drive_action");
+  ros::init(argc, argv, "free_drive");
   ros::NodeHandle nh;
   ros::NodeHandle pnh("~");
-  FreeDriveAction free_drive(nh, pnh);
+  FreeDriveServer free_drive(nh, pnh);
 
   ros::spin();
   return 0;

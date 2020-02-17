@@ -3,19 +3,23 @@
 ObstaclesGenerator::ObstaclesGenerator(const ros::NodeHandle &nh, const ros::NodeHandle &pnh) :
   nh_(nh),
   pnh_(pnh),
+  transformListener_(nh_),
   max_range_(1.0),
   min_range_(0.03),
 
   obstacles_frame_("laser"),
-  visualization_frame_("laser"),
-  visualize_(false),
+  visualization_frame_("base_link"),
+  output_frame_("base_link"),
+
+  visualize_(true),
 
   lidar_offset_(0),
   segment_threshold_(0.03),
   min_segment_size_(0.04),
   max_segment_size_(0.5),
   min_to_divide_(0.03),
-  upside_down_(false)
+  upside_down_(false),
+  dr_server_CB_(boost::bind(&ObstaclesGenerator::reconfigureCB, this, _1, _2))
 {
   obstacles_pub_ = nh_.advertise<selfie_msgs::PolygonArray>("obstacles", 10);
 }
@@ -35,6 +39,7 @@ bool ObstaclesGenerator::init()
   pnh_.getParam("visualize", visualize_);
   pnh_.getParam("obstacles_frame", obstacles_frame_);
   pnh_.getParam("visualization_frame", visualization_frame_);
+  pnh_.getParam("output_frame", output_frame_);
 
   pnh_.getParam("segment_threshold", segment_threshold_);
   pnh_.getParam("min_segment_size", min_segment_size_);
@@ -44,6 +49,8 @@ bool ObstaclesGenerator::init()
   pnh_.getParam("lidar_offset", lidar_offset_);
   pnh_.getParam("upside_down", upside_down_);
 
+  dr_server_.setCallback(dr_server_CB_);
+
   if (visualize_)
   {
     visualization_lines_pub_ = nh_.advertise<visualization_msgs::Marker>("visualization_lines", 1);
@@ -51,6 +58,7 @@ bool ObstaclesGenerator::init()
   }
 
   printInfoParams();
+  initializeTransform();
   return true;
 }
 
@@ -62,7 +70,7 @@ void ObstaclesGenerator::laserScanCallback(const sensor_msgs::LaserScan &msg)
   {
     obstacle_array_.polygons.clear();
     obstacle_array_.header.stamp = ros::Time::now();
-    obstacle_array_.header.frame_id = obstacles_frame_;
+    obstacle_array_.header.frame_id = output_frame_;
     obstacles_pub_.publish(obstacle_array_);
     line_array_.clear();
   }
@@ -211,7 +219,7 @@ void ObstaclesGenerator::generateObstacles()
 {
   obstacle_array_.polygons.clear();
   obstacle_array_.header.stamp = ros::Time::now();
-  obstacle_array_.header.frame_id = obstacles_frame_;
+  obstacle_array_.header.frame_id = output_frame_;
   if (!line_array_.empty())
   {
     float distance = 0;
@@ -291,8 +299,7 @@ void ObstaclesGenerator::generateObstacles()
       obstacle.points.clear();
     }
   }
-  if(upside_down_)
-    convertUpsideDown();
+  convertToOutputFrame(); // obstacle_array_
   obstacles_pub_.publish(obstacle_array_);
 }
 
@@ -409,6 +416,41 @@ void ObstaclesGenerator::divideIntoSegments()
   }
 }
 
+void ObstaclesGenerator::convertToOutputFrame()
+{
+  if(output_frame_ == obstacles_frame_) return;
+
+  for(std::vector<geometry_msgs::Polygon>::iterator plgit = obstacle_array_.polygons.begin();plgit!= obstacle_array_.polygons.end();++plgit)
+  {
+    std::for_each(plgit->points.begin(), plgit->points.end(), std::bind(&ObstaclesGenerator::transformPoint,this,  std::placeholders::_1)); 
+  }
+}
+
+void ObstaclesGenerator::initializeTransform()
+{
+  ROS_INFO("Waiting for any transform form %s to %s\n",output_frame_.c_str(), obstacles_frame_.c_str());
+
+  transformListener_.waitForTransform(output_frame_, obstacles_frame_, ros::Time(0), ros::Duration(30), ros::Duration(0.0001));
+  ROS_INFO("Transform from %s to %s found\n",output_frame_.c_str(), obstacles_frame_.c_str());
+  transformListener_.lookupTransform(output_frame_, obstacles_frame_, ros::Time(0), transform_);
+}
+
+void ObstaclesGenerator::transformPoint(geometry_msgs::Point32 &pt32)
+{
+  tf::Point tfpt;
+  geometry_msgs::Point pt;
+  pt.x = static_cast<double>(pt32.x);
+  pt.y = static_cast<double>(pt32.y);
+  pt.z = static_cast<double>(pt32.z);
+  tf::pointMsgToTF(pt, tfpt);
+  tfpt = transform_ * tfpt;
+  tf::pointTFToMsg(tfpt, pt);
+  pt32.x = static_cast<float>(pt.x);
+  pt32.y = static_cast<float>(pt.y);
+  pt32.z = static_cast<float>(pt.z);
+
+}
+
 void ObstaclesGenerator::convertUpsideDown()
 {
   for(int i = 0; i < obstacle_array_.polygons.size(); ++i)
@@ -418,4 +460,38 @@ void ObstaclesGenerator::convertUpsideDown()
     obstacle_array_.polygons[i].points[2].y *= -1;
     obstacle_array_.polygons[i].points[3].y *= -1;
   }
+}
+void ObstaclesGenerator::reconfigureCB(selfie_perception::DetectObstaclesConfig& config, uint32_t level)
+{
+    if(max_range_ != (float)config.max_range)
+    {
+        max_range_ = config.max_range;
+        ROS_INFO("max_range_ new value: %f", max_range_);
+    }
+    if(max_segment_size_ != (float)config.max_segment_size)
+    {
+        max_segment_size_ = config.max_segment_size;
+        ROS_INFO("max_segment_size_ new value: %f", max_segment_size_);
+    }
+    if(min_range_ != (float)config.min_range)
+    {
+        min_range_ = config.min_range;
+        ROS_INFO("min_range_ new value: %f", min_range_);
+    }
+    if(min_segment_size_ != (float)config.min_segment_size)
+    {
+        min_segment_size_ = config.min_segment_size;
+        ROS_INFO("min_segment_size_ new value: %f", min_segment_size_);
+    }
+    if(min_to_divide_ != (float)config.min_to_divide)
+    {
+        min_to_divide_ = config.min_to_divide;
+        ROS_INFO("min_to_divide new value: %f", min_to_divide_);
+    }
+    if(segment_threshold_ != (float)config.segment_threshold)
+    {
+        segment_threshold_ = config.segment_threshold;
+        ROS_INFO("segment_threshold new value: %f", segment_threshold_);
+    }
+
 }

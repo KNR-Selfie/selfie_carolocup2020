@@ -34,14 +34,27 @@ rosrun selfie_avoiding_obstacles lane_controller
 ## Parameters
  - `ROI_min_x`,`ROI_min_y`,`ROI_max_x`,`ROI_max_x` (*float*)
    - describing area of interest
- - `maximum_length_of_obstacle` (*float*, default: 0.8)
+ - `max_length_of_obstacle` (*float*, default: 0.8)
    - How long can be approached obstacle (described in regulations)
  - `right_lane_setpoint`,`left_lane_setpoint` (*float*, default: -0.2,0.2)
    - How far from middle of road is middle of right and left lane
  - `maximum_speed` (*float*)
- - `safe_speed` (*float*)
+ - `slowdown_speed` (*float*)
+   - Speed used before lane is being changed
+ - `lane_change_speed_` (*float*)
    - Speed used when lane is being changed
  - `safety_margin` (*float*)
   - safety margin considering inaccurations in measuring distance, used to calculate 
  - `visualization` (*bool*, default: true)
    - Whether or not visualization topics are active
+ - `ackermann_mode` (*bool*, default: false)
+   - set if ackermann mode is active (if not then front_axis_steering_mode is used)
+ - `num_proof_to_overtake` (*int*)
+   - how many times in a row car should discover obstacle to start intersecting (it is used to avoid overtaking caused by static)
+ - `num_corners_to_detect` (*int*)
+   - how many corners of box should be in area of interest to consider it as obstacle to avoid
+ - `lane_change_distance` (*float*)
+   - how many meters it should take to change lane
+ - `lane_change_kp` (*float*)
+   - desired Kp value for pid used while changing lane
+   

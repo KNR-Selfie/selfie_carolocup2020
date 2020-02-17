@@ -5,7 +5,7 @@
 
 #include <selfie_perception/particle_filter.h>
 
-void ParticleFilter::init(std::vector<cv::Point2f> points, double std)
+void ParticleFilter::init(std::vector<cv::Point2f> points)
 {
   if (num_control_points_ != points.size())
   {
@@ -15,23 +15,13 @@ void ParticleFilter::init(std::vector<cv::Point2f> points, double std)
   weights_.resize(num_particles_);
   particles_.resize(num_particles_);
 
-  std::vector<std::normal_distribution<float>> dist;
-  std::default_random_engine gen;
-
-  for (int i = 0; i < num_control_points_; ++i)
-  {
-    std::normal_distribution<float> dist_i(points[i].y, std);
-    dist.push_back(dist_i);
-  }
-
   for (int i = 0; i < num_particles_; ++i)
   {
     Particle p;
-    p.id = i;
     for (int j = 0; j < num_control_points_; ++j)
     {
       cv::Point2f pt;
-      pt.y = dist[j](gen);
+      pt.y = points[j].y;
       pt.x = points[j].x;
       p.points.push_back(pt);
       p.poly_degree = poly_degree_;
@@ -49,7 +39,7 @@ void ParticleFilter::init(std::vector<cv::Point2f> points, double std)
   is_initialized_ = true;
 }
 
-void ParticleFilter::prediction(double std)
+void ParticleFilter::prediction(float std_min, float std_max)
 {
   std::random_device r;
   std::default_random_engine gen(r());
@@ -63,9 +53,10 @@ void ParticleFilter::prediction(double std)
 
       //std::normal_distribution<float> dist_x(0, std * sin(angle));
       //std::normal_distribution<float> dist_y(0, std * cos(angle));
+      float std = (std_max - std_min) / (TOPVIEW_MAX_X - TOPVIEW_MIN_X) * (particles_[i].points[j].x - TOPVIEW_MIN_X) + std_min;
 
-      std::normal_distribution<float> dist_x(0, std);
       std::normal_distribution<float> dist_y(0, std);
+      std::normal_distribution<float> dist_x(0, std);
 
       particles_[i].points[j].x += dist_x(gen);
       if (particles_[i].points[j].x > TOPVIEW_MAX_X)
@@ -129,7 +120,7 @@ void ParticleFilter::resample()
     resampled_particles.push_back(particles_[i]);
   }
   particles_ = resampled_particles;
-
+/*
   int max_index = 0;
   float max = 0;
   for (int i = 0; i < particles_.size(); ++i)
@@ -141,6 +132,8 @@ void ParticleFilter::resample()
     }
   }
   best_particle_ = particles_[max_index];
+*/
+  calculateBest();
 }
 
 std::vector<float> ParticleFilter::getCoeff(int particle_id)
@@ -189,15 +182,19 @@ float ParticleFilter::findMinPointToParabola(cv::Point2f p, std::vector<float> c
   cv::Point2f poly_p;
   poly_p.x = p.x;
   poly_p.y = getPolyY(coeff, p.x);
-  float min = p.y - poly_p.y;
+  float min = std::abs(p.y - poly_p.y);
   float new_min = min;
   float step = 0.05;
+  int it = 0;
   do
   {
     min = new_min;
     poly_p.x -= step;
     poly_p.y = getPolyY(coeff, poly_p.x);
     new_min = getDistance(p, poly_p);
+    ++it;
+    if (it > 5)
+      break;
   } while (new_min - min < 0);
   return std::fabs(min);
 }
@@ -207,6 +204,27 @@ float ParticleFilter::getDistance(cv::Point2f p1, cv::Point2f p2)
   float dx = (p1.x - p2.x);
   float dy = (p1.y - p2.y);
   return sqrtf(dx * dx + dy * dy);
+}
+
+void ParticleFilter::calculateBest()
+{
+  std::vector<cv::Point2f> points_tab;
+  points_tab.resize(num_control_points_);
+  for (int i = 0; i < particles_.size(); ++i)
+  {
+    for (int j = 0; j < num_control_points_; ++j)
+    {
+      points_tab[j].x += particles_[i].points[j].x;
+      points_tab[j].y += particles_[i].points[j].y;
+    }
+  }
+  for (int j = 0; j < num_control_points_; ++j)
+  {
+    points_tab[j].x /= num_particles_;
+    points_tab[j].y /= num_particles_;
+  }
+  polyfit(points_tab, poly_degree_, best_particle_.coeff);
+  best_particle_.poly_degree = poly_degree_;
 }
 
 void ParticleFilter::reset()

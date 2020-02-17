@@ -1,11 +1,22 @@
 #include <selfie_scheduler/park_action_client.h>
+#include <std_srvs/Empty.h>
 
-ParkClient::ParkClient(std::string name):
-    ac_(name, true)
+ParkClient::ParkClient(std::string name, const ros::NodeHandle &pnh):
+    ac_(name, true),
+    pnh_(pnh),
+    result_(0),
+    parking_steering_mode_(ACKERMANN),
+    sucessful_park_counter_(0),
+    park_atttempts_counter_(0)
 {
     next_action_ = DRIVING;
     result_flag_ = EMPTY;
     action_state_ = SELFIE_IDLE;
+    cmdCreatorStopPub_ = nh_.serviceClient<std_srvs::Empty>("cmd_stop_pub");
+    steeringModeSetAckermann_ = nh_.serviceClient<std_srvs::Empty>("steering_ackerman");
+    steeringModeSetParallel_ = nh_.serviceClient<std_srvs::Empty>("steering_parallel");
+    
+    pnh_.getParam("parking_steering_mode", parking_steering_mode_);
 }
 
 ParkClient::~ParkClient()
@@ -28,6 +39,7 @@ void ParkClient::setGoal(boost::any goal)
     ac_.sendGoal(goal_, boost::bind(&ParkClient::doneCb, this, _1, _2),
                 boost::bind(&ParkClient::activeCb, this),
                 boost::bind(&ParkClient::feedbackCb, this, _1));
+    park_atttempts_counter_++;
 }
 bool ParkClient::waitForResult(float timeout)
 {
@@ -49,8 +61,14 @@ void ParkClient::doneCb(const actionlib::SimpleClientGoalState& state,
     }
     else
     {
-        result_ = result->done;
         result_flag_ = SUCCESS;
+        sucessful_park_counter_++;
+    }
+
+    //todo implement more logic 
+    if(sucessful_park_counter_ == 2)
+    {
+        result_ = PARKING_COMPLETE;
     }
 
 }
@@ -70,5 +88,21 @@ void ParkClient::cancelAction()
 void ParkClient::getActionResult(boost::any &result)
 {
     result = result_;
+}
+void ParkClient::setParkSteeringMode()
+{   
+    std_srvs::Empty empty_msg;
+    if(parking_steering_mode_)
+        steeringModeSetParallel_.call(empty_msg);
+    else
+        steeringModeSetAckermann_.call(empty_msg);
+}
+void ParkClient::prepareAction()
+{
+    std_srvs::Empty empty_msg;
+    cmdCreatorStopPub_.call(empty_msg);
+    setParkSteeringMode();
+
+    ROS_INFO("Prepare park -  cmd creator stop pub, set steering mode to %d", parking_steering_mode_);
 }
 

@@ -21,8 +21,8 @@ public:
 class Ackermann_control
 {
 public:
-  float steering_angle;
-  float steering_angle_velocity;
+  float steering_angle_front;
+  float steering_angle_back;
   float speed;
   float acceleration;
   float jerk;
@@ -41,19 +41,15 @@ public:
     sensor_msgs::Imu imu_msg;
     std_msgs::Float32 velo_msg;
     std_msgs::Float32 dist_msg;
-    std_msgs::Bool button1_msg;
-    std_msgs::Bool button2_msg;
-
-    std_msgs::Bool reset_vision_msg;
-    std_msgs::UInt8 switch_state_msg;
-
+    std_msgs::UInt8 futaba_state;
+    bool button_1;
+    bool button_2;
 };
 
 class Sub_messages
 {
 public:
     Ackermann_control ackerman;
-    Indicator_control indicator;
     Sub_messages();
 };
 

@@ -72,3 +72,7 @@ void StartingProcedureClient::getActionResult(boost::any &result)
 {
     result = result_;
 }
+void StartingProcedureClient::prepareAction()
+{
+    
+}

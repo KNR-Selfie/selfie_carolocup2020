@@ -35,11 +35,11 @@ typedef enum program_state
     READY_TO_DRIVE, // car ready to further ride
 
     //intersection
-    STOPPED_ON_INTERSECTION,  //car stopped before intersection
-    FOUND_OBSTACLES, //Found obstacles on priority road
-    APPROACHING_TO_INTERSECTION_WITH_OBSTACLES, //Found obstacles on priority road, and approaching to it in meantime
-    WAITING_ON_INTERSECTION, //car stops on intersection even if there aren't any obstacles
-    ROAD_CLEAR  //none obstacles on priority road
+    APPROACHING_TO_INTERSECTION, //Approaching to intersection
+    APPROACHING_TO_INTERSECTION2, //Approaching to intersection when we can't see line //TODO change it later
+    STOPPED_ON_INTERSECTION,  //car stopped before intersection, because there is another car on priority road
+    WAITING_ON_INTERSECTION, //car stops on intersection even if there aren't any obstacles and waits certain amount of time
+    ROAD_CLEAR  //none obstacles on priority road, action ends now
 
 
 }feedback_variable;
@@ -78,4 +78,17 @@ typedef enum client_goal_state
     SUCCESS,
 
 }client_goal_state_variable;
+
+typedef enum steering_mode
+{
+    ACKERMANN = 0,
+    PARALLEL,
+    FRONT_AXIS
+}steering_mode_variable;
+
+typedef enum park_counter
+{
+    PARKING_COMPLETE = 5,
+
+}park_counter_variable;
 #endif // SCHEDULER_ENUMS_H

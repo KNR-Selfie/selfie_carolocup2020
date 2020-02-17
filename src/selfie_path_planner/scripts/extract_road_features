@@ -16,6 +16,9 @@ from selfie_msgs.msg import RoadMarkings
 from std_msgs.msg import Float64
 from std_msgs.msg import Float32
 
+from dynamic_reconfigure.server import Server
+from selfie_path_planner.cfg import ExtractRoadFeaturesConfig
+
 max_speed = 3.0
 act_speed = 0.0
 
@@ -92,6 +95,18 @@ def act_speed_callback(msg):
     global act_speed
     act_speed = msg.data
 
+def set_if_reconfigured(config):
+    for it in config.keys():
+        if it is 'groups':
+            continue
+        if globals()[it] != config[it]:
+            globals()[it] = config[it]
+            rospy.loginfo("%s new value is %f",it , config[it])
+
+def reconfigureCB(config, level):
+    set_if_reconfigured(config)
+    return config
+
 if __name__ == '__main__':
     rospy.init_node('extract_road_features')
 
@@ -129,6 +144,8 @@ if __name__ == '__main__':
     print("max_deceleration set to: " + str(max_deceleration))
     print("max_curvature set to: " + str(max_curvature))
     print("average_window_size set to: " + str(window_size))
+
+    dr_srv = Server(ExtractRoadFeaturesConfig, reconfigureCB)
 
     global sma
     sma = StreamingMovingAverage(window_size)

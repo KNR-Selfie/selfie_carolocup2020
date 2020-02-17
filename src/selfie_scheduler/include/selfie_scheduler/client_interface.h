@@ -14,7 +14,7 @@ protected:
     program_state action_state_;
     client_goal_state result_flag_;
     action next_action_;
-
+    
 public:
     virtual ~ClientInterface() = 0;
     virtual bool waitForServer(float timeout) = 0;
@@ -22,6 +22,7 @@ public:
     virtual bool waitForResult(float timeout) = 0;
     virtual void cancelAction() = 0;
     virtual void getActionResult(boost::any &result) = 0;
+    virtual void prepareAction() = 0;
 
     client_goal_state getClientGoalState() {return result_flag_;}
     action getNextAction(){return next_action_;}

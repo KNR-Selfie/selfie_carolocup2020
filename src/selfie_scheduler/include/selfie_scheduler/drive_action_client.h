@@ -12,9 +12,23 @@ protected:
     selfie_msgs::drivingGoal goal_;
     bool result_;
     bool drive_mode_;
+    int drive_steering_mode_;
+    bool park_complete_;
+
+    ros::ServiceClient visionReset_ ;
+    ros::ServiceClient resetLaneController_;
+    ros::ServiceClient cmdCreatorStartPub_;
+    ros::ServiceClient steeringModeSetAckermann_;
+    ros::ServiceClient steeringModeSetParallel_;
+    ros::ServiceClient steeringModeSetFrontAxis_;
+    ros::ServiceClient avoidingObstSetPassive_;
+    ros::ServiceClient avoidingObstSetActive_;
+
+    ros::NodeHandle pnh_;
+    void checkParkCounter(boost::any goal);
 
 public:
-    DriveClient(std::string name);
+    DriveClient(std::string name, const ros::NodeHandle &pnh);
     ~DriveClient();
 
     void setDriveMode(bool drive_mode);
@@ -28,6 +42,8 @@ public:
     void activeCb();
     void feedbackCb(const selfie_msgs::drivingFeedbackConstPtr& feedback);
     void getActionResult(boost::any &result);
+    void setDriveSteeringMode();
+    void prepareAction();
 };
 
 

@@ -15,11 +15,16 @@ public:
   void aprox();
   int pointsSize();
   void calcParams();
-  void addBottomPoint();
+  void addBottomPoint(bool force = false);
   void generateForDensity();
+  void reduceTopPoints(float ratio);
+  cv::Point2f getPointNextToBottom(float min_dist_to_bottom);
+  void reducePointsToStraight(int check_to_index);
+  float getMaxDiffonX();
+  int getIndexOnMerge();
   void reset();
 
-  void pfSetup(int num_particles, int num_control_points, float std);
+  void pfSetup(int num_particles, int num_control_points, float std_min, float std_max);
   void pfInit();
   bool pfExecute();
   void pfReset();
@@ -57,6 +62,7 @@ public:
   void setDegree(int degree)
   {
     degree_ = degree;
+    pf_.setPolyDegree_(degree);
   }
 
   void setCoeff(std::vector<float> coeff)
@@ -97,7 +103,8 @@ private:
   std::vector<float> coeff_;
 
   ParticleFilter pf_;
-  float pf_std_;
+  float pf_std_min_;
+  float pf_std_max_;
   int pf_num_particles_;
   int pf_num_points_;
 
@@ -105,6 +112,7 @@ private:
   float points_density_   {15};
 
   float getDistance(cv::Point2f p1, cv::Point2f p2);
+  float getA(cv::Point2f p1, cv::Point2f p2);
 };
 
 #endif  //  SELFIE_PERCEPTION_ROAD_LINE_H
