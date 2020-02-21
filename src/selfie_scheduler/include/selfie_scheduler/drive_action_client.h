@@ -21,6 +21,7 @@ protected:
     ros::ServiceClient steeringModeSetAckermann_;
     ros::ServiceClient steeringModeSetParallel_;
     ros::ServiceClient steeringModeSetFrontAxis_;
+    ros::ServiceClient steeringModeSetDynamic_;
     ros::ServiceClient avoidingObstSetPassive_;
     ros::ServiceClient avoidingObstSetActive_;
 

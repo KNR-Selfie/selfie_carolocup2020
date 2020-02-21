@@ -19,6 +19,7 @@ DriveClient::DriveClient(std::string name, const ros::NodeHandle &pnh):
     cmdCreatorStartPub_ = nh_.serviceClient<std_srvs::Empty>("cmd_start_pub");
     steeringModeSetAckermann_ = nh_.serviceClient<std_srvs::Empty>("steering_ackerman");
     steeringModeSetParallel_ = nh_.serviceClient<std_srvs::Empty>("steering_parallel");
+    steeringModeSetDynamic_ = nh_.serviceClient<std_srvs::Empty>("steering_dynamic");
     steeringModeSetFrontAxis_ = nh_.serviceClient<std_srvs::Empty>("steering_front_axis");
     avoidingObstSetPassive_ = nh_.serviceClient<std_srvs::Empty>("avoiding_obst_set_passive");
     avoidingObstSetActive_ = nh_.serviceClient<std_srvs::Empty>("avoiding_obst_set_active");
@@ -116,6 +117,8 @@ void DriveClient::setDriveSteeringMode()
         steeringModeSetAckermann_.call(empty_msg);
     else if(drive_steering_mode_ == FRONT_AXIS)
         steeringModeSetFrontAxis_.call(empty_msg);
+    else if(drive_steering_mode_ == DYNAMIC)
+        steeringModeSetDynamic_.call(empty_msg);
 }
 
 void DriveClient::prepareAction()

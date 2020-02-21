@@ -83,7 +83,8 @@ typedef enum steering_mode
 {
     ACKERMANN = 0,
     PARALLEL,
-    FRONT_AXIS
+    FRONT_AXIS,
+    DYNAMIC
 }steering_mode_variable;
 
 typedef enum park_counter

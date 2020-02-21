@@ -16,16 +16,18 @@
 void ackermanCallback(const ackermann_msgs::AckermannDriveStamped::ConstPtr& msg);
 void left_turn_indicatorCallback(const std_msgs::Bool::ConstPtr& msg);
 void right_turn_indicatorCallback(const std_msgs::Bool::ConstPtr& msg);
+void steering_relationshipCallback(const std_msgs::Float32::ConstPtr& msg);
 bool steeringAckermanCallback(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
 bool steeringParallelCallback(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
 bool steeringFrontAxisCallback(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
+bool steeringDynamicCallback(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
 void reconfigureCB(selfie_stm32_bridge::StmBridgeConfig& config, uint32_t level);
 
 Pub_messages pub_messages;
 Sub_messages sub_messages;
 
 USB_STM Usb;
-int steering_mode = 0;
+int steering_mode = 3;
 std_msgs::Empty empty_msg;
 
 float ackermann_offset_front;
@@ -36,6 +38,8 @@ float parallel_offset_front_right;
 float parallel_offset_back_right;
 float front_axis_offset;
 float back_axis_offset;
+
+float steering_relationship = 1;
 
 int main(int argc, char **argv)
 {
@@ -65,10 +69,13 @@ int main(int argc, char **argv)
     ros::ServiceServer ackerman_steering_mode = n.advertiseService("steering_ackerman", steeringAckermanCallback);
     ros::ServiceServer parallel_steering_mode = n.advertiseService("steering_parallel", steeringParallelCallback);
     ros::ServiceServer front_axis_steering_mode = n.advertiseService("steering_front_axis", steeringFrontAxisCallback);
+    ros::ServiceServer dynamic_steering_mode = n.advertiseService("steering_dynamic", steeringDynamicCallback);
 
     ros::Subscriber ackerman_subscriber = n.subscribe("drive", 1, ackermanCallback);
     ros::Subscriber left_turn_indicator_subscriber = n.subscribe("left_turn_indicator", 1, left_turn_indicatorCallback);
     ros::Subscriber right_turn_indicator_subscriber = n.subscribe("right_turn_indicator", 1, right_turn_indicatorCallback);
+
+    ros::Subscriber steering_relationship_subscriber = n.subscribe("steering_relationship", 1, steering_relationshipCallback);
 
     Usb.init();
     Time time;
@@ -128,6 +135,11 @@ void ackermanCallback(const ackermann_msgs::AckermannDriveStamped::ConstPtr& msg
         sub_messages.ackerman.steering_angle_front = -msg->drive.steering_angle + front_axis_offset;
         sub_messages.ackerman.steering_angle_back = back_axis_offset;
     }
+    else if(steering_mode == DYNAMIC)
+    {
+        sub_messages.ackerman.steering_angle_front = -msg->drive.steering_angle * steering_relationship;
+        sub_messages.ackerman.steering_angle_back = msg->drive.steering_angle * (1 - steering_relationship);
+    }
         
     sub_messages.ackerman.speed = msg->drive.speed;
     sub_messages.ackerman.acceleration = msg->drive.acceleration;
@@ -146,10 +158,21 @@ bool steeringParallelCallback(std_srvs::Empty::Request& request, std_srvs::Empty
     return true;
 }
 
+bool steeringDynamicCallback(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
+{
+    steering_mode = DYNAMIC;
+    return true;
+}
+
 bool steeringFrontAxisCallback(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
 {
     steering_mode = FRONT_AXIS;
     return true;
+}
+
+void steering_relationshipCallback(const std_msgs::Float32::ConstPtr& msg)
+{
+    steering_relationship = msg->data;
 }
 
 void left_turn_indicatorCallback(const std_msgs::Bool::ConstPtr& msg)
