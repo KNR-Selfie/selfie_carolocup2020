@@ -16,12 +16,12 @@ FuzzyController* fc_steering_angle  = new FuzzyController();
 Range x_curvature_in_range(0, 1800);
 Range y_curvature_in_range(0, 100);
 Range x_turining_center_out_range(-100, 100);
-Range y_turining_center_out_range(0, 1);
+Range y_turining_center_out_range(0, 100);
 
 Range x_offset_in_range(-200, 200);
 Range y_offset_in_range(0, 100);
 Range x_steering_angle_out_range(-100, 100);
-Range y_steering_angle_out_range(-0.7, 0.7);
+Range y_steering_angle_out_range(-70, 70);
 
 Point low_curvature_point1 (400, 100);
 Point low_curvature_point2 (750, 0);
@@ -44,15 +44,15 @@ Point center_offset_point3 (50, 0);
 Point left_offset_point1 (0, 0);
 Point left_offset_point2 (50, 100);
 
-Point turining_center_front_3_point (0, 1);
-Point turining_center_front_2_point (0, 0.5);
+Point turining_center_front_3_point (0, 100);
+Point turining_center_front_2_point (0, 50);
 Point turining_center_front_1_point (0, 0);
 
-Point steering_angle_strong_left_point (0, 0.7);
-Point steering_angle_left_point (0, 0.35);
+Point steering_angle_strong_left_point (0, 70);
+Point steering_angle_left_point (0, 35);
 Point steering_angle_center_point (0, 0);
-Point steering_angle_right_point (0, -0.35);
-Point steering_angle_strong_right_point (0, -0.7);
+Point steering_angle_right_point (0, -35);
+Point steering_angle_strong_right_point (0, -70);
 
 Membership *low_curvature = new Membership(x_curvature_in_range, y_curvature_in_range);
 Membership *mid_curvature = new Membership(x_curvature_in_range, y_curvature_in_range);
@@ -110,10 +110,10 @@ int main(int argc, char** argv)
     // check for incoming messages
     ros::spinOnce();
 
-    steering_balance_msg.data = fc_turining_center->getOut();
+    steering_balance_msg.data = fc_turining_center->getOut() / 100;
     steering_balance_pub.publish(steering_balance_msg);
 
-    steering_angle_msg.data = fc_steering_angle->getOut();
+    steering_angle_msg.data = fc_steering_angle->getOut() / 100;
     steering_angle_pub.publish(steering_angle_msg);
 
     loop_rate.sleep();
