@@ -16,7 +16,7 @@
 void ackermanCallback(const ackermann_msgs::AckermannDriveStamped::ConstPtr& msg);
 void left_turn_indicatorCallback(const std_msgs::Bool::ConstPtr& msg);
 void right_turn_indicatorCallback(const std_msgs::Bool::ConstPtr& msg);
-void steering_relationshipCallback(const std_msgs::Float32::ConstPtr& msg);
+void steering_balanceCallback(const std_msgs::Float32::ConstPtr& msg);
 bool steeringAckermanCallback(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
 bool steeringParallelCallback(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
 bool steeringFrontAxisCallback(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
@@ -39,7 +39,7 @@ float parallel_offset_back_right;
 float front_axis_offset;
 float back_axis_offset;
 
-float steering_relationship = 1;
+float steering_balance = 1;
 
 int main(int argc, char **argv)
 {
@@ -75,7 +75,7 @@ int main(int argc, char **argv)
     ros::Subscriber left_turn_indicator_subscriber = n.subscribe("left_turn_indicator", 1, left_turn_indicatorCallback);
     ros::Subscriber right_turn_indicator_subscriber = n.subscribe("right_turn_indicator", 1, right_turn_indicatorCallback);
 
-    ros::Subscriber steering_relationship_subscriber = n.subscribe("steering_relationship", 1, steering_relationshipCallback);
+    ros::Subscriber steering_balance_subscriber = n.subscribe("steering_balance", 1, steering_balanceCallback);
 
     Usb.init();
     Time time;
@@ -137,8 +137,8 @@ void ackermanCallback(const ackermann_msgs::AckermannDriveStamped::ConstPtr& msg
     }
     else if(steering_mode == DYNAMIC)
     {
-        sub_messages.ackerman.steering_angle_front = -msg->drive.steering_angle * steering_relationship;
-        sub_messages.ackerman.steering_angle_back = msg->drive.steering_angle * (1 - steering_relationship);
+        sub_messages.ackerman.steering_angle_front = -msg->drive.steering_angle * steering_balance;
+        sub_messages.ackerman.steering_angle_back = msg->drive.steering_angle * (1 - steering_balance);
     }
         
     sub_messages.ackerman.speed = msg->drive.speed;
@@ -170,9 +170,9 @@ bool steeringFrontAxisCallback(std_srvs::Empty::Request& request, std_srvs::Empt
     return true;
 }
 
-void steering_relationshipCallback(const std_msgs::Float32::ConstPtr& msg)
+void steering_balanceCallback(const std_msgs::Float32::ConstPtr& msg)
 {
-    steering_relationship = msg->data;
+    steering_balance = msg->data;
 }
 
 void left_turn_indicatorCallback(const std_msgs::Bool::ConstPtr& msg)
