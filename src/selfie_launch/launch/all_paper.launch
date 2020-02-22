@@ -1,0 +1,59 @@
+<launch>
+  <!-- PARAMS FROM YAML -->
+  <arg name="yaml_parameters" default="$(find selfie_launch)/config/parameters.yaml"/>
+  <rosparam command="load" file="$(arg yaml_parameters)"/>
+
+  <!-- LAUNCH DEPENDENT PARAMS -->
+  <arg name="visualization_in_searching" default="true" />
+  <arg name="visualization_of_intersection" default="true" />
+  <arg name="parking_msgs_output" default="true" />
+  <arg name="detect_obstacles_visualization" default="true" />
+  <arg name="lane_controller_visualization" default="true" />
+  <arg name="debug_mode" value="false"/>
+
+  <!-- PLATFORM DEPENDENT PARAMS -->
+  <arg name="homography_file" default="/home/$(env USER)/.ros/homography_export.yaml" />
+  <arg name="hom_cut_file" default="/home/$(env USER)/.ros/hom_cut.yaml" />
+
+  <!-- NODES -->
+
+  <node name="stm32_bridge" type="selfie_stm32_bridge" pkg="selfie_stm32_bridge" respawn="true" output="screen">
+    <remap from="/speed" to="/stm32/speed" />
+  </node>
+
+  <node name="detect_markings" type="detect_markings" pkg="selfie_perception" respawn="true" output="screen">
+    <param name="config_file" value="$(arg homography_file)" />
+    <param name="hom_cut_file" value="$(arg hom_cut_file)" />
+    <param name="debug_mode" value="$(arg debug_mode)"/>
+  </node>
+
+  <node name="extract_road_features" type="extract_road_features" pkg="selfie_path_planner" respawn="true" output="screen" />
+
+  <node pkg="selfie_avoiding_obstacles" type="lane_controller" name="lane_controller" respawn="true" output="screen">
+    <param name="visualization" value="$(arg lane_controller_visualization)" />
+  </node>
+
+  <node pkg="selfie_starting_procedure" type="qr_decoder" name="qr_decoder" output="screen"/>
+
+  <node name="odometry" type="selfie_odometry" pkg="selfie_odometry" respawn="true" output="screen"/>
+  <node name="scheduler" type="scheduler" pkg="selfie_scheduler" respawn="true" output="screen" />
+
+
+
+  <node name="offset_combiner" pkg="selfie_control" type="offset_combiner.py" respawn="true" output="screen" />
+
+  <node name="cmd_creator" type="cmd_creator" pkg="selfie_control" respawn="true" output="screen" />
+
+  <node name="fuzzy_controller" type="fuzzy_logic" pkg="selfie_fuzzy_logic" respawn="true" output="screen" />
+
+  <!--  INCLUDES -->
+  <include file="$(find selfie_launch)/launch/subsystems/transforms.launch"/>
+  <include file="$(find selfie_launch)/launch/subsystems/basler.launch"/>
+  <include file="$(find selfie_launch)/launch/subsystems/action_servers.launch">
+    <arg name="i_visualization_in_searching" value="$(arg visualization_in_searching)" />
+    <arg name="i_visualization_of_intersection" value="$(arg visualization_of_intersection)" />
+    <arg name="i_parking_msgs_output" value="$(arg parking_msgs_output)" />
+  </include>
+
+
+</launch>

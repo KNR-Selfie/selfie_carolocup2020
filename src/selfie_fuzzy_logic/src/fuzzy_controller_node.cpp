@@ -44,8 +44,8 @@ Point center_offset_point3 (50, 0);
 Point left_offset_point1 (0, 0);
 Point left_offset_point2 (50, 100);
 
-Point turining_center_front_3_point (0, 100);
-Point turining_center_front_2_point (0, 50);
+Point turining_center_front_3_point (0, 50);
+Point turining_center_front_2_point (0, 25);
 Point turining_center_front_1_point (0, 0);
 
 Point steering_angle_strong_left_point (0, 70);

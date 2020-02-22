@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-selfie_ip="10.70.13.13"
+selfie_ip="10.10.1.1"
 selfie_name="selfie"
 
 echo "selfie password:"
