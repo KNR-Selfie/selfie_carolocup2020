@@ -138,7 +138,7 @@ void ackermanCallback(const ackermann_msgs::AckermannDriveStamped::ConstPtr& msg
     else if(steering_mode == DYNAMIC)
     {
         sub_messages.ackerman.steering_angle_front = -msg->drive.steering_angle * steering_balance;
-        sub_messages.ackerman.steering_angle_back = msg->drive.steering_angle * (0.5 - steering_balance);
+        sub_messages.ackerman.steering_angle_back = msg->drive.steering_angle * (1 - steering_balance);
     }
         
     sub_messages.ackerman.speed = msg->drive.speed;
