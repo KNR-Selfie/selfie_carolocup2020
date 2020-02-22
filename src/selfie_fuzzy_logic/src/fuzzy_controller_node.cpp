@@ -67,6 +67,11 @@ Point steering_angle_low_right_point (0, -15);
 Point steering_angle_mid_right_point (0, -40);
 Point steering_angle_high_right_point (0, -70);
 
+Point steering_angle_mid_left_cur_point (0, 45);
+Point steering_angle_low_left_cur_point (0, 30);
+Point steering_angle_low_right_cur_point (0, -30);
+Point steering_angle_mid_right_cur_point (0, -45);
+
 Membership *low_curvature = new Membership(x_curvature_in_range, y_curvature_in_range);
 Membership *mid_curvature = new Membership(x_curvature_in_range, y_curvature_in_range);
 Membership *high_curvature = new Membership(x_curvature_in_range, y_curvature_in_range);
@@ -88,6 +93,11 @@ Membership *steering_angle_center = new Membership(x_steering_angle_out_range, y
 Membership *steering_angle_low_right = new Membership(x_steering_angle_out_range, y_steering_angle_out_range);
 Membership *steering_angle_mid_right = new Membership(x_steering_angle_out_range, y_steering_angle_out_range);
 Membership *steering_angle_high_right = new Membership(x_steering_angle_out_range, y_steering_angle_out_range);
+
+Membership *steering_angle_mid_left_cur = new Membership(x_steering_angle_out_range, y_steering_angle_out_range);
+Membership *steering_angle_low_left_cur = new Membership(x_steering_angle_out_range, y_steering_angle_out_range);
+Membership *steering_angle_low_right_cur = new Membership(x_steering_angle_out_range, y_steering_angle_out_range);
+Membership *steering_angle_mid_right_cur = new Membership(x_steering_angle_out_range, y_steering_angle_out_range);
 
 void setup();
 void addRules();
@@ -182,6 +192,11 @@ void setup()
   steering_angle_low_right->addPoint(steering_angle_low_right_point);
   steering_angle_mid_right->addPoint(steering_angle_mid_right_point);
   steering_angle_high_right->addPoint(steering_angle_high_right_point);
+
+  steering_angle_mid_left_cur->addPoint(steering_angle_mid_left_cur_point);
+  steering_angle_low_left_cur->addPoint(steering_angle_low_left_cur_point);
+  steering_angle_low_right_cur->addPoint(steering_angle_low_right_cur_point);
+  steering_angle_mid_right_cur->addPoint(steering_angle_mid_right_cur_point);
 }
 
 void addRules()
@@ -226,12 +241,12 @@ void addRules()
   Rule *r6 = new Rule();
   r6->addInput(curvature, *mid_curvature);
   r6->addInput(offset, *left_offset_strong);
-  r6->addOutput(*steering_angle_mid_right);
+  r6->addOutput(*steering_angle_mid_right_cur);
 
   Rule *r7 = new Rule();
   r7->addInput(curvature, *high_curvature);
   r7->addInput(offset, *left_offset_strong);
-  r7->addOutput(*steering_angle_low_right);
+  r7->addOutput(*steering_angle_low_right_cur);
 
 
   Rule *r8 = new Rule();
@@ -242,12 +257,12 @@ void addRules()
   Rule *r9 = new Rule();
   r9->addInput(curvature, *mid_curvature);
   r9->addInput(offset, *right_offset_strong);
-  r9->addOutput(*steering_angle_mid_left);
+  r9->addOutput(*steering_angle_mid_left_cur);
 
   Rule *r10 = new Rule();
   r10->addInput(curvature, *high_curvature);
   r10->addInput(offset, *right_offset_strong);
-  r10->addOutput(*steering_angle_low_left);
+  r10->addOutput(*steering_angle_low_left_cur);
 
 
   Rule *r13 = new Rule();
@@ -258,7 +273,7 @@ void addRules()
   Rule *r14 = new Rule();
   r14->addInput(curvature, *mid_curvature);
   r14->addInput(offset, *left_offset_low);
-  r14->addOutput(*steering_angle_low_right);
+  r14->addOutput(*steering_angle_low_right_cur);
 
   Rule *r15 = new Rule();
   r15->addInput(curvature, *high_curvature);
@@ -274,7 +289,7 @@ void addRules()
   Rule *r17 = new Rule();
   r17->addInput(curvature, *mid_curvature);
   r17->addInput(offset, *right_offset_low);
-  r17->addOutput(*steering_angle_low_left);
+  r17->addOutput(*steering_angle_low_left_cur);
 
   Rule *r18 = new Rule();
   r18->addInput(curvature, *high_curvature);
