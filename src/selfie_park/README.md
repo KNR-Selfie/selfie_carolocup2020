@@ -13,6 +13,8 @@ rosrun selfie_park detect_parking_spot
 ### Subscribed topics
 - `/obstacles` ([selfie_msgs/PolygonArray](https://github.com/KNR-Selfie/selfie_carolocup2020/wiki/Messages-and-actions))
   - detected obstacles
+- `/distance` ([std_msgs/Float32](https://docs.ros.org/api/std_msgs/html/msg/Float32.html))
+  - detected obstacles
  
 ### Published topics
 - `/max_speed` ([std_msgs/Float64](https://docs.ros.org/api/std_msgs/html/msg/Float64.html))
@@ -36,7 +38,10 @@ rosrun selfie_park detect_parking_spot
    - describes maximum angle between car and found place (used mainly in filtering out wrong places)
  - `length_of_parking_area` (*float*, default: 0.8)
    - how long will be covered before cancelling searching
-
+ - `new_setpoint` (*float*)
+   - setpoint used in parking zone
+ - `old_setpoint` (*float*)
+   - setpoint used when action is ended
 
 # Park Action
 ## Usage
