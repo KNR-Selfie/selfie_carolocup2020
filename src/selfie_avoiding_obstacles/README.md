@@ -14,12 +14,18 @@ rosrun selfie_avoiding_obstacles lane_controller
   - detected obstacles
  - `/road_markings` ([selfie_msgs/RoadMarkings](https://github.com/KNR-Selfie/selfie_carolocup2020/wiki/Messages-and-actions))
    - contains polynomial coefficients for fitted lines
+ - `/distance` ([std_msgs/Float32](https://docs.ros.org/api/std_msgs/html/msg/Float32.html))
+   - distance covered by car
+  
  
 ### Published topics
 - `/setpoint` ([std_msgs/Float32](https://docs.ros.org/api/std_msgs/html/msg/Float32.html))
   - describes lane, changing this value changes lane
 - `/max_speed` ([std_msgs/Float64](https://docs.ros.org/api/std_msgs/html/msg/Float64.html))
   - current speed of car
+  - describes lane, changing this value changes lane
+- `/right_turn_indicator` `/left_turn_indicator` ([std_msgs/Bool](https://docs.ros.org/kinetic/api/std_msgs/html/msg/Bool.html))
+  - used for turning on and of turn indicators
 - `/avoiding_obstacles` ([visualization_msgs/Marker](https://docs.ros.org/api/visualization_msgs/html/msg/Marker.html))
   - (only when parameter `visualization=true` visualizes found found and places in rviz)
 
@@ -32,10 +38,18 @@ rosrun selfie_avoiding_obstacles lane_controller
 
 
 ## Parameters
+ - `visualization` (*bool*, default: true)
+   - Whether or not visualization topics are active
+ - `ackermann_mode` (*bool*, default: false)
+   - set if ackermann mode is active (if not then front_axis_steering_mode is used)
+ - `max_length_of_obstacle` (*float*)
+   - How long can be approached obstacle (described in regulations)
+ - `max_distance_to_obstacle` (*float*)
+   - if obstacle in front of car is nearer than this value then car will start overtaking
  - `ROI_min_x`,`ROI_min_y`,`ROI_max_x`,`ROI_max_x` (*float*)
    - describing area of interest
- - `max_length_of_obstacle` (*float*, default: 0.8)
-   - How long can be approached obstacle (described in regulations)
+ - `right_obst_area_min_x`,`right_obst_area_max_x`,`right_obst_area_min_y`,`right_obst_area_max_y` (*float*)
+   - describing area of interest used while overtaking (checking if there is still obstacle on thhe right side of car)
  - `right_lane_setpoint`,`left_lane_setpoint` (*float*, default: -0.2,0.2)
    - How far from middle of road is middle of right and left lane
  - `maximum_speed` (*float*)
@@ -45,11 +59,7 @@ rosrun selfie_avoiding_obstacles lane_controller
    - Speed used when lane is being changed
  - `safety_margin` (*float*)
   - safety margin considering inaccurations in measuring distance, used to calculate 
- - `visualization` (*bool*, default: true)
-   - Whether or not visualization topics are active
- - `ackermann_mode` (*bool*, default: false)
-   - set if ackermann mode is active (if not then front_axis_steering_mode is used)
- - `num_proof_to_overtake` (*int*)
+ - `num_proof_to_slowdown` (*int*)
    - how many times in a row car should discover obstacle to start intersecting (it is used to avoid overtaking caused by static)
  - `num_corners_to_detect` (*int*)
    - how many corners of box should be in area of interest to consider it as obstacle to avoid
