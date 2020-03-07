@@ -52,25 +52,34 @@ rosrun selfie_park park_server
 ## Topics
 ### Subscribed
 - /distance (std_msgs/Float32)
+- /road_markings (selfie_msgs/RoadMarkings)
 ### Published
 - /drive (ackermann_msgs/AckermannDriveStamped)
 - /right_turn_indicator (std_msgs/Bool)
 - /left_turn_indicator (std_msgs/Bool)
 
+## Called Services
+- /steering_parallel
+changes the steering mode to parallel when starting the parking manouvre
+
 ## Parameters
 - state_msgs (bool)
 printing messages indicating the current state of the parking manouvre
 - parking_speed (float)
-distance between imu and the laser sensor of the vehicle
+speed during the parking manouvre
 - back_to_mid (float)
-distance between the back and the base_link of the vehicle
+distance between the base_link and the middle of the vehicle
 - idle_time (float)
 time spent idle in the parking spot
 - iter_distance (float)
 one move distance
 - angle_coeff (float)
-angle coefficient for calculations
+angle coefficient for localization (higher = parked closer to the lane)
 - max_turn (float)
 maximal wheel turn angle
 - turn_delay (float)
-time to wait for turn direction change
+time to wait for the turning direction change
+- line_dist_end (float)
+distance to the left parking spot bounding line, at which the parking manouvre is to be finished
+- start_parking_speed (float)
+the speed at which the car goes right before starting the parking manouvre
