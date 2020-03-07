@@ -29,12 +29,12 @@ rosrun selfie_starting_procedure starting_procedure
    Called when a button is pressed, starts searching for the gate with the lidar sensor
 
 ## Parameters
-- `starting_speed` (float)
-- `use_scan` (bool)
+- `starting_speed` (float, default=2)
+- `use_scan` (bool, default=false)
    whether to start when the lidar stops detecting the gate
-- `use_qr` (bool)
+- `use_qr` (bool, default=true)
    whether to start when the camera stops detecting the qr code
-- `Kp` (float)
+- `Kp` (float, default=1)
    the proportional gain of starting regulator, keeps the direction throughout the starting procedure
 
 # Qr Decoder
@@ -57,11 +57,11 @@ rosrun selfie_starting_procedure qr_decoder
 - `stopQrSearch` ([std_srvs/Empty](http://docs.ros.org/melodic/api/std_srvs/html/srv/Empty.html))
    Stops the search for the qr code
 ## Parameters
-- `min_detect_rate` (float)
+- `min_detect_rate` (float, default=0.4)
    the rate of detection that needs to be exceeded 
-- `iterations_to_valid` (int)
+- `iterations_to_valid` (int, default=2)
    minimal number of timer iterations with detect rate over the threshold in order to validate the detection of the qr code
-- `visualize` (bool)
+- `visualize` (bool, default=false)
    open the visualization of the qr code detection
 
 # Gate scanner
@@ -83,13 +83,13 @@ rosrun selfie_starting_procedure gate_scanner
    starts searching for the gate with the lidar sensor when called
 
 ## Parameters
-- `no_obstacle_time_thresh` (float)
+- `no_obstacle_time_thresh` (float, default=1.5)
    when there are no detections throughout this amount of time, the feedback is sent
-- `min_distance` (float)
+- `min_distance` (float, default=0.1)
    start distance of ROI
-- `max_distance` (float)
+- `max_distance` (float, default=0.5)
    end distance of ROI
-- `min_width` (float)
+- `min_width` (float, default=0.2)
    width of ROI
-- `min_gate_seen_count` (float)
+- `min_gate_seen_count` (float, default=5)
    minimal amount of detections to send the feedback
