@@ -44,42 +44,47 @@ rosrun selfie_park detect_parking_spot
    - setpoint used when action is ended
 
 # Park Action
+Goes straight until the starting position is reached and parks in the parking spot. Waits two seconds and leaves the parking spot.
+
 ## Usage
 ```
-. devel/setup.bash
 rosrun selfie_park park_server
 ```
+
 ## Topics
 ### Subscribed
-- /distance (std_msgs/Float32)
-- /road_markings (selfie_msgs/RoadMarkings)
+- `/distance` ([std_msgs/Float32](http://docs.ros.org/melodic/api/std_msgs/html/msg/Float32.html))
+used for localization
+- `/road_markings` (selfie_msgs/RoadMarkings)
+parking position is determined relative to the right lane marking
 ### Published
-- /drive (ackermann_msgs/AckermannDriveStamped)
-- /right_turn_indicator (std_msgs/Bool)
-- /left_turn_indicator (std_msgs/Bool)
+- `/drive` ([ackermann_msgs/AckermannDriveStamped](http://docs.ros.org/jade/api/ackermann_msgs/html/msg/AckermannDriveStamped.html))
+steering commands
+- `/right_turn_indicator` ([std_msgs/Bool](http://docs.ros.org/melodic/api/std_msgs/html/msg/Bool.html))
+- `/left_turn_indicator` ([std_msgs/Bool](http://docs.ros.org/melodic/api/std_msgs/html/msg/Bool.html))
 
 ## Called Services
-- /steering_parallel
+- `/steering_parallel` ([std_srvs/Empty](http://docs.ros.org/melodic/api/std_srvs/html/srv/Empty.html))
 changes the steering mode to parallel when starting the parking manouvre
 
 ## Parameters
-- state_msgs (bool)
+- `state_msgs` (bool)
 printing messages indicating the current state of the parking manouvre
-- parking_speed (float)
+- `parking_speed` (float)
 speed during the parking manouvre
-- back_to_mid (float)
+- `back_to_mid` (float)
 distance between the base_link and the middle of the vehicle
-- idle_time (float)
+- `idle_time` (float)
 time spent idle in the parking spot
-- iter_distance (float)
+- `iter_distance` (float)
 one move distance
-- angle_coeff (float)
+- `angle_coeff` (float)
 angle coefficient for localization (higher = parked closer to the lane)
-- max_turn (float)
+- `max_turn` (float)
 maximal wheel turn angle
-- turn_delay (float)
+- `turn_delay` (float)
 time to wait for the turning direction change
-- line_dist_end (float)
+- `line_dist_end` (float)
 distance to the left parking spot bounding line, at which the parking manouvre is to be finished
-- start_parking_speed (float)
+- `start_parking_speed` (float)
 the speed at which the car goes right before starting the parking manouvre
