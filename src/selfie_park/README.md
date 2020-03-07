@@ -7,7 +7,7 @@ Server uses [search.action](https://github.com/KNR-Selfie/selfie_carolocup2020/w
 rosrun selfie_park detect_parking_spot
 ```
 ## Topics
-###Action name
+### Action name
 - `search`
 
 ### Subscribed topics
