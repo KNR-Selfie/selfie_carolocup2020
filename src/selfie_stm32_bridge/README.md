@@ -23,11 +23,11 @@ Data stream from IMU.
 `speed` ([std_msgs/Float32](http://docs.ros.org/api/std_msgs/html/msg/Float32.html))
 Linear velocity magnitude at the center of rear axle, as calculated from encoder data (in m/s).
 
-`start_button1` ([std_msgs/Bool](http://docs.ros.org/api/std_msgs/html/msg/Bool.html))
-Status of the start button1 (0 - no start, 1 - start).
+`start_button1` ([std_msgs/Empty](http://docs.ros.org/melodic/api/std_msgs/html/msg/Empty.html))
+starts parking competition
 
-`start_button2` ([std_msgs/Bool](http://docs.ros.org/api/std_msgs/html/msg/Bool.html))
-Status of the start button2 (0 - no start, 1 - start).
+`start_button2` ([std_msgs/Empty](http://docs.ros.org/melodic/api/std_msgs/html/msg/Empty.html))
+starts obstacle competition
 
 `distance` ([std_msgs/Float32](http://docs.ros.org/api/std_msgs/html/msg/Float32.html))
 Distance covered by the car.
