@@ -9,11 +9,11 @@ QrDecoder::QrDecoder(const ros::NodeHandle &nh, const ros::NodeHandle &pnh): nh_
   zbar_scanner_.set_config(zbar::ZBAR_QRCODE, zbar::ZBAR_CFG_ENABLE, 1);
   gate_open_pub_ = nh_.advertise<std_msgs::Empty>("qr_gate_open", 1);
   pnh_.param<float>("min_detect_rate", min_detect_rate_, 0.4);
-  pnh_.param<int>("interations_to_vaild", interations_to_vaild_, 2);
+  pnh_.param<int>("iterations_to_vaild", iterations_to_vaild_, 2);
   pnh_.param("visualize", visualize_, false);
 
   ROS_INFO("min_detect_rate: %.2f", min_detect_rate_);
-  ROS_INFO("interations_to_vaild: %d", interations_to_vaild_);
+  ROS_INFO("iterations_to_vaild: %d", iterations_to_vaild_);
 
   start_serv_ = nh_.advertiseService("startQrSearch", &QrDecoder::startSearching, this);
   stop_serv_ = nh_.advertiseService("stopQrSearch", &QrDecoder::stopSearching, this);
@@ -174,7 +174,7 @@ void QrDecoder::calcRate(const ros::TimerEvent &time)
   }
   count_bar_ = 0;
   count_frame_ = 0;
-  if (count_valid_iterations_ < interations_to_vaild_)
+  if (count_valid_iterations_ < iterations_to_vaild_)
   {
     if (detect_rate_ < min_detect_rate_)
     {
@@ -185,7 +185,7 @@ void QrDecoder::calcRate(const ros::TimerEvent &time)
       return;
     }
     ++count_valid_iterations_;
-    if (count_valid_iterations_ == interations_to_vaild_)
+    if (count_valid_iterations_ == iterations_to_vaild_)
     {
       ROS_INFO("QrDetector - detection valid");
     }
