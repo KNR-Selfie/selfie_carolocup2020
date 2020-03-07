@@ -68,23 +68,23 @@ steering commands
 changes the steering mode to parallel when starting the parking manouvre
 
 ## Parameters
-- `state_msgs` (bool)
+- `state_msgs` (bool, default=false)
 printing messages indicating the current state of the parking manouvre
-- `parking_speed` (float)
+- `parking_speed` (float, default=0.8)
 speed during the parking manouvre
-- `back_to_mid` (float)
+- `back_to_mid` (float, default=0.18)
 distance between the base_link and the middle of the vehicle
-- `idle_time` (float)
+- `idle_time` (float, default=2)
 time spent idle in the parking spot
-- `iter_distance` (float)
+- `iter_distance` (float, default=0.2)
 one move distance
-- `angle_coeff` (float)
+- `angle_coeff` (float, default=0.5)
 angle coefficient for localization (higher = parked closer to the lane)
-- `max_turn` (float)
+- `max_turn` (float, default=0.5)
 maximal wheel turn angle
-- `turn_delay` (float)
+- `turn_delay` (float, default=0.1)
 time to wait for the turning direction change
-- `line_dist_end` (float)
+- `line_dist_end` (float, default=0.15)
 distance to the left parking spot bounding line, at which the parking manouvre is to be finished
-- `start_parking_speed` (float)
+- `start_parking_speed` (float, default=0.5)
 the speed at which the car goes right before starting the parking manouvre
