@@ -22,3 +22,11 @@ rosrun selfie_path_planner extract_road_features
   - Distance from the car where offsets are calculated [m]
 - `min_spped` (*float*, default: 0.5)
   - Min speed of the car [m/s]
+-  `max_acceleration` (*float*)
+   - max acceleration of the car
+-  `max_deceleration` (*float*)
+   - max deceleration of the car
+-  `max_curvature` (*float*)
+   - max possible curvature (linear speed control)
+-  `average_window_size` (*float*)
+   - window size in moving average filter that smooth curvature of the road

@@ -56,7 +56,10 @@ rosrun selfie_intersection intersection_server
 -  `stop_time` (*float*)
    - how long car should stop on intersection (even if there are no other cars)
 -  `speed_default` (*float*)
-
    - default speed of approaching to intersection
+-  `distance_of_blind_approaching` (*float*)
+   - distance which skould covered blindly (to reduce distance to intersection)
+-  `num_corners_to_detect` (*int*)
+   - number of corners which should be found in area on interest
 -  `visualization` (*bool*, default: false)
    - Whether or not visualization topics are active

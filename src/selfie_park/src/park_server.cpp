@@ -11,9 +11,6 @@ pnh_(pnh),
 as_(nh_, "park", false),
 dr_server_CB_(boost::bind(&ParkService::reconfigureCB, this, _1, _2))
 {
-  pnh_.param<std::string>("odom_topic", odom_topic_, "/odom");
-  pnh_.param<std::string>("ackermann_topic", ackermann_topic_, "/drive");
-  
   pnh_.param<bool>("state_msgs", state_msgs_, false);
   pnh_.param<float>("parking_speed", parking_speed_, 0.8);
   pnh_.param<float>("max_turn", max_turn_, 0.5);
@@ -39,7 +36,7 @@ dr_server_CB_(boost::bind(&ParkService::reconfigureCB, this, _1, _2))
   steering_mode_set_front_axis_ = nh_.serviceClient<std_srvs::Empty>("steering_front_axis");
   as_.start();
   dist_sub_ = nh_.subscribe("/distance", 1, &ParkService::distanceCallback, this);
-  ackermann_pub_ = nh_.advertise<ackermann_msgs::AckermannDriveStamped>(ackermann_topic_, 10);
+  ackermann_pub_ = nh_.advertise<ackermann_msgs::AckermannDriveStamped>("/drive", 10);
   right_indicator_pub_ = nh_.advertise<std_msgs::Bool>("right_turn_indicator", 20);
   left_indicator_pub_ = nh_.advertise<std_msgs::Bool>("left_turn_indicator", 20);
   markings_sub_ = nh_.subscribe("/road_markings", 10, &ParkService::markingsCallback,this);

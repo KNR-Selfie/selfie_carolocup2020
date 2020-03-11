@@ -7,11 +7,13 @@ Server uses [search.action](https://github.com/KNR-Selfie/selfie_carolocup2020/w
 rosrun selfie_park detect_parking_spot
 ```
 ## Topics
-###Action name
+### Action name
 - `search`
 
 ### Subscribed topics
 - `/obstacles` ([selfie_msgs/PolygonArray](https://github.com/KNR-Selfie/selfie_carolocup2020/wiki/Messages-and-actions))
+  - detected obstacles
+- `/distance` ([std_msgs/Float32](https://docs.ros.org/api/std_msgs/html/msg/Float32.html))
   - detected obstacles
  
 ### Published topics
@@ -36,36 +38,53 @@ rosrun selfie_park detect_parking_spot
    - describes maximum angle between car and found place (used mainly in filtering out wrong places)
  - `length_of_parking_area` (*float*, default: 0.8)
    - how long will be covered before cancelling searching
-
+ - `new_setpoint` (*float*)
+   - setpoint used in parking zone
+ - `old_setpoint` (*float*)
+   - setpoint used when action is ended
 
 # Park Action
+Goes straight until the starting position is reached and parks in the parking spot. Waits two seconds and leaves the parking spot.
+
 ## Usage
 ```
-. devel/setup.bash
 rosrun selfie_park park_server
 ```
+
 ## Topics
 ### Subscribed
-- /distance (std_msgs/Float32)
+- `/distance` ([std_msgs/Float32](http://docs.ros.org/melodic/api/std_msgs/html/msg/Float32.html))
+used for localization
+- `/road_markings` (selfie_msgs/RoadMarkings)
+parking position is determined relative to the right lane marking
 ### Published
-- /drive (ackermann_msgs/AckermannDriveStamped)
-- /right_turn_indicator (std_msgs/Bool)
-- /left_turn_indicator (std_msgs/Bool)
+- `/drive` ([ackermann_msgs/AckermannDriveStamped](http://docs.ros.org/jade/api/ackermann_msgs/html/msg/AckermannDriveStamped.html))
+steering commands
+- `/right_turn_indicator` ([std_msgs/Bool](http://docs.ros.org/melodic/api/std_msgs/html/msg/Bool.html))
+- `/left_turn_indicator` ([std_msgs/Bool](http://docs.ros.org/melodic/api/std_msgs/html/msg/Bool.html))
+
+## Called Services
+- `/steering_parallel` ([std_srvs/Empty](http://docs.ros.org/melodic/api/std_srvs/html/srv/Empty.html))
+changes the steering mode to parallel when starting the parking manouvre
 
 ## Parameters
-- state_msgs (bool)
+- `state_msgs` (bool, default=false)
 printing messages indicating the current state of the parking manouvre
-- parking_speed (float)
-distance between imu and the laser sensor of the vehicle
-- back_to_mid (float)
-distance between the back and the base_link of the vehicle
-- idle_time (float)
+- `parking_speed` (float, default=0.8)
+speed during the parking manouvre
+- `back_to_mid` (float, default=0.18)
+distance between the base_link and the middle of the vehicle
+- `idle_time` (float, default=2)
 time spent idle in the parking spot
-- iter_distance (float)
+- `iter_distance` (float, default=0.2)
 one move distance
-- angle_coeff (float)
-angle coefficient for calculations
-- max_turn (float)
+- `angle_coeff` (float, default=0.5)
+angle coefficient for localization (higher = parked closer to the lane)
+- `max_turn` (float, default=0.5)
 maximal wheel turn angle
-- turn_delay (float)
-time to wait for turn direction change
+- `turn_delay` (float, default=0.1)
+time to wait for the turning direction change
+- `line_dist_end` (float, default=0.15)
+distance to the left parking spot bounding line, at which the parking manouvre is to be finished
+- `start_parking_speed` (float, default=0.5)
+the speed at which the car goes right before starting the parking manouvre
