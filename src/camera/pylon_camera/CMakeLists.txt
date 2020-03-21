@@ -29,7 +29,7 @@ find_package(
      roslint
 )
 
-find_package(OpenCV 3.3.1 REQUIRED)
+find_package(OpenCV REQUIRED)
 
 catkin_package(
     INCLUDE_DIRS
