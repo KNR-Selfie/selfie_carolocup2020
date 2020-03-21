@@ -35,7 +35,7 @@ class QrDecoder
 
   bool visualize_ {false};
   float min_detect_rate_ {0.2};
-  int interations_to_vaild_ {2};
+  int iterations_to_vaild_ {2};
   float detect_rate_ {1.0};
 
   int count_frame_{0};
