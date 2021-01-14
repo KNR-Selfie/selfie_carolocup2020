@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import rospy
 import actionlib
 from selfie_msgs.msg import startingAction, startingGoal

@@ -316,17 +316,17 @@ void LaneDetector::drawAproxOnHomographyMasked()
   if (!aprox_lines_frame_coordinate_[2].empty())
     for (int i = 0; i < aprox_lines_frame_coordinate_[2].size(); ++i)
     {
-      cv::circle(homography_masked_frame_, aprox_lines_frame_coordinate_[2][i], 2, cv::Scalar(255, 0, 0), CV_FILLED);
+      cv::circle(homography_masked_frame_, aprox_lines_frame_coordinate_[2][i], 2, cv::Scalar(255, 0, 0), cv::FILLED);
     }
   if (!aprox_lines_frame_coordinate_[0].empty())
     for (int i = 0; i < aprox_lines_frame_coordinate_[0].size(); ++i)
     {
-      cv::circle(homography_masked_frame_, aprox_lines_frame_coordinate_[0][i], 2, cv::Scalar(0, 0, 255), CV_FILLED);
+      cv::circle(homography_masked_frame_, aprox_lines_frame_coordinate_[0][i], 2, cv::Scalar(0, 0, 255), cv::FILLED);
     }
   if (!aprox_lines_frame_coordinate_[1].empty())
     for (int i = 0; i < aprox_lines_frame_coordinate_[1].size(); ++i)
     {
-      cv::circle(homography_masked_frame_, aprox_lines_frame_coordinate_[1][i], 2, cv::Scalar(0, 255, 0), CV_FILLED);
+      cv::circle(homography_masked_frame_, aprox_lines_frame_coordinate_[1][i], 2, cv::Scalar(0, 255, 0), cv::FILLED);
     }
 
   if (!debug_points_.empty())
@@ -335,8 +335,8 @@ void LaneDetector::drawAproxOnHomographyMasked()
     for (int i = 0; i < debug_points_.size(); i += 2)
     {
       cv::line(homography_masked_frame_, debug_points_[i], debug_points_[i + 1], cv::Scalar(0, 255, 255), 2);
-	  cv::circle(homography_masked_frame_, debug_points_[i], 5, cv::Scalar(255, 255, 0), CV_FILLED, cv::LINE_AA);
-	  cv::circle(homography_masked_frame_, debug_points_[i + 1], 5, cv::Scalar(255, 255, 0), CV_FILLED, cv::LINE_AA);
+	  cv::circle(homography_masked_frame_, debug_points_[i], 5, cv::Scalar(255, 255, 0), cv::FILLED, cv::LINE_AA);
+	  cv::circle(homography_masked_frame_, debug_points_[i + 1], 5, cv::Scalar(255, 255, 0), cv::FILLED, cv::LINE_AA);
     }
   }
 }
@@ -1571,7 +1571,7 @@ void LaneDetector::lanesVectorVisualization(cv::Mat &visualization_frame)
   {
     for (int j = 0; j < lines_vector_[i].size(); ++j)
     {
-      cv::circle(visualization_frame, lines_vector_[i][j], 2, cv::Scalar(255, 0, 0), CV_FILLED, cv::LINE_AA);
+      cv::circle(visualization_frame, lines_vector_[i][j], 2, cv::Scalar(255, 0, 0), cv::FILLED, cv::LINE_AA);
     }
   }
 
@@ -1595,7 +1595,7 @@ void LaneDetector::LCRLinesDraw(cv::Mat &visualization_frame)
 
     for (int i = 0; i < temp_vec.size(); ++i)
     {
-      cv::circle(visualization_frame, temp_vec[i], 2, cv::Scalar(255, 0, 0), CV_FILLED, cv::LINE_AA);
+      cv::circle(visualization_frame, temp_vec[i], 2, cv::Scalar(255, 0, 0), cv::FILLED, cv::LINE_AA);
     }
     temp_vec.clear();
   }
@@ -1606,7 +1606,7 @@ void LaneDetector::LCRLinesDraw(cv::Mat &visualization_frame)
 
     for (int i = 0; i < temp_vec.size(); ++i)
     {
-      cv::circle(visualization_frame, temp_vec[i], 2, cv::Scalar(0, 255, 0), CV_FILLED, cv::LINE_AA);
+      cv::circle(visualization_frame, temp_vec[i], 2, cv::Scalar(0, 255, 0), cv::FILLED, cv::LINE_AA);
     }
     temp_vec.clear();
   }
@@ -1617,7 +1617,7 @@ void LaneDetector::LCRLinesDraw(cv::Mat &visualization_frame)
 
     for (int i = 0; i < temp_vec.size(); ++i)
     {
-      cv::circle(visualization_frame, temp_vec[i], 2, cv::Scalar(0, 0, 255), CV_FILLED, cv::LINE_AA);
+      cv::circle(visualization_frame, temp_vec[i], 2, cv::Scalar(0, 0, 255), cv::FILLED, cv::LINE_AA);
     }
     temp_vec.clear();
   }
@@ -2081,11 +2081,11 @@ void LaneDetector::drawParticles(int num)
       cv::transform(pf_cp, pf_cp, world2topview_.rowRange(0, 2));
       for (int j = 1; j < pf_line.size(); ++j)
       {
-        cv::line(pf_vis_mat_, pf_line[j - 1], pf_line[j], cv::Scalar(color_set[i][0], color_set[i][1], color_set[i][2]), 1.5, CV_AA);
+        cv::line(pf_vis_mat_, pf_line[j - 1], pf_line[j], cv::Scalar(color_set[i][0], color_set[i][1], color_set[i][2]), 1.5, cv::LINE_AA);
       }
       for (int j = 0; j < pf_cp.size(); ++j)
       {
-        cv::circle(pf_vis_mat_, pf_cp[j], 3, cv::Scalar(color_set[i][0], color_set[i][1], color_set[i][2]), CV_FILLED);
+        cv::circle(pf_vis_mat_, pf_cp[j], 3, cv::Scalar(color_set[i][0], color_set[i][1], color_set[i][2]), cv::FILLED);
       }
     }
 
@@ -2105,11 +2105,11 @@ void LaneDetector::drawParticles(int num)
       cv::transform(pf_cp, pf_cp, world2topview_.rowRange(0, 2));
       for (int j = 1; j < pf_line.size(); ++j)
       {
-        cv::line(pf_vis_mat_, pf_line[j - 1], pf_line[j], cv::Scalar(color_set[i][0], color_set[i][1], color_set[i][2]), 1.5, CV_AA);
+        cv::line(pf_vis_mat_, pf_line[j - 1], pf_line[j], cv::Scalar(color_set[i][0], color_set[i][1], color_set[i][2]), 1.5, cv::LINE_AA);
       }
       for (int j = 0; j < pf_cp.size(); ++j)
       {
-        cv::circle(pf_vis_mat_, pf_cp[j], 3, cv::Scalar(color_set[i][0], color_set[i][1], color_set[i][2]), CV_FILLED);
+        cv::circle(pf_vis_mat_, pf_cp[j], 3, cv::Scalar(color_set[i][0], color_set[i][1], color_set[i][2]), cv::FILLED);
       }
     }
 
@@ -2129,11 +2129,11 @@ void LaneDetector::drawParticles(int num)
       cv::transform(pf_cp, pf_cp, world2topview_.rowRange(0, 2));
       for (int j = 1; j < pf_line.size(); ++j)
       {
-        cv::line(pf_vis_mat_, pf_line[j - 1], pf_line[j], cv::Scalar(color_set[i][0], color_set[i][1], color_set[i][2]), 1.5, CV_AA);
+        cv::line(pf_vis_mat_, pf_line[j - 1], pf_line[j], cv::Scalar(color_set[i][0], color_set[i][1], color_set[i][2]), 1.5, cv::LINE_AA);
       }
       for (int j = 0; j < pf_cp.size(); ++j)
       {
-        cv::circle(pf_vis_mat_, pf_cp[j], 3, cv::Scalar(color_set[i][0], color_set[i][1], color_set[i][2]), CV_FILLED);
+        cv::circle(pf_vis_mat_, pf_cp[j], 3, cv::Scalar(color_set[i][0], color_set[i][1], color_set[i][2]), cv::FILLED);
       }
     }
   }
@@ -2422,7 +2422,7 @@ void LaneDetector::drawIntersection()
   for (size_t i = 0; i < lines_out_h_.size(); ++i)
   {
     cv::Vec4i l = lines_out_h_[i];
-    cv::line(outside_road_, cv::Point(l[0], l[1]), cv::Point(l[2], l[3]), cv::Scalar(0,0,255), 1.5, CV_AA);
+    cv::line(outside_road_, cv::Point(l[0], l[1]), cv::Point(l[2], l[3]), cv::Scalar(0,0,255), 1.5, cv::LINE_AA);
   }
 
   if(!isec_min_dist_points_.empty())
@@ -2430,7 +2430,7 @@ void LaneDetector::drawIntersection()
     cv::transform(isec_min_dist_points_, isec_min_dist_points_, world2topview_.rowRange(0, 2));
     for (size_t i = 0; i < isec_min_dist_points_.size(); i ++)
     {
-      cv::circle(outside_road_, isec_min_dist_points_[i], 2, cv::Scalar(255, 255, 0), CV_FILLED);
+      cv::circle(outside_road_, isec_min_dist_points_[i], 2, cv::Scalar(255, 255, 0), cv::FILLED);
     }
     isec_min_dist_points_.clear();
   }
@@ -2442,7 +2442,7 @@ void LaneDetector::drawIntersection()
   for (size_t i = 0; i < isec_debug_points_.size(); i += 2)
   {
     cv::Vec4i l = lines_out_h_[i];
-    cv::line(outside_road_, isec_debug_points_[i], isec_debug_points_[i + 1], cv::Scalar(0,255,0), 1, CV_AA);
+    cv::line(outside_road_, isec_debug_points_[i], isec_debug_points_[i + 1], cv::Scalar(0,255,0), 1, cv::LINE_AA);
   }
   isec_debug_points_.clear();
 }

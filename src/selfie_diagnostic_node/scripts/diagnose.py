@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import rospy
 from sensor_msgs.msg import LaserScan, Image, Imu
 from std_msgs.msg import Bool, String, Float32
