@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # This script creates a ros node that looks for nodes that publish Image msgs and advertises a to a camera_control_msgs/SetSleeping service. 
 # If it does find any, it assumes it is a Pylon camera and sends it either to sleep or wakes it up, depending on argument.
